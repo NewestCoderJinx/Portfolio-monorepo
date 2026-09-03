@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Project } from './projects/project.entity';
 
 @Module({
   imports: [
@@ -13,8 +12,8 @@ import { Project } from './projects/project.entity';
       username: 'postgres',
       password: '12345',
       database: 'portfolio_dev',
-      entities: [Project],
-      synchronize: true, // Automatically creates tables in your local development database
+      autoLoadEntities: true, // Automatically registers all entities globally
+      synchronize: true,     // Creates tables automatically in local development
     }),
   ],
 })
