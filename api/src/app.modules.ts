@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import { ProjectsModule } from './modules/projects/projects.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -12,9 +12,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: 'postgres',
       password: '12345',
       database: 'portfolio_dev',
-      autoLoadEntities: true, // Automatically registers all entities globally
-      synchronize: true,     // Creates tables automatically in local development
+      autoLoadEntities: true,
+      synchronize: true,
     }),
+    ProjectsModule,
   ],
 })
 export class AppModule {}
