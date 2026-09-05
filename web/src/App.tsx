@@ -1,14 +1,25 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { getProjects, type Project } from './api/projectstate.ts';
+import { 
+  getProjects, 
+  createProject, 
+  updateProject, 
+  deleteProject, 
+  type Project 
+} from './api/projectstate';
 
 export function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  
-  // Form state
+
+  // Form state for creating projects
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+
+  // Editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   const fetchProjects = () => {
     setLoading(true);
@@ -22,24 +33,44 @@ export function App() {
     fetchProjects();
   }, []);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     try {
-      // Create project via API POST request
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, imageUrl }),
-      });
-      if (!res.ok) throw new Error('Failed to create project');
+      await createProject({ title, description, imageUrl });
       setTitle('');
       setDescription('');
       setImageUrl('');
-      fetchProjects(); // Refresh the list after adding
+      fetchProjects();
     } catch (err) {
       console.error('Error creating project:', err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this project?')) return;
+    try {
+      await deleteProject(id);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error('Error deleting project:', err);
+    }
+  };
+
+  const startEditing = (project: Project) => {
+    setEditingId(project.id);
+    setEditTitle(project.title);
+    setEditDescription(project.description || '');
+  };
+
+  const handleUpdate = async (id: string) => {
+    try {
+      await updateProject(id, { title: editTitle, description: editDescription });
+      setEditingId(null);
+      fetchProjects();
+    } catch (err) {
+      console.error('Error updating project:', err);
     }
   };
 
@@ -48,7 +79,7 @@ export function App() {
       <h1 style={{ textAlign: 'center' }}>Portfolio Projects</h1>
 
       {/* Creation Form */}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+      <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
         <h3>Add New Project</h3>
         <input 
           type="text" 
@@ -62,7 +93,7 @@ export function App() {
           placeholder="Description" 
           value={description} 
           onChange={(e) => setDescription(e.target.value)} 
-          style={{ padding: '0.5rem', minHeight: '80px' }}
+          style={{ padding: '0.5rem', minHeight: '60px' }}
         />
         <input 
           type="text" 
@@ -71,23 +102,51 @@ export function App() {
           onChange={(e) => setImageUrl(e.target.value)} 
           style={{ padding: '0.5rem' }}
         />
-        <button type="submit" style={{ padding: '0.75rem', cursor: 'pointer' }}>
-          Create Project
-        </button>
+        <button type="submit" style={{ padding: '0.5rem', cursor: 'pointer' }}>Create Project</button>
       </form>
 
-      {/* Projects List */}
+      {/* Projects Grid */}
       {loading ? (
         <p style={{ textAlign: 'center' }}>Loading projects...</p>
       ) : projects.length === 0 ? (
-        <p style={{ textAlign: 'center' }}>No projects found yet. Use the form above to add one!</p>
+        <p style={{ textAlign: 'center' }}>No projects found.</p>
       ) : (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
           {projects.map((p) => (
-            <div key={p.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem' }}>
-              <h4>{p.title}</h4>
-              <p>{p.description || 'No description provided.'}</p>
-              {p.imageUrl && <img src={p.imageUrl} alt={p.title} style={{ width: '100%', borderRadius: '4px' }} />}
+            <div key={p.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              {editingId === p.id ? (
+                /* Edit Mode View */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    value={editTitle} 
+                    onChange={(e) => setEditTitle(e.target.value)} 
+                    style={{ padding: '0.4rem' }}
+                  />
+                  <textarea 
+                    value={editDescription} 
+                    onChange={(e) => setEditDescription(e.target.value)} 
+                    style={{ padding: '0.4rem' }}
+                  />
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button onClick={() => handleUpdate(p.id)} style={{ flex: 1, padding: '0.3rem', cursor: 'pointer' }}>Save</button>
+                    <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: '0.3rem', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                /* Standard Card View */
+                <>
+                  <div>
+                    <h4>{p.title}</h4>
+                    <p style={{ fontSize: '0.9rem', color: '#555' }}>{p.description || 'No description provided.'}</p>
+                    {p.imageUrl && <img src={p.imageUrl} alt={p.title} style={{ width: '100%', borderRadius: '4px' }} />}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                    <button onClick={() => startEditing(p)} style={{ flex: 1, padding: '0.4rem', cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => handleDelete(p.id)} style={{ flex: 1, padding: '0.4rem', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
