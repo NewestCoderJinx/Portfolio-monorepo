@@ -1,22 +1,40 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { 
-  getProjects, 
-  createProject, 
-  updateProject, 
-  deleteProject, 
-  type Project 
-} from './api/projectstate';
+import {
+  Box,
+  Container,
+  Heading,
+  VStack,
+  Input,
+  Textarea,
+  Button,
+  SimpleGrid,
+  Card,
+  CardBody,
+  Text,
+  Image,
+  HStack,
+  Spinner,
+  useTabs,
+} from '@chakra-ui/react';
+import {
+  getProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  type Projects,
+} from './api/projects';
 
 export function App() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Projects>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const toast = useToast();
 
-  // Form state for creating projects
+  // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
-  // Editing state
+  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -42,26 +60,28 @@ export function App() {
       setTitle('');
       setDescription('');
       setImageUrl('');
+      toast({ title: 'Project created!', status: 'success', duration: 3000, isClosable: true });
       fetchProjects();
     } catch (err) {
-      console.error('Error creating project:', err);
+      toast({ title: 'Error creating project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) return;
+    if (!window.confirm('Delete this project?')) return;
     try {
       await deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      toast({ title: 'Project deleted', status: 'info', duration: 3000, isClosable: true });
     } catch (err) {
-      console.error('Error deleting project:', err);
+      toast({ title: 'Error deleting project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
-  const startEditing = (project: Project) => {
-    setEditingId(project.id);
-    setEditTitle(project.title);
-    setEditDescription(project.description || '');
+  const startEditing = (p: Projects) => {
+    setEditingId(p.id);
+    setEditTitle(p.title);
+    setEditDescription(p.description || '');
   };
 
   const handleUpdate = async (id: string) => {
@@ -69,90 +89,104 @@ export function App() {
       await updateProject(id, { title: editTitle, description: editDescription });
       setEditingId(null);
       fetchProjects();
+      toast({ title: 'Project updated!', status: 'success', duration: 3000, isClosable: true });
     } catch (err) {
-      console.error('Error updating project:', err);
+      toast({ title: 'Error updating project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1 style={{ textAlign: 'center' }}>Portfolio Projects</h1>
+    <Container maxW="container.md" py={10}>
+      <VStack gap={8} align="stretch">
+        <Heading as="h1" textAlign="center" size="xl">
+          Portfolio Projects
+        </Heading>
 
-      {/* Creation Form */}
-      <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-        <h3>Add New Project</h3>
-        <input 
-          type="text" 
-          placeholder="Project Title" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          required 
-          style={{ padding: '0.5rem' }}
-        />
-        <textarea 
-          placeholder="Description" 
-          value={description} 
-          onChange={(e) => setDescription(e.target.value)} 
-          style={{ padding: '0.5rem', minHeight: '60px' }}
-        />
-        <input 
-          type="text" 
-          placeholder="Image URL (optional)" 
-          value={imageUrl} 
-          onChange={(e) => setImageUrl(e.target.value)} 
-          style={{ padding: '0.5rem' }}
-        />
-        <button type="submit" style={{ padding: '0.5rem', cursor: 'pointer' }}>Create Project</button>
-      </form>
+        {/* Creation Form Card */}
+        <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="lg" boxShadow="sm" borderWidth="1px">
+          <Heading as="h2" size="md" mb={4}>
+            Add New Project
+          </Heading>
+          <VStack gap={4}>
+            <Input
+              placeholder="Project Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+            <Textarea
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <Input
+              placeholder="Image URL (optional)"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+            <Button type="submit" colorScheme="blue" width="full">
+              Create Project
+            </Button>
+          </VStack>
+        </Box>
 
-      {/* Projects Grid */}
-      {loading ? (
-        <p style={{ textAlign: 'center' }}>Loading projects...</p>
-      ) : projects.length === 0 ? (
-        <p style={{ textAlign: 'center' }}>No projects found.</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
-          {projects.map((p) => (
-            <div key={p.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              {editingId === p.id ? (
-                /* Edit Mode View */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    value={editTitle} 
-                    onChange={(e) => setEditTitle(e.target.value)} 
-                    style={{ padding: '0.4rem' }}
-                  />
-                  <textarea 
-                    value={editDescription} 
-                    onChange={(e) => setEditDescription(e.target.value)} 
-                    style={{ padding: '0.4rem' }}
-                  />
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <button onClick={() => handleUpdate(p.id)} style={{ flex: 1, padding: '0.3rem', cursor: 'pointer' }}>Save</button>
-                    <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: '0.3rem', cursor: 'pointer' }}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                /* Standard Card View */
-                <>
-                  <div>
-                    <h4>{p.title}</h4>
-                    <p style={{ fontSize: '0.9rem', color: '#555' }}>{p.description || 'No description provided.'}</p>
-                    {p.imageUrl && <img src={p.imageUrl} alt={p.title} style={{ width: '100%', borderRadius: '4px' }} />}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button onClick={() => startEditing(p)} style={{ flex: 1, padding: '0.4rem', cursor: 'pointer' }}>Edit</button>
-                    <button onClick={() => handleDelete(p.id)} style={{ flex: 1, padding: '0.4rem', backgroundColor: '#ff4d4d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        {/* Projects List */}
+        {loading ? (
+          <VStack py={10}>
+            <Spinner size="xl" color="blue.500" />
+            <Text color="gray.500">Loading projects...</Text>
+          </VStack>
+        ) : projects.length === 0 ? (
+          <Text textAlign="center" color="gray.500">
+            No projects found. Create one using the form above!
+          </Text>
+        ) : (
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            {projects.map((p) => (
+              <Card key={p.id} borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
+                <CardBody>
+                  {editingId === p.id ? (
+                        <VStack gap={3}>
+                      <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                      <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+                      <HStack width="full">
+                        <Button colorScheme="green" size="sm" flex={1} onClick={() => handleUpdate(p.id)}>
+                          Save
+                        </Button>
+                        <Button size="sm" flex={1} onClick={() => setEditingId(null)}>
+                          Cancel
+                        </Button>
+                      </HStack>
+                    </VStack>
+                  ) : (
+                    <VStack align="start" gap={3}>
+                      {p.imageUrl && <Image src={p.imageUrl} alt={p.title} borderRadius="md" maxH="160px" w="full" objectFit="cover" />}
+                      <Heading size="md">{p.title}</Heading>
+                      <Text color="gray.600" fontSize="sm">
+                        {p.description || 'No description provided.'}
+                      </Text>
+                      <HStack width="full" pt={2}>
+                        <Button size="sm" flex={1} onClick={() => startEditing(p)}>
+                          Edit
+                        </Button>
+                        <Button size="sm" colorScheme="red" flex={1} onClick={() => handleDelete(p.id)}>
+                          Delete
+                        </Button>
+                      </HStack>
+                    </VStack>
+                  )}
+                </CardBody>
+              </Card>
+            ))}
+          </SimpleGrid>
+        )}
+      </VStack>
+    </Container>
   );
 }
 
 export default App;
+
+function useToast() {
+  throw new Error('Function not implemented.');
+}
