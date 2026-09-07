@@ -19,4 +19,10 @@ export class Project {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  githubUrl: string;
+
+  @Column({ nullable: true })
+  demoUrl: string;
 }

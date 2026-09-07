@@ -44,3 +44,32 @@ export const updateProject = async (id: string, payload: UpdateProjectPayload): 
 export const deleteProject = async (id: string): Promise<void> => {
   await axios.delete(`${API_BASE_URL}/projects/${id}`);
 };
+export interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  tags?: string[];
+  githubUrl?: string;
+  demoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectPayload {
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  tags?: string[];
+  githubUrl?: string;
+  demoUrl?: string;
+}
+
+export interface UpdateProjectPayload {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  tags?: string[];
+  githubUrl?: string;
+  demoUrl?: string;
+}
