@@ -86,7 +86,51 @@ export function PublicView() {
                         {p.description || 'No description provided.'}
                       </Text>
                     </Box>
+<Box pt={4} borderTopWidth="1px" borderColor="gray.100">
+  {/* Tech Stack Tags */}
+  {p.tags && p.tags.length > 0 && (
+    <Wrap spacing={1.5} mb={4}>
+      {p.tags.map((tag, idx) => (
+        <WrapItem key={idx}>
+          <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
+            {tag}
+          </Tag>
+        </WrapItem>
+      ))}
+    </Wrap>
+  )}
 
+  {/* Action Links */}
+  <HStack spacing={3}>
+    {p.githubUrl && (
+      <Button
+        as="a"
+        href={p.githubUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        size="sm"
+        variant="outline"
+        colorScheme="gray"
+        flex={1}
+      >
+        Source Code
+      </Button>
+    )}
+    {p.demoUrl && (
+      <Button
+        as="a"
+        href={p.demoUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        size="sm"
+        colorScheme="blue"
+        flex={1}
+      >
+        Live Demo
+      </Button>
+    )}
+  </HStack>
+</Box>
                     <Box pt={4} borderTopWidth="1px" borderColor="gray.100">
                       {p.tags && p.tags.length > 0 && (
                         <Wrap spacing={1.5}>
