@@ -15,6 +15,9 @@ import {
   HStack,
   Spinner,
   Badge,
+  Tag,
+  Wrap,
+  WrapItem,
   useToast,
   Divider,
 } from '@chakra-ui/react';
@@ -35,11 +38,13 @@ export function App() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editTagsInput, setEditTagsInput] = useState('');
 
   const fetchProjects = () => {
     setLoading(true);
@@ -57,11 +62,18 @@ export function App() {
     e.preventDefault();
     if (!title.trim()) return;
 
+    // Convert comma-separated string to string array
+    const tags = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
     try {
-      await createProject({ title, description, imageUrl });
+      await createProject({ title, description, imageUrl, tags });
       setTitle('');
       setDescription('');
       setImageUrl('');
+      setTagsInput('');
       toast({ title: 'Project published!', status: 'success', duration: 3000, isClosable: true });
       fetchProjects();
     } catch (err) {
@@ -84,11 +96,17 @@ export function App() {
     setEditingId(p.id);
     setEditTitle(p.title);
     setEditDescription(p.description || '');
+    setEditTagsInput(p.tags ? p.tags.join(', ') : '');
   };
 
   const handleUpdate = async (id: string) => {
+    const tags = editTagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
     try {
-      await updateProject(id, { title: editTitle, description: editDescription });
+      await updateProject(id, { title: editTitle, description: editDescription, tags });
       setEditingId(null);
       fetchProjects();
       toast({ title: 'Project updated!', status: 'success', duration: 3000, isClosable: true });
@@ -102,7 +120,6 @@ export function App() {
       <Container maxW="container.lg">
         <VStack spacing={8} align="stretch">
           
-          {/* Header Section */}
           <VStack spacing={2} textAlign="center">
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Developer Workspace
@@ -115,33 +132,35 @@ export function App() {
             </Text>
           </VStack>
 
-          {/* Creation Form Card */}
+          {/* Creation Form */}
           <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
             <Heading as="h2" size="sm" mb={4} color="gray.700">
               Add New Showcase Item
             </Heading>
             <VStack spacing={4}>
               <Input
-                placeholder="Project Title (e.g. Developer Portfolio App)"
+                placeholder="Project Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 isRequired
-                focusBorderColor="blue.500"
               />
               <Textarea
-                placeholder="Short technical description of stack, features, and architecture..."
+                placeholder="Short technical description..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                focusBorderColor="blue.500"
                 rows={3}
+              />
+              <Input
+                placeholder="Tech Stack Tags (e.g. React, NestJS, PostgreSQL)"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
               />
               <Input
                 placeholder="Cover Image URL (optional)"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                focusBorderColor="blue.500"
               />
-              <Button type="submit" colorScheme="blue" width="full" size="md">
+              <Button type="submit" colorScheme="blue" width="full">
                 Publish Project
               </Button>
             </VStack>
@@ -149,7 +168,7 @@ export function App() {
 
           <Divider />
 
-          {/* Projects Display Grid */}
+          {/* Projects Display */}
           {loading ? (
             <VStack py={12}>
               <Spinner size="xl" color="blue.500" thickness="3px" />
@@ -168,6 +187,7 @@ export function App() {
                       <VStack spacing={3}>
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" />
                         <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={3} />
+                        <Input placeholder="Tags (comma separated)" value={editTagsInput} onChange={(e) => setEditTagsInput(e.target.value)} size="sm" />
                         <HStack width="full" pt={2}>
                           <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
                             Save
@@ -187,8 +207,21 @@ export function App() {
                           <Text color="gray.600" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
+
+                          {/* Render Tech Stack Tags */}
+                          {p.tags && p.tags.length > 0 && (
+                            <Wrap mt={3} spacing={1.5}>
+                              {p.tags.map((tag, idx) => (
+                                <WrapItem key={idx}>
+                                  <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
+                                    {tag}
+                                  </Tag>
+                                </WrapItem>
+                              ))}
+                            </Wrap>
+                          )}
                         </Box>
-                        
+
                         <HStack width="full" pt={3} borderTopWidth="1px" borderColor="gray.100">
                           <Button size="xs" variant="outline" colorScheme="gray" flex={1} onClick={() => startEditing(p)}>
                             Edit

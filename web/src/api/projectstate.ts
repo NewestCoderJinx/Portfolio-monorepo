@@ -2,25 +2,28 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:3000';
 
-export type Project = {
+export interface Project {
   id: string;
   title: string;
   description?: string;
   imageUrl?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
-};
+}
 
 export interface CreateProjectPayload {
   title: string;
   description?: string;
   imageUrl?: string;
+  tags?: string[];
 }
 
 export interface UpdateProjectPayload {
   title?: string;
   description?: string;
   imageUrl?: string;
+  tags?: string[];
 }
 
 export const getProjects = async (): Promise<Project[]> => {
