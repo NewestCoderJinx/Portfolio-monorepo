@@ -14,18 +14,20 @@ import {
   Image,
   HStack,
   Spinner,
-  useTabs,
+  Badge,
+  useToast,
+  Divider,
 } from '@chakra-ui/react';
 import {
   getProjects,
   createProject,
   updateProject,
   deleteProject,
-  type Projects,
-} from './api/projects';
+  type Project,
+} from './api/projectstate';
 
 export function App() {
-  const [projects, setProjects] = useState<Projects>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const toast = useToast();
 
@@ -60,25 +62,25 @@ export function App() {
       setTitle('');
       setDescription('');
       setImageUrl('');
-      toast({ title: 'Project created!', status: 'success', duration: 3000, isClosable: true });
+      toast({ title: 'Project published!', status: 'success', duration: 3000, isClosable: true });
       fetchProjects();
     } catch (err) {
-      toast({ title: 'Error creating project', status: 'error', duration: 3000, isClosable: true });
+      toast({ title: 'Failed to create project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this project?')) return;
+    if (!window.confirm('Are you sure you want to remove this project?')) return;
     try {
       await deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
-      toast({ title: 'Project deleted', status: 'info', duration: 3000, isClosable: true });
+      toast({ title: 'Project removed', status: 'info', duration: 3000, isClosable: true });
     } catch (err) {
-      toast({ title: 'Error deleting project', status: 'error', duration: 3000, isClosable: true });
+      toast({ title: 'Failed to delete project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
-  const startEditing = (p: Projects) => {
+  const startEditing = (p: Project) => {
     setEditingId(p.id);
     setEditTitle(p.title);
     setEditDescription(p.description || '');
@@ -91,102 +93,122 @@ export function App() {
       fetchProjects();
       toast({ title: 'Project updated!', status: 'success', duration: 3000, isClosable: true });
     } catch (err) {
-      toast({ title: 'Error updating project', status: 'error', duration: 3000, isClosable: true });
+      toast({ title: 'Failed to update project', status: 'error', duration: 3000, isClosable: true });
     }
   };
 
   return (
-    <Container maxW="container.md" py={10}>
-      <VStack gap={8} align="stretch">
-        <Heading as="h1" textAlign="center" size="xl">
-          Portfolio Projects
-        </Heading>
-
-        {/* Creation Form Card */}
-        <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="lg" boxShadow="sm" borderWidth="1px">
-          <Heading as="h2" size="md" mb={4}>
-            Add New Project
-          </Heading>
-          <VStack gap={4}>
-            <Input
-              placeholder="Project Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-            <Textarea
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <Input
-              placeholder="Image URL (optional)"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
-            <Button type="submit" colorScheme="blue" width="full">
-              Create Project
-            </Button>
+    <Box bg="gray.50" minH="100vh" py={12}>
+      <Container maxW="container.lg">
+        <VStack spacing={8} align="stretch">
+          
+          {/* Header Section */}
+          <VStack spacing={2} textAlign="center">
+            <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
+              Developer Workspace
+            </Badge>
+            <Heading as="h1" size="xl" letterSpacing="tight">
+              Portfolio Management
+            </Heading>
+            <Text color="gray.600">
+              Manage your engineering projects stored in PostgreSQL
+            </Text>
           </VStack>
-        </Box>
 
-        {/* Projects List */}
-        {loading ? (
-          <VStack py={10}>
-            <Spinner size="xl" color="blue.500" />
-            <Text color="gray.500">Loading projects...</Text>
-          </VStack>
-        ) : projects.length === 0 ? (
-          <Text textAlign="center" color="gray.500">
-            No projects found. Create one using the form above!
-          </Text>
-        ) : (
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            {projects.map((p) => (
-              <Card key={p.id} borderWidth="1px" borderRadius="lg" overflow="hidden" boxShadow="sm">
-                <CardBody>
-                  {editingId === p.id ? (
-                        <VStack gap={3}>
-                      <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-                      <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
-                      <HStack width="full">
-                        <Button colorScheme="green" size="sm" flex={1} onClick={() => handleUpdate(p.id)}>
-                          Save
-                        </Button>
-                        <Button size="sm" flex={1} onClick={() => setEditingId(null)}>
-                          Cancel
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  ) : (
-                    <VStack align="start" gap={3}>
-                      {p.imageUrl && <Image src={p.imageUrl} alt={p.title} borderRadius="md" maxH="160px" w="full" objectFit="cover" />}
-                      <Heading size="md">{p.title}</Heading>
-                      <Text color="gray.600" fontSize="sm">
-                        {p.description || 'No description provided.'}
-                      </Text>
-                      <HStack width="full" pt={2}>
-                        <Button size="sm" flex={1} onClick={() => startEditing(p)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" colorScheme="red" flex={1} onClick={() => handleDelete(p.id)}>
-                          Delete
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  )}
-                </CardBody>
-              </Card>
-            ))}
-          </SimpleGrid>
-        )}
-      </VStack>
-    </Container>
+          {/* Creation Form Card */}
+          <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
+            <Heading as="h2" size="sm" mb={4} color="gray.700">
+              Add New Showcase Item
+            </Heading>
+            <VStack spacing={4}>
+              <Input
+                placeholder="Project Title (e.g. Developer Portfolio App)"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                isRequired
+                focusBorderColor="blue.500"
+              />
+              <Textarea
+                placeholder="Short technical description of stack, features, and architecture..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                focusBorderColor="blue.500"
+                rows={3}
+              />
+              <Input
+                placeholder="Cover Image URL (optional)"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                focusBorderColor="blue.500"
+              />
+              <Button type="submit" colorScheme="blue" width="full" size="md">
+                Publish Project
+              </Button>
+            </VStack>
+          </Box>
+
+          <Divider />
+
+          {/* Projects Display Grid */}
+          {loading ? (
+            <VStack py={12}>
+              <Spinner size="xl" color="blue.500" thickness="3px" />
+              <Text color="gray.500" fontSize="sm">Fetching latest records...</Text>
+            </VStack>
+          ) : projects.length === 0 ? (
+            <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderStyle="dashed" borderWidth="2px" borderColor="gray.300">
+              <Text color="gray.500">No projects found. Publish your first item using the form above!</Text>
+            </Box>
+          ) : (
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+              {projects.map((p) => (
+                <Card key={p.id} borderWidth="1px" borderColor="gray.200" borderRadius="xl" overflow="hidden" boxShadow="xs" bg="white">
+                  <CardBody p={5}>
+                    {editingId === p.id ? (
+                      <VStack spacing={3}>
+                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" />
+                        <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={3} />
+                        <HStack width="full" pt={2}>
+                          <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
+                            Save
+                          </Button>
+                          <Button size="xs" flex={1} onClick={() => setEditingId(null)}>
+                            Cancel
+                          </Button>
+                        </HStack>
+                      </VStack>
+                    ) : (
+                      <VStack align="start" spacing={3} height="100%" justifyContent="space-between">
+                        <Box width="full">
+                          {p.imageUrl && (
+                            <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
+                          )}
+                          <Heading size="sm" color="gray.800">{p.title}</Heading>
+                          <Text color="gray.600" fontSize="xs" mt={2} noOfLines={3}>
+                            {p.description || 'No description provided.'}
+                          </Text>
+                        </Box>
+                        
+                        <HStack width="full" pt={3} borderTopWidth="1px" borderColor="gray.100">
+                          <Button size="xs" variant="outline" colorScheme="gray" flex={1} onClick={() => startEditing(p)}>
+                            Edit
+                          </Button>
+                          <Button size="xs" variant="ghost" colorScheme="red" flex={1} onClick={() => handleDelete(p.id)}>
+                            Delete
+                          </Button>
+                        </HStack>
+                      </VStack>
+                    )}
+                  </CardBody>
+                </Card>
+              ))}
+            </SimpleGrid>
+          )}
+
+        </VStack>
+      </Container>
+    </Box>
   );
 }
 
 export default App;
-
-function useToast() {
-  throw new Error('Function not implemented.');
-}
