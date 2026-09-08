@@ -45,7 +45,8 @@ export function App() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTagsInput, setEditTagsInput] = useState('');
-
+  const [githubUrl, setGithubUrl] = useState('');
+  const [demoUrl, setDemoUrl] = useState('');
   const fetchProjects = () => {
     setLoading(true);
     getProjects()
@@ -69,11 +70,13 @@ export function App() {
       .filter((t) => t.length > 0);
 
     try {
-      await createProject({ title, description, imageUrl, tags });
+      await createProject({ title, description, imageUrl, tags, githubUrl, demoUrl });
       setTitle('');
       setDescription('');
       setImageUrl('');
       setTagsInput('');
+      setGithubUrl('');
+      setDemoUrl('');
       toast({ title: 'Project published!', status: 'success', duration: 3000, isClosable: true });
       fetchProjects();
     } catch (err) {
@@ -97,6 +100,8 @@ export function App() {
     setEditTitle(p.title);
     setEditDescription(p.description || '');
     setEditTagsInput(p.tags ? p.tags.join(', ') : '');
+    setGithubUrl(p.githubUrl || '');
+    setDemoUrl(p.demoUrl || '');
   };
 
   const handleUpdate = async (id: string) => {
@@ -106,7 +111,7 @@ export function App() {
       .filter((t) => t.length > 0);
 
     try {
-      await updateProject(id, { title: editTitle, description: editDescription, tags });
+      await updateProject(id, { title: editTitle, description: editDescription, tags, githubUrl, demoUrl });
       setEditingId(null);
       fetchProjects();
       toast({ title: 'Project updated!', status: 'success', duration: 3000, isClosable: true });
@@ -187,7 +192,16 @@ export function App() {
                       <VStack spacing={3}>
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" />
                         <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={3} />
-                        <Input placeholder="Tags (comma separated)" value={editTagsInput} onChange={(e) => setEditTagsInput(e.target.value)} size="sm" />
+                        <Input
+                           placeholder="GitHub Repository URL (e.g. https://github.com/...)"
+                            value={githubUrl}
+                            onChange={(e) => setGithubUrl(e.target.value)}
+                               />
+                        <Input
+                           placeholder="Live Demo URL (e.g. https://my-app.vercel.app)"
+                           value={demoUrl}
+                           onChange={(e) => setDemoUrl(e.target.value)}
+                             />
                         <HStack width="full" pt={2}>
                           <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
                             Save
@@ -207,7 +221,6 @@ export function App() {
                           <Text color="gray.600" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
-
                           {/* Render Tech Stack Tags */}
                           {p.tags && p.tags.length > 0 && (
                             <Wrap mt={3} spacing={1.5}>
@@ -242,6 +255,5 @@ export function App() {
       </Container>
     </Box>
   );
-}
-
+}  
 export default App;

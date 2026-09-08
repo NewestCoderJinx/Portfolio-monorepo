@@ -131,6 +131,7 @@ export function PublicView() {
     )}
   </HStack>
 </Box>
+
                     <Box pt={4} borderTopWidth="1px" borderColor="gray.100">
                       {p.tags && p.tags.length > 0 && (
                         <Wrap spacing={1.5}>
