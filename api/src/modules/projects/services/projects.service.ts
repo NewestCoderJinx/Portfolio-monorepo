@@ -5,6 +5,9 @@ import { Project } from '../entities/projects.entity.js';
 import { ProjectsDto } from '../dtos/projects.dto.js';
 @Injectable()
 export class ProjectsService {
+  update(id: string, dto: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
