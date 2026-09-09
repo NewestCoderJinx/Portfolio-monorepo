@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProjectsService } from '../services/projects.service.js';
-import { ProjectsDto } from '../dtos/projects.dto.js';
+// DTO import removed because the module does not export ProjectsDto
 import { Project } from '../entities/projects.entity.js';
-
+import { AuthGuard } from '@nestjs/passport';
 @ApiTags('projects')
 @Controller('projects')
 export class ProjectsController {
@@ -26,8 +26,8 @@ export class ProjectsController {
   @Post()
   @ApiOperation({ summary: 'Create a new project' })
   @ApiResponse({ status: 201, description: 'Project created successfully.', type: Project })
-  create(@Body() createProjectDto: ProjectsDto) {
-    return this.projectsService.create(createProjectDto);
+  create(@Body() ProjectsDto: any) {
+    return this.projectsService.create(ProjectsDto);
   }
 
   @Delete(':id')
