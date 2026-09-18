@@ -1,21 +1,25 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectsModule } from './modules/projects/projects.module.js';
+import { AuthModule } from './modules/projects/auth/auth.module.ts';
+import { UsersModule } from './modules/users/users.module.js';
+import { Project } from '../modules/projects/project.entity';
+import { User } from '../modules/users/user.entity';
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: '12345',
-      database: 'portfolio_dev',
-      autoLoadEntities: true,
-      synchronize: true,
+      password: 'your_password',
+      database: 'portfolio',
+      entities: [Project, User],
+      synchronize: true, // Auto sync schema in development
     }),
     ProjectsModule,
+    UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

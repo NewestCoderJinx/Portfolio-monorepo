@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Patch, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ProjectsService } from '../services/projects.service.js';
+import { ProjectsService } from '../../services/projects.service';
 import { Project } from '../entities/projects.entity.js';
 import { AuthGuard } from '@nestjs/passport';
 
