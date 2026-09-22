@@ -1,5 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProjectsModule } from './projects/projects.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { Project } from './projects/project.entity';
+import { User } from './users/user.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -10,7 +16,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       password: 'your_password',
       database: 'portfolio',
       entities: [Project, User],
-      synchronize: true, // Auto sync schema in development
+      synchronize: true,
     }),
     ProjectsModule,
     UsersModule,
