@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from './dto/create-project.dto';
+import { ProjectsService } from './projects/projects.service';
+import { CreateProjectDto } from './projects/create-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
