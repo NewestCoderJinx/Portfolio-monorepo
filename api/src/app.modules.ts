@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProjectsModule } from './modules/projects/projects.module.js';
 import { AuthModule } from './modules/projects/auth/auth.module.ts';
 import { UsersModule } from './modules/users/users.module.js';
-import { Project } from '../modules/projects/project.entity';
-import { User } from '../modules/users/user.entity';
+import { Project } from './modules/projects/project.entity';
+import { User } from './modules/users/user.entity.js';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
