@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from './user.service';
+import { UsersService } from '../users/user.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class AuthService {
     return this.generateToken(user.id, user.email);
   }
 
-  private generateToken(userId: string, email: string) {
+  private generateToken(userId: number, email: string) {
     return {
       access_token: this.jwtService.sign({ sub: userId, email }),
     };
