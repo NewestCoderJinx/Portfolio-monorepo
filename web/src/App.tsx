@@ -1,13 +1,31 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicView } from './pages/PublicView';
 import AdminView from './pages/AdminView';
+import { LoginView } from './pages/LoginView';
+import { isAuthenticated } from './api/auth';
+import type { JSX } from 'react/jsx-runtime';
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<PublicView />} />
-        <Route path="/admin" element={<AdminView />} />
+        <Route path="/login" element={<LoginView />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminView />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
