@@ -23,8 +23,7 @@ export const loginUser = async (email: string, password: string) => {
   localStorage.setItem('access_token', data.access_token);
   return data;
 };
-
-export const logoutUser = () => {
+  export const logoutUser = (): void => {
   localStorage.removeItem('access_token');
 };
 export const getToken = (): string | null => {

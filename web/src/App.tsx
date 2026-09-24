@@ -2,10 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicView } from './pages/PublicView';
 import AdminView from './pages/AdminView';
 import { LoginView } from './pages/LoginView';
-
-function isAuthenticated() {
-  return Boolean(localStorage.getItem('access_token'));
-}
+import Navbar from './components/Navbar';
+import { isAuthenticated } from './api/auth';
 
 function ProtectedRoute({ children }: { children: React.ReactElement }) {
   if (!isAuthenticated()) {
@@ -17,6 +15,7 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
 export function App() {
   return (
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<PublicView />} />
         <Route path="/login" element={<LoginView />} />
