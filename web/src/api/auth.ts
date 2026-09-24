@@ -1,31 +1,29 @@
-import axios from 'axios';
+const API_URL = 'http://localhost:3000';
 
-const API_BASE_URL = 'http://localhost:3000';
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
-export interface AuthResponse {
-  access_token: string;
-}
-
-export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/login`, {
-    email,
-    password,
+export const loginUser = async (email: string, password: string) => {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
   });
-  return response.data;
+
+  if (!res.ok) {
+    throw new Error('Invalid credentials');
+  }
+
+  const data = await res.json();
+  localStorage.setItem('access_token', data.access_token);
+  return data;
 };
 
-export const setToken = (token: string): void => {
-  localStorage.setItem('admin_token', token);
-};
-
-export const getToken = (): string | null => {
-  return localStorage.getItem('admin_token');
-};
-
-export const removeToken = (): void => {
-  localStorage.removeItem('admin_token');
-};
-
-export const isAuthenticated = (): boolean => {
-  return !!getToken();
+export const logoutUser = () => {
+  localStorage.removeItem('access_token');
 };

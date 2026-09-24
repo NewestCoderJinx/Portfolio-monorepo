@@ -2,8 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicView } from './pages/PublicView';
 import AdminView from './pages/AdminView';
 import { LoginView } from './pages/LoginView';
-import { isAuthenticated } from './api/auth';
 import type { JSX } from 'react/jsx-runtime';
+function isAuthenticated() {
+  return Boolean(localStorage.getItem('token'));
+}
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   if (!isAuthenticated()) {
