@@ -1,140 +1,151 @@
 import { useEffect, useState } from 'react';
-import { Box,Container,Heading,VStack,SimpleGrid,Card,CardBody,Text,Image,Spinner,Badge,Tag,Wrap,WrapItem,HStack,Button,Link,Flex,} from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  SimpleGrid,
+  Card,
+  CardBody,
+  Image,
+  Tag,
+  Wrap,
+  WrapItem,
+  VStack,
+  HStack,
+  Button,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Spinner,
+  Badge,
+  Icon,
+} from '@chakra-ui/react';
 import { getProjects, type Project } from '../api/projectstate';
+
+// Simple search icon SVG wrapper
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+);
 
 export function PublicView() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   useEffect(() => {
     getProjects()
       .then((data) => setProjects(data))
-      .catch((err) => console.error('Error fetching projects:', err))
+      .catch((err) => console.error('Error fetching public projects:', err))
       .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <Box bg="gray.50" minH="100vh">
-      {/* Top Navigation */}
-      <Box bg="white" borderBottomWidth="1px" borderColor="gray.200" py={4} px={8}>
-        <Flex maxW="container.lg" mx="auto" justify="space-between" align="center">
-          <Heading size="md" color="blue.600" letterSpacing="tight">
-            DevPortfolio
-          </Heading>
-          <Button as={RouterLink} to="/admin" size="sm" variant="ghost" colorScheme="gray">
-            Admin Workspace
-          </Button>
-        </Flex>
-      </Box>
+  // Collect unique tech stack tags from all projects
+  const allTags = Array.from(
+    new Set(projects.flatMap((p) => p.tags || []))
+  );
 
-      <Container maxW="container.lg" py={16}>
-        <VStack spacing={12} align="stretch">
+  // Filter projects by search term and selected tag
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesTag = selectedTag ? p.tags?.includes(selectedTag) : true;
+
+    return matchesSearch && matchesTag;
+  });
+
+  return (
+    <Box bg="gray.50" minH="100vh" py={12}>
+      <Container maxW="container.lg">
+        <VStack spacing={8} align="stretch">
           
-          {/* Hero Section */}
-          <VStack spacing={4} textAlign="center" maxW="2xl" mx="auto">
+          {/* Header Hero Section */}
+          <VStack spacing={3} textAlign="center">
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Full-Stack Software Engineer
             </Badge>
             <Heading as="h1" size="2xl" letterSpacing="tight">
               Featured Engineering Projects
             </Heading>
-            <Text color="gray.600" fontSize="lg">
+            <Text color="gray.600" maxW="2xl" fontSize="md">
               Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
             </Text>
           </VStack>
 
-          {/* Project Cards Grid */}
+          {/* Search Bar & Tag Filter Pills */}
+          <VStack spacing={4} align="stretch" bg="white" p={5} borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
+            <InputGroup size="md">
+              <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
+              <Input
+                placeholder="Search by project name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                borderRadius="md"
+              />
+            </InputGroup>
+
+            {allTags.length > 0 && (
+              <HStack spacing={2} flexWrap="wrap" pt={2}>
+                <Text fontSize="xs" fontWeight="bold" color="gray.500" mr={1}>
+                  Filter by Tag:
+                </Text>
+                <Tag
+                  size="sm"
+                  cursor="pointer"
+                  colorScheme={selectedTag === null ? 'blue' : 'gray'}
+                  variant={selectedTag === null ? 'solid' : 'subtle'}
+                  onClick={() => setSelectedTag(null)}
+                >
+                  All
+                </Tag>
+                {allTags.map((tag) => (
+                  <Tag
+                    key={tag}
+                    size="sm"
+                    cursor="pointer"
+                    colorScheme={selectedTag === tag ? 'blue' : 'gray'}
+                    variant={selectedTag === tag ? 'solid' : 'subtle'}
+                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  >
+                    {tag}
+                  </Tag>
+                ))}
+              </HStack>
+            )}
+          </VStack>
+
+          {/* Project Grid */}
           {loading ? (
             <VStack py={16}>
               <Spinner size="xl" color="blue.500" thickness="3px" />
-              <Text color="gray.500" fontSize="sm">Loading portfolio items...</Text>
+              <Text color="gray.500" fontSize="sm">Loading portfolio showcase...</Text>
             </VStack>
-          ) : projects.length === 0 ? (
-            <Box textAlign="center" py={16} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
-              <Text color="gray.500">No projects currently displayed.</Text>
+          ) : filteredProjects.length === 0 ? (
+            <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
+              <Text color="gray.500">No projects match your search criteria.</Text>
             </Box>
           ) : (
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
-              {projects.map((p) => (
-                <Card
-                  key={p.id}
-                  borderWidth="1px"
-                  borderColor="gray.200"
-                  borderRadius="xl"
-                  overflow="hidden"
-                  boxShadow="sm"
-                  bg="white"
-                  transition="all 0.2s"
-                  _hover={{ transform: 'translateY(-4px)', boxShadow: 'md' }}
-                >
-                  <CardBody p={6} display="flex" flexDirection="column" justifyContent="space-between">
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+              {filteredProjects.map((p) => (
+                <Card key={p.id} borderWidth="1px" borderColor="gray.200" borderRadius="xl" overflow="hidden" boxShadow="sm" bg="white">
+                  <CardBody p={5} display="flex" flexDirection="column" justifyContent="space-between">
                     <Box>
-                      {p.imageUrl ? (
+                      {p.imageUrl && (
                         <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="160px" w="full" objectFit="cover" mb={4} />
-                      ) : (
-                        <Box h="140px" w="full" bg="gray.100" borderRadius="lg" mb={4} display="flex" alignItems="center" justifyContent="center">
-                          <Text color="gray.400" fontSize="xs">No preview image</Text>
-                        </Box>
                       )}
-                      
-                      <Heading size="md" color="gray.800" mb={2}>
-                        {p.title}
-                      </Heading>
-                      
-                      <Text color="gray.600" fontSize="sm" mb={4} noOfLines={3}>
+                      <Heading size="md" color="gray.800" mb={2}>{p.title}</Heading>
+                      <Text color="gray.600" fontSize="sm" mb={4}>
                         {p.description || 'No description provided.'}
                       </Text>
-                    </Box>
-<Box pt={4} borderTopWidth="1px" borderColor="gray.100">
-  {/* Tech Stack Tags */}
-  {p.tags && p.tags.length > 0 && (
-    <Wrap spacing={1.5} mb={4}>
-      {p.tags.map((tag, idx) => (
-        <WrapItem key={idx}>
-          <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
-            {tag}
-          </Tag>
-        </WrapItem>
-      ))}
-    </Wrap>
-  )}
 
-  {/* Action Links */}
-  <HStack spacing={3}>
-    {p.githubUrl && (
-      <Button
-        as="a"
-        href={p.githubUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        size="sm"
-        variant="outline"
-        colorScheme="gray"
-        flex={1}
-      >
-        Source Code
-      </Button>
-    )}
-    {p.demoUrl && (
-      <Button
-        as="a"
-        href={p.demoUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        size="sm"
-        colorScheme="blue"
-        flex={1}
-      >
-        Live Demo
-      </Button>
-    )}
-  </HStack>
-</Box>
-
-                    <Box pt={4} borderTopWidth="1px" borderColor="gray.100">
                       {p.tags && p.tags.length > 0 && (
-                        <Wrap spacing={1.5}>
+                        <Wrap mb={4} spacing={1.5}>
                           {p.tags.map((tag, idx) => (
                             <WrapItem key={idx}>
                               <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
@@ -145,6 +156,37 @@ export function PublicView() {
                         </Wrap>
                       )}
                     </Box>
+
+                    {/* Interactive Links */}
+                    <HStack spacing={3} pt={4} borderTopWidth="1px" borderColor="gray.100">
+                      {p.githubUrl && (
+                        <Button
+                          as="a"
+                          href={p.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="sm"
+                          variant="outline"
+                          colorScheme="gray"
+                          flex={1}
+                        >
+                          Code Repository
+                        </Button>
+                      )}
+                      {p.demoUrl && (
+                        <Button
+                          as="a"
+                          href={p.demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="sm"
+                          colorScheme="blue"
+                          flex={1}
+                        >
+                          Live Demo
+                        </Button>
+                      )}
+                    </HStack>
                   </CardBody>
                 </Card>
               ))}
@@ -156,3 +198,5 @@ export function PublicView() {
     </Box>
   );
 }
+
+export default PublicView;
