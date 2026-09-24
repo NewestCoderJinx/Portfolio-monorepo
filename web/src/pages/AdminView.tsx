@@ -29,7 +29,7 @@ import {
   type Project,
 } from '../api/projectstate';
 
-export function App() {
+export function AdminView() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const toast = useToast();
@@ -39,14 +39,17 @@ export function App() {
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [tagsInput, setTagsInput] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [demoUrl, setDemoUrl] = useState('');
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTagsInput, setEditTagsInput] = useState('');
-  const [githubUrl, setGithubUrl] = useState('');
-  const [demoUrl, setDemoUrl] = useState('');
+  const [editGithubUrl, setEditGithubUrl] = useState('');
+  const [editDemoUrl, setEditDemoUrl] = useState('');
+
   const fetchProjects = () => {
     setLoading(true);
     getProjects()
@@ -63,7 +66,6 @@ export function App() {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Convert comma-separated string to string array
     const tags = tagsInput
       .split(',')
       .map((t) => t.trim())
@@ -100,8 +102,8 @@ export function App() {
     setEditTitle(p.title);
     setEditDescription(p.description || '');
     setEditTagsInput(p.tags ? p.tags.join(', ') : '');
-    setGithubUrl(p.githubUrl || '');
-    setDemoUrl(p.demoUrl || '');
+    setEditGithubUrl(p.githubUrl || '');
+    setEditDemoUrl(p.demoUrl || '');
   };
 
   const handleUpdate = async (id: string) => {
@@ -111,7 +113,13 @@ export function App() {
       .filter((t) => t.length > 0);
 
     try {
-      await updateProject(id, { title: editTitle, description: editDescription, tags, githubUrl, demoUrl });
+      await updateProject(id, {
+        title: editTitle,
+        description: editDescription,
+        tags,
+        githubUrl: editGithubUrl,
+        demoUrl: editDemoUrl,
+      });
       setEditingId(null);
       fetchProjects();
       toast({ title: 'Project updated!', status: 'success', duration: 3000, isClosable: true });
@@ -124,7 +132,6 @@ export function App() {
     <Box bg="gray.50" minH="100vh" py={12}>
       <Container maxW="container.lg">
         <VStack spacing={8} align="stretch">
-          
           <VStack spacing={2} textAlign="center">
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Developer Workspace
@@ -165,6 +172,16 @@ export function App() {
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
               />
+              <Input
+                placeholder="GitHub Repository URL (optional)"
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+              />
+              <Input
+                placeholder="Live Demo URL (optional)"
+                value={demoUrl}
+                onChange={(e) => setDemoUrl(e.target.value)}
+              />
               <Button type="submit" colorScheme="blue" width="full">
                 Publish Project
               </Button>
@@ -193,15 +210,23 @@ export function App() {
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" />
                         <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={3} />
                         <Input
-                           placeholder="GitHub Repository URL (e.g. https://github.com/...)"
-                            value={githubUrl}
-                            onChange={(e) => setGithubUrl(e.target.value)}
-                               />
+                          placeholder="Tech Stack Tags"
+                          value={editTagsInput}
+                          onChange={(e) => setEditTagsInput(e.target.value)}
+                          size="sm"
+                        />
                         <Input
-                           placeholder="Live Demo URL (e.g. https://my-app.vercel.app)"
-                           value={demoUrl}
-                           onChange={(e) => setDemoUrl(e.target.value)}
-                             />
+                          placeholder="GitHub Repository URL"
+                          value={editGithubUrl}
+                          onChange={(e) => setEditGithubUrl(e.target.value)}
+                          size="sm"
+                        />
+                        <Input
+                          placeholder="Live Demo URL"
+                          value={editDemoUrl}
+                          onChange={(e) => setEditDemoUrl(e.target.value)}
+                          size="sm"
+                        />
                         <HStack width="full" pt={2}>
                           <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
                             Save
@@ -221,7 +246,6 @@ export function App() {
                           <Text color="gray.600" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
-                          {/* Render Tech Stack Tags */}
                           {p.tags && p.tags.length > 0 && (
                             <Wrap mt={3} spacing={1.5}>
                               {p.tags.map((tag, idx) => (
@@ -250,10 +274,10 @@ export function App() {
               ))}
             </SimpleGrid>
           )}
-
         </VStack>
       </Container>
     </Box>
   );
-}  
-export default App;
+}
+
+export default AdminView;
