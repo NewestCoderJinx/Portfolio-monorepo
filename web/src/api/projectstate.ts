@@ -19,6 +19,14 @@ export const getProjects = async (): Promise<Project[]> => {
   if (!res.ok) throw new Error('Failed to fetch projects');
   return res.json();
 };
+export const formatUrl = (url?: string): string | undefined => {
+  if (!url || !url.trim()) return undefined;
+  const trimmed = url.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
 
 export const createProject = async (projectData: Partial<Project>): Promise<Project> => {
   const token = getToken();

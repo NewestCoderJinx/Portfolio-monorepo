@@ -19,7 +19,6 @@ import {
   InputLeftElement,
   Spinner,
   Badge,
-  Icon,
 } from '@chakra-ui/react';
 import { getProjects, type Project } from '../api/projectstate';
 
