@@ -20,18 +20,22 @@ import {
   WrapItem,
   useToast,
   Divider,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
 import {
   getProjects,
   createProject,
   updateProject,
   deleteProject,
+  formatUrl,
   type Project,
 } from '../api/projectstate';
 
 export function AdminView() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const toast = useToast();
 
   // Form state
@@ -64,25 +68,41 @@ export function AdminView() {
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      toast({ title: 'Project title is required', status: 'warning', duration: 3000, isClosable: true });
+      return;
+    }
 
+    setSubmitting(true);
     const tags = tagsInput
       .split(',')
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
     try {
-      await createProject({ title, description, imageUrl, tags, githubUrl, demoUrl });
+      await createProject({
+        title: title.trim(),
+        description: description.trim(),
+        imageUrl: formatUrl(imageUrl),
+        tags,
+        githubUrl: formatUrl(githubUrl),
+        demoUrl: formatUrl(demoUrl),
+      });
+
+      // Reset form
       setTitle('');
       setDescription('');
       setImageUrl('');
       setTagsInput('');
       setGithubUrl('');
       setDemoUrl('');
+
       toast({ title: 'Project published!', status: 'success', duration: 3000, isClosable: true });
       fetchProjects();
     } catch (err) {
       toast({ title: 'Failed to create project', status: 'error', duration: 3000, isClosable: true });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -114,11 +134,11 @@ export function AdminView() {
 
     try {
       await updateProject(id, {
-        title: editTitle,
-        description: editDescription,
+        title: editTitle.trim(),
+        description: editDescription.trim(),
         tags,
-        githubUrl: editGithubUrl,
-        demoUrl: editDemoUrl,
+        githubUrl: formatUrl(editGithubUrl),
+        demoUrl: formatUrl(editDemoUrl),
       });
       setEditingId(null);
       fetchProjects();
@@ -150,39 +170,62 @@ export function AdminView() {
               Add New Showcase Item
             </Heading>
             <VStack spacing={4}>
-              <Input
-                placeholder="Project Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                isRequired
-              />
-              <Textarea
-                placeholder="Short technical description..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-              <Input
-                placeholder="Tech Stack Tags (e.g. React, NestJS, PostgreSQL)"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-              />
-              <Input
-                placeholder="Cover Image URL (optional)"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-              />
-              <Input
-                placeholder="GitHub Repository URL (optional)"
-                value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
-              />
-              <Input
-                placeholder="Live Demo URL (optional)"
-                value={demoUrl}
-                onChange={(e) => setDemoUrl(e.target.value)}
-              />
-              <Button type="submit" colorScheme="blue" width="full">
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Project Title</FormLabel>
+                <Input
+                  placeholder="e.g. Microservices Order Processing API"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Description</FormLabel>
+                <Textarea
+                  placeholder="Short technical description..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Tech Stack Tags</FormLabel>
+                <Input
+                  placeholder="Comma-separated: React, NestJS, PostgreSQL"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Cover Image URL</FormLabel>
+                <Input
+                  placeholder="https://images.unsplash.com/..."
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>GitHub Repository URL</FormLabel>
+                <Input
+                  placeholder="github.com/username/repository"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Live Demo URL</FormLabel>
+                <Input
+                  placeholder="my-demo-app.vercel.app"
+                  value={demoUrl}
+                  onChange={(e) => setDemoUrl(e.target.value)}
+                />
+              </FormControl>
+
+              <Button type="submit" colorScheme="blue" width="full" isLoading={submitting} loadingText="Publishing...">
                 Publish Project
               </Button>
             </VStack>
