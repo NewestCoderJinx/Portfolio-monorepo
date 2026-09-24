@@ -2,12 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicView } from './pages/PublicView';
 import AdminView from './pages/AdminView';
 import { LoginView } from './pages/LoginView';
-import type { JSX } from 'react/jsx-runtime';
+
 function isAuthenticated() {
-  return Boolean(localStorage.getItem('token'));
+  return Boolean(localStorage.getItem('access_token'));
 }
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }

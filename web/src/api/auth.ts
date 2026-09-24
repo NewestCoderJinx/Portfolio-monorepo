@@ -27,3 +27,10 @@ export const loginUser = async (email: string, password: string) => {
 export const logoutUser = () => {
   localStorage.removeItem('access_token');
 };
+export const getToken = (): string | null => {
+  return localStorage.getItem('access_token');
+};
+
+export const isAuthenticated = (): boolean => {
+  return !!getToken();
+};
