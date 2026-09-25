@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -9,13 +9,15 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Portfolio API')
-    .setDescription('REST API for portfolio project management')
+    .setDescription('API documentation for my portfolio application')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
 }
 bootstrap();
