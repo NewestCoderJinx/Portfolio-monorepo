@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { fetchProjects, type Project } from './api/projects';
+import { fetchProjects, Projects } from './api/projects';
+import { isAuthenticated, logoutUser } from './api/auth';
+import { AuthForm } from './components/AuthForm';
 
 export function App() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Projects[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
 
-  useEffect(() => {
+  const loadProjects = () => {
+    setLoading(true);
     fetchProjects()
       .then((data) => {
         setProjects(data);
@@ -14,27 +17,47 @@ export function App() {
       })
       .catch((err) => {
         console.error('Failed to load projects:', err);
-        setError('Could not connect to NestJS API');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadProjects();
   }, []);
 
-  if (loading) return <div style={{ padding: '2rem' }}>Loading projects...</div>;
-  if (error) return <div style={{ padding: '2rem', color: 'red' }}>{error}</div>;
+  const handleLogout = () => {
+    logoutUser();
+    setIsAuth(false);
+  };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Portfolio Projects</h1>
-      {projects.length === 0 ? (
-        <p>No projects found in PostgreSQL database.</p>
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1>Portfolio Projects</h1>
+        {isAuth && (
+          <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', cursor: 'pointer' }}>
+            Logout
+          </button>
+        )}
+      </header>
+
+      {!isAuth ? (
+        <AuthForm onSuccess={() => setIsAuth(true)} />
       ) : (
-        <ul>
-          {projects.map((proj) => (
-            <li key={proj.id}>
-              <strong>{proj.title}</strong>: {proj.description}
-            </li>
-          ))}
-        </ul>
+        <div>
+          <p style={{ color: 'green', fontWeight: 'bold' }}>Authenticated successfully!</p>
+          {loading ? (
+            <p>Loading projects...</p>
+          ) : (
+            <ul>
+              {projects.map((proj) => (
+                <li key={proj.id} style={{ marginBottom: '1rem' }}>
+                  <strong>{proj.title}</strong>: {proj.description}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );

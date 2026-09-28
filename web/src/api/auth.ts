@@ -33,3 +33,21 @@ export const getToken = (): string | null => {
 export const isAuthenticated = (): boolean => {
   return !!getToken();
 };
+export const registerUser = async (email: string, password: string) => {
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Registration failed');
+  }
+
+  const data = await res.json();
+  if (data.access_token) {
+    localStorage.setItem('access_token', data.access_token);
+  }
+  return data;
+};
