@@ -1,23 +1,18 @@
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  
   app.enableCors();
 
-  const config = new DocumentBuilder()
-    .setTitle('Portfolio API')
-    .setDescription('API documentation for my portfolio application')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  // Serve static images from the uploads folder
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
+  await app.listen(3000);
 }
 bootstrap();

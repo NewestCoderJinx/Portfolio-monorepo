@@ -1,32 +1,41 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from './dto/create-project.dto';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  UseGuards,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  // Existing CRUD endpoints...
 
-  @Get()
-  findAll() {
-    return this.projectsService.findAll();
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Post()
-  create(@Body() dto: CreateProjectDto) {
-    return this.projectsService.create(dto);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: Partial<CreateProjectDto>) {
-    return this.projectsService.update(id, dto);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectsService.remove(id);
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp|gif)$/)) {
+          return callback(new Error('Only image files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    // Returns the relative static URL for the frontend
+    return {
+      imageUrl: `http://localhost:3000/uploads/${file.filename}`,
+    };
   }
 }

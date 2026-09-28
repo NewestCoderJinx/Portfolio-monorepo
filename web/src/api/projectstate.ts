@@ -1,4 +1,5 @@
 import { getToken } from './auth';
+import API from './axios';
 
 const API_URL = 'http://localhost:3000';
 
@@ -65,4 +66,16 @@ export const deleteProject = async (id: string): Promise<void> => {
     },
   });
   if (!res.ok) throw new Error('Failed to delete project');
+};
+export const uploadProjectImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await API.post<{ imageUrl: string }>('/projects/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data.imageUrl;
 };

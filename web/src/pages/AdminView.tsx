@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react';
 import {
   Box,
   Container,
@@ -28,6 +28,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  uploadProjectImage,
   formatUrl,
   type Project,
 } from '../api/projectstate';
@@ -36,6 +37,7 @@ export function AdminView() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const toast = useToast();
 
   // Form state
@@ -66,6 +68,22 @@ export function AdminView() {
     fetchProjects();
   }, []);
 
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const url = await uploadProjectImage(file);
+      setImageUrl(url);
+      toast({ title: 'Image uploaded successfully!', status: 'success', duration: 3000, isClosable: true });
+    } catch (err) {
+      toast({ title: 'Failed to upload image', status: 'error', duration: 3000, isClosable: true });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -83,7 +101,7 @@ export function AdminView() {
       await createProject({
         title: title.trim(),
         description: description.trim(),
-        imageUrl: formatUrl(imageUrl),
+        imageUrl: imageUrl.trim(),
         tags,
         githubUrl: formatUrl(githubUrl),
         demoUrl: formatUrl(demoUrl),
@@ -199,12 +217,27 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Cover Image URL</FormLabel>
-                <Input
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Cover Image</FormLabel>
+                <VStack align="stretch" spacing={2}>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    p={1}
+                  />
+                  {uploadingImage && (
+                    <HStack spacing={2}>
+                      <Spinner size="xs" color="blue.500" />
+                      <Text fontSize="xs" color="gray.500">Uploading image to server...</Text>
+                    </HStack>
+                  )}
+                  {imageUrl && !uploadingImage && (
+                    <Box mt={1}>
+                      <Text fontSize="xs" color="gray.500" mb={1}>Selected preview:</Text>
+                      <Image src={imageUrl} alt="Cover preview" maxH="120px" borderRadius="md" objectFit="cover" />
+                    </Box>
+                  )}
+                </VStack>
               </FormControl>
 
               <FormControl>
@@ -225,7 +258,14 @@ export function AdminView() {
                 />
               </FormControl>
 
-              <Button type="submit" colorScheme="blue" width="full" isLoading={submitting} loadingText="Publishing...">
+              <Button
+                type="submit"
+                colorScheme="blue"
+                width="full"
+                isLoading={submitting}
+                isDisabled={uploadingImage}
+                loadingText="Publishing..."
+              >
                 Publish Project
               </Button>
             </VStack>
