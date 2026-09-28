@@ -22,7 +22,6 @@ import {
 } from '@chakra-ui/react';
 import { getProjects, type Project } from '../api/projectstate';
 
-// Simple search icon SVG wrapper
 const SearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8"></circle>
@@ -43,12 +42,10 @@ export function PublicView() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Collect unique tech stack tags from all projects
   const allTags = Array.from(
     new Set(projects.flatMap((p) => p.tags || []))
   );
 
-  // Filter projects by search term and selected tag
   const filteredProjects = projects.filter((p) => {
     const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -80,7 +77,9 @@ export function PublicView() {
           {/* Search Bar & Tag Filter Pills */}
           <VStack spacing={4} align="stretch" bg="white" p={5} borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
             <InputGroup size="md">
-              <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
+              <InputLeftElement pointerEvents="none">
+                <SearchIcon />
+              </InputLeftElement>
               <Input
                 placeholder="Search by project name or description..."
                 value={searchQuery}
@@ -127,7 +126,20 @@ export function PublicView() {
             </VStack>
           ) : filteredProjects.length === 0 ? (
             <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
-              <Text color="gray.500">No projects match your search criteria.</Text>
+              <Text color="gray.500" mb={3}>No projects match your search criteria.</Text>
+              {(searchQuery || selectedTag) && (
+                <Button
+                  size="sm"
+                  colorScheme="blue"
+                  variant="ghost"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedTag(null);
+                  }}
+                >
+                  Clear Search & Filters
+                </Button>
+              )}
             </Box>
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
