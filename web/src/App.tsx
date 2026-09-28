@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { fetchProjects, Projects } from './api/projects';
+import { fetchProjects, type Project } from './api/projects';
 import { isAuthenticated, logoutUser } from './api/auth';
 import { AuthForm } from './components/AuthForm';
 
 export function App() {
-  const [projects, setProjects] = useState<Projects[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
 
