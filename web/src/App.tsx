@@ -1,29 +1,11 @@
-import { useEffect, useState } from 'react';
-import { fetchProjects, type Project } from './api/projects';
-import { isAuthenticated, logoutUser } from './api/auth';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { AdminView } from './pages/AdminView'; 
 import { AuthForm } from './components/AuthForm';
+import { isAuthenticated, logoutUser } from './api/auth';
+import { useState } from 'react';
 
 export function App() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
-
-  const loadProjects = () => {
-    setLoading(true);
-    fetchProjects()
-      .then((data) => {
-        setProjects(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Failed to load projects:', err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
 
   const handleLogout = () => {
     logoutUser();
@@ -31,35 +13,43 @@ export function App() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Portfolio Projects</h1>
-        {isAuth && (
-          <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', cursor: 'pointer' }}>
-            Logout
-          </button>
-        )}
-      </header>
+    <BrowserRouter>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'sans-serif' }}>
+        {/* Navigation Bar matching screenshot */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
+          <Link to="/" style={{ textDecoration: 'none', color: '#1e40af', fontSize: '1.25rem', fontWeight: 'bold' }}>
+            DevPortfolio
+          </Link>
 
-      {!isAuth ? (
-        <AuthForm onSuccess={() => setIsAuth(true)} />
-      ) : (
-        <div>
-          <p style={{ color: 'green', fontWeight: 'bold' }}>Authenticated successfully!</p>
-          {loading ? (
-            <p>Loading projects...</p>
-          ) : (
-            <ul>
-              {projects.map((proj) => (
-                <li key={proj.id} style={{ marginBottom: '1rem' }}>
-                  <strong>{proj.title}</strong>: {proj.description}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
+          <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <Link to="/" style={{ textDecoration: 'none', color: '#334155', fontWeight: 500 }}>
+              Public View
+            </Link>
+            <Link to="/admin" style={{ textDecoration: 'none', color: '#334155', fontWeight: 500 }}>
+              Dashboard
+            </Link>
+            {isAuth && (
+              <button
+                onClick={handleLogout}
+                style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Logout
+              </button>
+            )}
+          </nav>
+        </header>
+
+        {/* Routes */}
+        <Routes>
+          <Route path="/" element={<div style={{ padding: '2rem', textAlign: 'center' }}>Public Portfolio View</div>} />
+          <Route
+            path="/admin"
+            element={isAuth ? <AdminView /> : <AuthForm onSuccess={() => setIsAuth(true)} />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 

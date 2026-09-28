@@ -1,10 +1,14 @@
 import API from './axios';
 
 export interface Project {
-  id: number;
+  id?: string;
   title: string;
   description: string;
-  link?: string;
+  tags?: string;
+  imageUrl?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  createdAt?: string;
 }
 
 export const fetchProjects = async (): Promise<Project[]> => {
@@ -12,7 +16,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
   return response.data;
 };
 
-export const createProject = async (projectData: Partial<Project>): Promise<Project> => {
+export const createProject = async (projectData: Project): Promise<Project> => {
   const response = await API.post<Project>('/projects', projectData);
   return response.data;
 };
