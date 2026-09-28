@@ -1,4 +1,20 @@
 import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  Container,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  VStack,
+  Text,
+  Alert,
+  AlertIcon,
+  Card,
+  CardBody,
+  Badge,
+} from '@chakra-ui/react';
 import { loginUser, registerUser } from '../api/auth';
 
 interface AuthFormProps {
@@ -26,58 +42,103 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       onSuccess();
     } catch (err: any) {
       console.error('Authentication error:', err);
-      setError(err.message || 'Authentication failed.');
+      setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '1.5rem', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>{isLogin ? 'Login' : 'Register'}</h2>
+    <Box bg="gray.50" minH="calc(100vh - 80px)" py={12} display="flex" alignItems="center">
+      <Container maxW="md">
+        <Card borderWidth="1px" borderColor="gray.200" borderRadius="xl" boxShadow="sm" bg="white">
+          <CardBody p={8}>
+            <VStack spacing={6} align="stretch">
+              
+              {/* Header Badge & Title */}
+              <VStack spacing={2} textAlign="center">
+                <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
+                  Admin Access
+                </Badge>
+                <Heading size="lg" color="gray.800" letterSpacing="tight">
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                </Heading>
+                <Text color="gray.600" fontSize="sm">
+                  {isLogin
+                    ? 'Enter your credentials to access the project dashboard'
+                    : 'Register an account to manage portfolio projects'}
+                </Text>
+              </VStack>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+              {/* Error Message */}
+              {error && (
+                <Alert status="error" borderRadius="md" fontSize="sm">
+                  <AlertIcon />
+                  {error}
+                </Alert>
+              )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.25rem' }}>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
+              {/* Form */}
+              <Box as="form" onSubmit={handleSubmit}>
+                <VStack spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                      Email Address
+                    </FormLabel>
+                    <Input
+                      type="email"
+                      placeholder="admin@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      borderRadius="md"
+                    />
+                  </FormControl>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.25rem' }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
+                  <FormControl isRequired>
+                    <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                      Password
+                    </FormLabel>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      borderRadius="md"
+                    />
+                  </FormControl>
 
-        <button type="submit" disabled={loading} style={{ padding: '0.5rem', cursor: 'pointer' }}>
-          {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
-        </button>
-      </form>
+                  <Button
+                    type="submit"
+                    colorScheme="blue"
+                    width="full"
+                    mt={2}
+                    isLoading={loading}
+                    loadingText={isLogin ? 'Signing in...' : 'Registering...'}
+                  >
+                    {isLogin ? 'Sign In' : 'Sign Up'}
+                  </Button>
+                </VStack>
+              </Box>
 
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <button
-          type="button"
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setError(null);
-          }}
-          style={{ background: 'none', border: 'none', color: '#0066cc', cursor: 'pointer', textDecoration: 'underline' }}
-        >
-          {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
-        </button>
-      </div>
-    </div>
+              {/* Switch between Login and Register */}
+              <Box textAlign="center" pt={2}>
+                <Button
+                  variant="link"
+                  colorScheme="blue"
+                  fontSize="sm"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError(null);
+                  }}
+                >
+                  {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
+                </Button>
+              </Box>
+
+            </VStack>
+          </CardBody>
+        </Card>
+      </Container>
+    </Box>
   );
 };
