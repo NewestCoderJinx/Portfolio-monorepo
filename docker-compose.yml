@@ -1,7 +1,13 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database Service
+  # NestJS Backend API Service
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api/uploads:/usr/src/app/uploads  # PostgreSQL Database Service
   postgres:
     image: postgres:15-alpine
     container_name: portfolio_postgres
@@ -15,8 +21,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+
   # NestJS Backend API Service
-  api:
+  api:  
     build:
       context: ./api
       dockerfile: Dockerfile
