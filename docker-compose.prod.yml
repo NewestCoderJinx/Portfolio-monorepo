@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: portfolio_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - portfolio_net
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: portfolio_api_prod
+    restart: always
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER:-portfolio_user}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      DATABASE_NAME: ${POSTGRES_DB:-portfolio_db}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key}
+    volumes:
+      - uploads_data:/usr/src/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - portfolio_net
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: portfolio_web_prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - portfolio_net
+
+volumes:
+  postgres_prod_data:
+  uploads_data:
+
+networks:
+  portfolio_net:
+    driver: bridge
