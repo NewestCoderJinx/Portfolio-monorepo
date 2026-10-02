@@ -57,11 +57,11 @@ export function PublicView() {
   });
 
   return (
-    <Box bg="gray.50" minH="100vh" py={12}>
+    <Box bg="gray.50" minH="calc(100vh - 70px)" py={12}>
       <Container maxW="container.lg">
         <VStack spacing={8} align="stretch">
           
-          {/* Header Hero Section */}
+          {/* Hero Section */}
           <VStack spacing={3} textAlign="center">
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Full-Stack Software Engineer
@@ -74,7 +74,7 @@ export function PublicView() {
             </Text>
           </VStack>
 
-          {/* Search Bar & Tag Filter Pills */}
+          {/* Search & Dynamic Filter Section */}
           <VStack spacing={4} align="stretch" bg="white" p={5} borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
             <InputGroup size="md">
               <InputLeftElement pointerEvents="none">
@@ -118,7 +118,7 @@ export function PublicView() {
             )}
           </VStack>
 
-          {/* Project Grid */}
+          {/* Projects Display Grid */}
           {loading ? (
             <VStack py={16}>
               <Spinner size="xl" color="blue.500" thickness="3px" />
@@ -168,7 +168,7 @@ export function PublicView() {
                       )}
                     </Box>
 
-                    {/* Interactive Links */}
+                    {/* External Resource Actions */}
                     <HStack spacing={3} pt={4} borderTopWidth="1px" borderColor="gray.100">
                       {p.githubUrl && (
                         <Button
@@ -181,7 +181,7 @@ export function PublicView() {
                           colorScheme="gray"
                           flex={1}
                         >
-                          Code Repository
+                          Repository
                         </Button>
                       )}
                       {p.demoUrl && (

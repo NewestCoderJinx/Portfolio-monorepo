@@ -3,7 +3,10 @@ import { AdminView } from './pages/AdminView';
 import { AuthForm } from './components/AuthForm';
 import { isAuthenticated, logoutUser } from './api/auth';
 import { useState } from 'react';
+import { PublicView } from './pages/PublicView';
 
+// ... inside <Routes>
+<Route path="/" element={<PublicView />} />
 export function App() {
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
 
