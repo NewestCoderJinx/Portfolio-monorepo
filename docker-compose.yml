@@ -8,6 +8,16 @@ services:
       - "3000:3000"
     volumes:
       - ./api/uploads:/usr/src/app/uploads  # PostgreSQL Database Service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgrespassword
+      DATABASE_NAME: portfoliodb
+      JWT_SECRET: supersecretjwtkey
+      PORT: 3000
+    depends_on:
+      - postgres
   postgres:
     image: postgres:15-alpine
     container_name: portfolio_postgres
@@ -23,25 +33,7 @@ services:
 
 
   # NestJS Backend API Service
-  api:  
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    container_name: portfolio_api
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgrespassword
-      DATABASE_NAME: portfoliodb
-      JWT_SECRET: supersecretjwtkey
-      PORT: 3000
-    depends_on:
-      - postgres
-
+  
   # React Vite Frontend Service
   web:
     build:
