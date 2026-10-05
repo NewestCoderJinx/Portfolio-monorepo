@@ -66,9 +66,14 @@ export function PublicView() {
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Full-Stack Software Engineer
             </Badge>
-            <Heading as="h1" size="2xl" letterSpacing="tight">
-              Featured Engineering Projects
-            </Heading>
+            <HStack spacing={3} justify="center">
+              <Heading as="h1" size="2xl" letterSpacing="tight">
+                Featured Engineering Projects
+              </Heading>
+              <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full">
+                {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
+              </Badge>
+            </HStack>
             <Text color="gray.600" maxW="2xl" fontSize="md">
               Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
             </Text>
