@@ -92,7 +92,25 @@ export function PublicView() {
                 borderRadius="md"
               />
             </InputGroup>
+          {/* Hero Section */}
+<VStack spacing={3} textAlign="center">
+  <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
+    Full-Stack Software Engineer
+  </Badge>
+  
+  <HStack spacing={3} justify="center" wrap="wrap">
+    <Heading as="h1" size="2xl" letterSpacing="tight">
+      Featured Engineering Projects
+    </Heading>
+    <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full" variant="subtle">
+      {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
+    </Badge>
+  </HStack>
 
+  <Text color="gray.600" maxW="2xl" fontSize="md">
+    Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
+  </Text>
+</VStack>
             {allTags.length > 0 && (
               <HStack spacing={2} flexWrap="wrap" pt={2}>
                 <Text fontSize="xs" fontWeight="bold" color="gray.500" mr={1}>
