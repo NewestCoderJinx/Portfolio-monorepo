@@ -1,32 +1,27 @@
-# React + TypeScript + Vite
+# Full-Stack Engineer Portfolio Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A production-ready portfolio web application built using a modern TypeScript stack, containerized with Docker, and architected with a full administrative CRUD workflow.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* **Public Showcase**: Responsive project grid featuring title search, tag-based dynamic filtering, and direct links to live demos and GitHub repositories.
+* **Admin Dashboard**: Secure control panel for managing portfolio entries with real-time image upload previews.
+* **JWT Authentication**: Password-protected admin routing with persistent session tokens.
+* **Static File Management**: Multi-part image upload handling with volume-backed disk storage.
+* **Container Orchestration**: Multi-stage Docker builds configured for both development hot-reloading and Nginx production reverse proxying.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Frontend**: React, TypeScript, Vite, Chakra UI
+* **Backend**: NestJS, TypeScript, TypeORM
+* **Database**: PostgreSQL
+* **Infrastructure**: Docker, Docker Compose, Nginx
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## ⚡ Quick Start (Local Development)
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+### Prerequisites
+* Docker & Docker Compose installed
+* Node.js (v18+) & Yarn
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
