@@ -19,6 +19,7 @@ import {
   InputLeftElement,
   Spinner,
   Badge,
+  useToast,
 } from '@chakra-ui/react';
 import { getProjects, type Project } from '../api/projectstate';
 
@@ -35,12 +36,36 @@ export function PublicView() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
+  const toast = useToast();
+
   useEffect(() => {
-    getProjects()
+    getProjects(() => undefined)
       .then((data) => setProjects(data))
-      .catch((err) => console.error('Error fetching public projects:', err))
+      .catch((err) => {
+        console.error('Failed to load projects:', err);
+        toast({
+          title: 'Unable to load projects',
+          description: 'Please check your connection or server status.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [toast]);
+
+  // Copy Project Link Helper
+  const handleCopyLink = (url: string, title: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: 'Link copied!',
+      description: `Copied URL for "${title}" to clipboard.`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+      position: 'bottom-right',
+    });
+  };
 
   const allTags = Array.from(
     new Set(projects.flatMap((p) => p.tags || []))
@@ -66,14 +91,16 @@ export function PublicView() {
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Full-Stack Software Engineer
             </Badge>
-            <HStack spacing={3} justify="center">
+
+            <HStack spacing={3} justify="center" wrap="wrap">
               <Heading as="h1" size="2xl" letterSpacing="tight">
                 Featured Engineering Projects
               </Heading>
-              <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full">
+              <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full" variant="subtle">
                 {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
               </Badge>
             </HStack>
+
             <Text color="gray.600" maxW="2xl" fontSize="md">
               Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
             </Text>
@@ -92,25 +119,7 @@ export function PublicView() {
                 borderRadius="md"
               />
             </InputGroup>
-          {/* Hero Section */}
-<VStack spacing={3} textAlign="center">
-  <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
-    Full-Stack Software Engineer
-  </Badge>
-  
-  <HStack spacing={3} justify="center" wrap="wrap">
-    <Heading as="h1" size="2xl" letterSpacing="tight">
-      Featured Engineering Projects
-    </Heading>
-    <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full" variant="subtle">
-      {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
-    </Badge>
-  </HStack>
 
-  <Text color="gray.600" maxW="2xl" fontSize="md">
-    Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
-  </Text>
-</VStack>
             {allTags.length > 0 && (
               <HStack spacing={2} flexWrap="wrap" pt={2}>
                 <Text fontSize="xs" fontWeight="bold" color="gray.500" mr={1}>
@@ -192,14 +201,14 @@ export function PublicView() {
                     </Box>
 
                     {/* External Resource Actions */}
-                    <HStack spacing={3} pt={4} borderTopWidth="1px" borderColor="gray.100">
+                    <HStack spacing={2} pt={4} borderTopWidth="1px" borderColor="gray.100" width="full">
                       {p.githubUrl && (
                         <Button
                           as="a"
                           href={p.githubUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          size="sm"
+                          size="xs"
                           variant="outline"
                           colorScheme="gray"
                           flex={1}
@@ -213,13 +222,21 @@ export function PublicView() {
                           href={p.demoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          size="sm"
+                          size="xs"
                           colorScheme="blue"
                           flex={1}
                         >
                           Live Demo
                         </Button>
                       )}
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="teal"
+                        onClick={() => handleCopyLink(p.demoUrl || p.githubUrl || window.location.href, p.title)}
+                      >
+                        Share
+                      </Button>
                     </HStack>
                   </CardBody>
                 </Card>
