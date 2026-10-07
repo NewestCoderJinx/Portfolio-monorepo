@@ -15,7 +15,7 @@ export interface Project {
   updatedAt?: string;
 }
 
-export const getProjects = async (): Promise<Project[]> => {
+export const getProjects = async (p0: (prev: any) => any): Promise<Project[]> => {
   const res = await fetch(`${API_URL}/projects`);
   if (!res.ok) throw new Error('Failed to fetch projects');
   return res.json();

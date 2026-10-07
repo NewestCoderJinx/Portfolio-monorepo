@@ -18,10 +18,10 @@ import {
   Tag,
   Wrap,
   WrapItem,
-  useToast,
   Divider,
   FormControl,
   FormLabel,
+  useToast,
 } from '@chakra-ui/react';
 import {
   getProjects,
@@ -58,7 +58,7 @@ export function AdminView() {
 
   const fetchProjects = () => {
     setLoading(true);
-    getProjects()
+    getProjects(() => [])
       .then((data) => setProjects(data))
       .catch((err) => console.error('Error fetching projects:', err))
       .finally(() => setLoading(false));
