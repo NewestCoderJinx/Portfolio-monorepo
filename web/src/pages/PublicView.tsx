@@ -39,7 +39,7 @@ export function PublicView() {
   const toast = useToast();
 
   useEffect(() => {
-    getProjects(() => undefined)
+    getProjects()
       .then((data) => setProjects(data))
       .catch((err) => {
         console.error('Failed to load projects:', err);
