@@ -22,6 +22,11 @@ import {
   FormControl,
   FormLabel,
   useToast,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from '@chakra-ui/react';
 import {
   getProjects,
@@ -40,13 +45,20 @@ export function AdminView() {
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const toast = useToast();
 
-  // Form state
+  // Basic Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
+
+  // Case Study Form state
+  const [problem, setProblem] = useState('');
+  const [solution, setSolution] = useState('');
+  const [challenges, setChallenges] = useState('');
+  const [decisions, setDecisions] = useState('');
+  const [lessonsLearned, setLessonsLearned] = useState('');
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,12 +67,20 @@ export function AdminView() {
   const [editTagsInput, setEditTagsInput] = useState('');
   const [editGithubUrl, setEditGithubUrl] = useState('');
   const [editDemoUrl, setEditDemoUrl] = useState('');
+  const [editProblem, setEditProblem] = useState('');
+  const [editSolution, setEditSolution] = useState('');
+  const [editChallenges, setEditChallenges] = useState('');
+  const [editDecisions, setEditDecisions] = useState('');
+  const [editLessonsLearned, setEditLessonsLearned] = useState('');
 
   const fetchProjects = () => {
     setLoading(true);
-    getProjects(() => [])
+    getProjects()
       .then((data) => setProjects(data))
-      .catch((err) => console.error('Error fetching projects:', err))
+      .catch((err) => {
+        console.error('Error fetching projects:', err);
+        toast({ title: 'Failed to load projects', status: 'error', duration: 3000, isClosable: true });
+      })
       .finally(() => setLoading(false));
   };
 
@@ -101,15 +121,25 @@ export function AdminView() {
       await createProject({
         title: title.trim(),
         description: description.trim(),
+        problem: problem.trim(),
+        solution: solution.trim(),
+        challenges: challenges.trim(),
+        decisions: decisions.trim(),
+        lessonsLearned: lessonsLearned.trim(),
         imageUrl: imageUrl.trim(),
         tags,
         githubUrl: formatUrl(githubUrl),
         demoUrl: formatUrl(demoUrl),
       });
 
-      // Reset form
+      // Reset form fields
       setTitle('');
       setDescription('');
+      setProblem('');
+      setSolution('');
+      setChallenges('');
+      setDecisions('');
+      setLessonsLearned('');
       setImageUrl('');
       setTagsInput('');
       setGithubUrl('');
@@ -142,6 +172,11 @@ export function AdminView() {
     setEditTagsInput(p.tags ? p.tags.join(', ') : '');
     setEditGithubUrl(p.githubUrl || '');
     setEditDemoUrl(p.demoUrl || '');
+    setEditProblem(p.problem || '');
+    setEditSolution(p.solution || '');
+    setEditChallenges(p.challenges || '');
+    setEditDecisions(p.decisions || '');
+    setEditLessonsLearned(p.lessonsLearned || '');
   };
 
   const handleUpdate = async (id: string) => {
@@ -154,6 +189,11 @@ export function AdminView() {
       await updateProject(id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
+        problem: editProblem.trim(),
+        solution: editSolution.trim(),
+        challenges: editChallenges.trim(),
+        decisions: editDecisions.trim(),
+        lessonsLearned: editLessonsLearned.trim(),
         tags,
         githubUrl: formatUrl(editGithubUrl),
         demoUrl: formatUrl(editDemoUrl),
@@ -170,6 +210,8 @@ export function AdminView() {
     <Box bg="gray.50" minH="100vh" py={12}>
       <Container maxW="container.lg">
         <VStack spacing={8} align="stretch">
+          
+          {/* Header */}
           <VStack spacing={2} textAlign="center">
             <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
               Developer Workspace
@@ -198,12 +240,12 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Description</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Short Summary / Description</FormLabel>
                 <Textarea
-                  placeholder="Short technical description..."
+                  placeholder="Short technical overview..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
+                  rows={2}
                 />
               </FormControl>
 
@@ -216,15 +258,48 @@ export function AdminView() {
                 />
               </FormControl>
 
+              {/* Case Study Accordion */}
+              <Accordion allowToggle width="full" borderStyle="none">
+                <AccordionItem border="1px" borderColor="gray.200" borderRadius="md">
+                  <h2>
+                    <AccordionButton bg="gray.50" _expanded={{ bg: 'blue.50', color: 'blue.600' }}>
+                      <Box as="span" flex="1" textAlign="left" fontSize="xs" fontWeight="bold">
+                        Detailed Technical Case Study (Optional)
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                  </h2>
+                  <AccordionPanel pb={4}>
+                    <VStack spacing={3}>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color="gray.600">The Problem</FormLabel>
+                        <Textarea placeholder="What real-world problem did this project address?" value={problem} onChange={(e) => setProblem(e.target.value)} size="sm" rows={2} />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color="gray.600">The Solution</FormLabel>
+                        <Textarea placeholder="Architectural solution implemented..." value={solution} onChange={(e) => setSolution(e.target.value)} size="sm" rows={2} />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color="gray.600">Engineering Decisions</FormLabel>
+                        <Textarea placeholder="Key trade-offs or technical decisions..." value={decisions} onChange={(e) => setDecisions(e.target.value)} size="sm" rows={2} />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color="gray.600">Challenges Encountered</FormLabel>
+                        <Textarea placeholder="Technical roadblocks and how they were solved..." value={challenges} onChange={(e) => setChallenges(e.target.value)} size="sm" rows={2} />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="xs" color="gray.600">Lessons Learned</FormLabel>
+                        <Textarea placeholder="Key takeaways and future improvements..." value={lessonsLearned} onChange={(e) => setLessonsLearned(e.target.value)} size="sm" rows={2} />
+                      </FormControl>
+                    </VStack>
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+
               <FormControl>
                 <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Cover Image</FormLabel>
                 <VStack align="stretch" spacing={2}>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    p={1}
-                  />
+                  <Input type="file" accept="image/*" onChange={handleFileUpload} p={1} />
                   {uploadingImage && (
                     <HStack spacing={2}>
                       <Spinner size="xs" color="blue.500" />
@@ -233,7 +308,7 @@ export function AdminView() {
                   )}
                   {imageUrl && !uploadingImage && (
                     <Box mt={1}>
-                      <Text fontSize="xs" color="gray.500" mb={1}>Selected preview:</Text>
+                      <Text fontSize="xs" color="gray.500" mb={1}>Preview:</Text>
                       <Image src={imageUrl} alt="Cover preview" maxH="120px" borderRadius="md" objectFit="cover" />
                     </Box>
                   )}
@@ -273,7 +348,7 @@ export function AdminView() {
 
           <Divider />
 
-          {/* Projects Display */}
+          {/* Projects Display Grid */}
           {loading ? (
             <VStack py={12}>
               <Spinner size="xl" color="blue.500" thickness="3px" />
@@ -290,26 +365,36 @@ export function AdminView() {
                   <CardBody p={5}>
                     {editingId === p.id ? (
                       <VStack spacing={3}>
-                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" />
-                        <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={3} />
-                        <Input
-                          placeholder="Tech Stack Tags"
-                          value={editTagsInput}
-                          onChange={(e) => setEditTagsInput(e.target.value)}
-                          size="sm"
-                        />
-                        <Input
-                          placeholder="GitHub Repository URL"
-                          value={editGithubUrl}
-                          onChange={(e) => setEditGithubUrl(e.target.value)}
-                          size="sm"
-                        />
-                        <Input
-                          placeholder="Live Demo URL"
-                          value={editDemoUrl}
-                          onChange={(e) => setEditDemoUrl(e.target.value)}
-                          size="sm"
-                        />
+                        <Heading size="xs" color="blue.600">Edit Project</Heading>
+                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" placeholder="Title" />
+                        <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={2} placeholder="Description" />
+                        <Input value={editTagsInput} onChange={(e) => setEditTagsInput(e.target.value)} size="sm" placeholder="Tags (comma-separated)" />
+                        
+                        <Accordion allowToggle width="full" borderStyle="none">
+                          <AccordionItem border="1px" borderColor="gray.200" borderRadius="md">
+                            <h2>
+                              <AccordionButton bg="gray.50" py={1}>
+                                <Box as="span" flex="1" textAlign="left" fontSize="xs">
+                                  Edit Case Study Details
+                                </Box>
+                                <AccordionIcon />
+                              </AccordionButton>
+                            </h2>
+                            <AccordionPanel pb={2}>
+                              <VStack spacing={2}>
+                                <Textarea value={editProblem} onChange={(e) => setEditProblem(e.target.value)} size="xs" placeholder="Problem" rows={2} />
+                                <Textarea value={editSolution} onChange={(e) => setEditSolution(e.target.value)} size="xs" placeholder="Solution" rows={2} />
+                                <Textarea value={editDecisions} onChange={(e) => setEditDecisions(e.target.value)} size="xs" placeholder="Decisions" rows={2} />
+                                <Textarea value={editChallenges} onChange={(e) => setEditChallenges(e.target.value)} size="xs" placeholder="Challenges" rows={2} />
+                                <Textarea value={editLessonsLearned} onChange={(e) => setEditLessonsLearned(e.target.value)} size="xs" placeholder="Lessons Learned" rows={2} />
+                              </VStack>
+                            </AccordionPanel>
+                          </AccordionItem>
+                        </Accordion>
+
+                        <Input value={editGithubUrl} onChange={(e) => setEditGithubUrl(e.target.value)} size="sm" placeholder="GitHub URL" />
+                        <Input value={editDemoUrl} onChange={(e) => setEditDemoUrl(e.target.value)} size="sm" placeholder="Demo URL" />
+
                         <HStack width="full" pt={2}>
                           <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
                             Save

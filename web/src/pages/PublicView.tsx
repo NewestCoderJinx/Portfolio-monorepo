@@ -20,6 +20,19 @@ import {
   Spinner,
   Badge,
   useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Divider,
 } from '@chakra-ui/react';
 import { getProjects, type Project } from '../api/projectstate';
 
@@ -35,7 +48,9 @@ export function PublicView() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
   useEffect(() => {
@@ -54,7 +69,6 @@ export function PublicView() {
       .finally(() => setLoading(false));
   }, [toast]);
 
-  // Copy Project Link Helper
   const handleCopyLink = (url: string, title: string) => {
     navigator.clipboard.writeText(url);
     toast({
@@ -67,9 +81,12 @@ export function PublicView() {
     });
   };
 
-  const allTags = Array.from(
-    new Set(projects.flatMap((p) => p.tags || []))
-  );
+  const handleOpenCaseStudy = (project: Project) => {
+    setSelectedProject(project);
+    onOpen();
+  };
+
+  const allTags = Array.from(new Set(projects.flatMap((p) => p.tags || [])));
 
   const filteredProjects = projects.filter((p) => {
     const matchesSearch =
@@ -200,44 +217,55 @@ export function PublicView() {
                       )}
                     </Box>
 
-                    {/* External Resource Actions */}
-                    <HStack spacing={2} pt={4} borderTopWidth="1px" borderColor="gray.100" width="full">
-                      {p.githubUrl && (
-                        <Button
-                          as="a"
-                          href={p.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          size="xs"
-                          variant="outline"
-                          colorScheme="gray"
-                          flex={1}
-                        >
-                          Repository
-                        </Button>
-                      )}
-                      {p.demoUrl && (
-                        <Button
-                          as="a"
-                          href={p.demoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          size="xs"
-                          colorScheme="blue"
-                          flex={1}
-                        >
-                          Live Demo
-                        </Button>
-                      )}
+                    {/* Actions */}
+                    <VStack align="stretch" spacing={2} pt={4} borderTopWidth="1px" borderColor="gray.100">
                       <Button
                         size="xs"
-                        variant="ghost"
-                        colorScheme="teal"
-                        onClick={() => handleCopyLink(p.demoUrl || p.githubUrl || window.location.href, p.title)}
+                        colorScheme="blue"
+                        variant="subtle"
+                        onClick={() => handleOpenCaseStudy(p)}
                       >
-                        Share
+                        Read Case Study
                       </Button>
-                    </HStack>
+
+                      <HStack spacing={2} width="full">
+                        {p.githubUrl && (
+                          <Button
+                            as="a"
+                            href={p.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="xs"
+                            variant="outline"
+                            colorScheme="gray"
+                            flex={1}
+                          >
+                            Repository
+                          </Button>
+                        )}
+                        {p.demoUrl && (
+                          <Button
+                            as="a"
+                            href={p.demoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="xs"
+                            colorScheme="blue"
+                            flex={1}
+                          >
+                            Live Demo
+                          </Button>
+                        )}
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="teal"
+                          onClick={() => handleCopyLink(p.demoUrl || p.githubUrl || window.location.href, p.title)}
+                        >
+                          Share
+                        </Button>
+                      </HStack>
+                    </VStack>
                   </CardBody>
                 </Card>
               ))}
@@ -246,6 +274,99 @@ export function PublicView() {
 
         </VStack>
       </Container>
+
+      {/* Case Study Detailed Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader>
+            <VStack align="start" spacing={1}>
+              <Badge colorScheme="blue" fontSize="xs">Case Study</Badge>
+              <Heading size="lg">{selectedProject?.title}</Heading>
+            </VStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {selectedProject && (
+              <VStack align="stretch" spacing={5}>
+                {selectedProject.imageUrl && (
+                  <Image
+                    src={selectedProject.imageUrl}
+                    alt={selectedProject.title}
+                    borderRadius="lg"
+                    maxH="220px"
+                    objectFit="cover"
+                  />
+                )}
+
+                <Tabs variant="soft-rounded" colorScheme="blue" size="sm">
+                  <TabList flexWrap="wrap" gap={1}>
+                    <Tab>Overview</Tab>
+                    <Tab>Problem & Solution</Tab>
+                    <Tab>Decisions & Challenges</Tab>
+                    <Tab>Lessons Learned</Tab>
+                  </TabList>
+                  <Divider my={3} />
+                  <TabPanels>
+                    <TabPanel px={0}>
+                      <VStack align="start" spacing={3}>
+                        <Heading size="xs" color="gray.500" textTransform="uppercase">Summary</Heading>
+                        <Text color="gray.700">{selectedProject.description || 'No overview provided.'}</Text>
+                        
+                        {selectedProject.tags && selectedProject.tags.length > 0 && (
+                          <Box pt={2}>
+                            <Heading size="xs" color="gray.500" textTransform="uppercase" mb={2}>Technologies</Heading>
+                            <Wrap spacing={1.5}>
+                              {selectedProject.tags.map((tag, idx) => (
+                                <WrapItem key={idx}>
+                                  <Tag size="sm" colorScheme="blue">{tag}</Tag>
+                                </WrapItem>
+                              ))}
+                            </Wrap>
+                          </Box>
+                        )}
+                      </VStack>
+                    </TabPanel>
+
+                    <TabPanel px={0}>
+                      <VStack align="start" spacing={4}>
+                        <Box>
+                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>The Problem</Heading>
+                          <Text color="gray.700">{selectedProject.problem || 'No details provided.'}</Text>
+                        </Box>
+                        <Box>
+                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>The Solution</Heading>
+                          <Text color="gray.700">{selectedProject.solution || 'No details provided.'}</Text>
+                        </Box>
+                      </VStack>
+                    </TabPanel>
+
+                    <TabPanel px={0}>
+                      <VStack align="start" spacing={4}>
+                        <Box>
+                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Key Engineering Decisions</Heading>
+                          <Text color="gray.700">{selectedProject.decisions || 'No details provided.'}</Text>
+                        </Box>
+                        <Box>
+                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Challenges Encountered</Heading>
+                          <Text color="gray.700">{selectedProject.challenges || 'No details provided.'}</Text>
+                        </Box>
+                      </VStack>
+                    </TabPanel>
+
+                    <TabPanel px={0}>
+                      <Box>
+                        <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Lessons Learned</Heading>
+                        <Text color="gray.700">{selectedProject.lessonsLearned || 'No details provided.'}</Text>
+                      </Box>
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
+              </VStack>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
