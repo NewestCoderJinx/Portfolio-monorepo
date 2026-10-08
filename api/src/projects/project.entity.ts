@@ -11,6 +11,21 @@ export class Project {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ type: 'text', nullable: true })
+  problem: string;
+
+  @Column({ type: 'text', nullable: true })
+  solution: string;
+
+  @Column({ type: 'text', nullable: true })
+  challenges: string;
+
+  @Column({ type: 'text', nullable: true })
+  decisions: string;
+
+  @Column({ type: 'text', nullable: true })
+  lessonsLearned: string;
+
   @Column({ nullable: true })
   imageUrl: string;
 
