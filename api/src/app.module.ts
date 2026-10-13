@@ -5,6 +5,18 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/user.module';
 import { Project } from './projects/project.entity';
 import { User } from './users/user.entity';
+import { Profile } from './profile/entities/profile.entity';
+import { ProfileController } from './profile/profile.controller';
+import { ProfileService } from './profile/profile.service';
+
+@Module({
+  imports: [
+    // ... existing imports
+    TypeOrmModule.forFeature([Profile]),
+  ],
+  controllers: [ProfileController],
+  providers: [ProfileService],
+})
 
 @Module({
   imports: [
