@@ -1,6 +1,21 @@
 import { DataSource } from 'typeorm';
 import { Project } from './projects/entities/project.entity';
+// Inside runSeed() after initializing AppDataSource:
+const profileRepo = AppDataSource.getRepository(Profile);
 
+const existingProfile = await profileRepo.findOne({ where: {} });
+if (!existingProfile) {
+  const defaultProfile = profileRepo.create({
+    name: 'Alonnah',
+    headline: 'Full-Stack Software Engineer & Systems Architect',
+    bio: 'Passionate software engineer specializing in NestJS, React, and cloud-native infrastructure.',
+    location: 'Remote / Available Worldwide',
+    githubUrl: 'https://github.com/alonnah',
+    linkedinUrl: 'https://linkedin.com/in/alonnah',
+  });
+  await profileRepo.save(defaultProfile);
+  console.log('Default developer profile seeded successfully!');
+}
 const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.POSTGRES_HOST || 'localhost',
