@@ -323,18 +323,18 @@
   resolved "https://registry.npmjs.org/@nestjs/mapped-types/-/mapped-types-12.0.0.tgz"
   integrity sha512-aX7lxZcqXldtnSr0bgT2ZPQvpTpIwBMW1GMX29o4s3q02vmq6JoTYuPW0GwYXa8BiFMRX7WbGZVDA703pNqOMQ==
 
-"@nestjs/mau@^0.2.6":
-  version "0.2.8"
-  resolved "https://registry.npmjs.org/@nestjs/mau/-/mau-0.2.8.tgz"
-  integrity sha512-nIb0i3c/KhKEbxZfYMEKv9Mcvk5miBdZcexnvkgnAUhoMO2BUjOGT+Khf2cZzu7B51Y7v01NG2JVl/HdQEUQ6w==
+"@nestjs/mau@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.npmjs.org/@nestjs/mau/-/mau-0.0.6.tgz"
+  integrity sha512-AZFgoyc/6Ivle2KYsteDrmBdJHdwx1AeC8gS0o8kdTosEVSPUdd3KuuHvR0lDy995r24FivpjpxM60INxk8w+g==
   dependencies:
     chalk "4.1.2"
     cli-progress "3.12.0"
     commander "4.1.1"
     inquirer "8.2.6"
     node-emoji "2.1.3"
+    node-fetch "2.7.0"
     ora "5.4.1"
-    undici "6.20.1"
 
 "@nestjs/observe@^0.1.8":
   version "0.1.8"
@@ -1961,6 +1961,13 @@ node-emoji@2.2.0:
     emojilib "^2.4.0"
     skin-tone "^2.0.0"
 
+node-fetch@2.7.0:
+  version "2.7.0"
+  resolved "https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz"
+  integrity sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==
+  dependencies:
+    whatwg-url "^5.0.0"
+
 node-gyp-build@^4.8.4:
   version "4.8.4"
   resolved "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.8.4.tgz"
@@ -2675,6 +2682,11 @@ token-types@^6.1.1, token-types@^6.1.2:
     "@tokenizer/token" "^0.3.0"
     ieee754 "^1.2.1"
 
+tr46@~0.0.3:
+  version "0.0.3"
+  resolved "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz"
+  integrity sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==
+
 tsconfck@^3.0.3:
   version "3.1.6"
   resolved "https://registry.npmjs.org/tsconfck/-/tsconfck-3.1.6.tgz"
@@ -2758,11 +2770,6 @@ undici-types@~8.3.0:
   version "8.3.0"
   resolved "https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz"
   integrity sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==
-
-undici@6.20.1:
-  version "6.20.1"
-  resolved "https://registry.npmjs.org/undici/-/undici-6.20.1.tgz"
-  integrity sha512-AjQF1QsmqfJys+LXfGTNum+qw4S88CojRInG/6t31W/1fk6G59s92bnAvGz5Cmur+kQv2SURXEvvudLmbrE8QA==
 
 unicode-emoji-modifier-base@^1.0.0:
   version "1.0.0"
@@ -2848,6 +2855,19 @@ wcwidth@^1.0.1:
   integrity sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==
   dependencies:
     defaults "^1.0.3"
+
+webidl-conversions@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-3.0.1.tgz"
+  integrity sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==
+
+whatwg-url@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.npmjs.org/whatwg-url/-/whatwg-url-5.0.0.tgz"
+  integrity sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==
+  dependencies:
+    tr46 "~0.0.3"
+    webidl-conversions "^3.0.0"
 
 why-is-node-running@^2.3.0:
   version "2.3.0"
