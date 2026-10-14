@@ -1,8 +1,27 @@
 import { DataSource } from 'typeorm';
-import { Project } from './projects/entities/project.entity';
-// Inside runSeed() after initializing AppDataSource:
-const profileRepo = AppDataSource.getRepository(Profile);
+import { Project } from './projects/project.entity';
+import { Profile } from './profile/entities/profile.entity';
+const AppDataSource = new DataSource({
+  type: 'postgres',
+  host: process.env.POSTGRES_HOST || 'localhost',
+  port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+  username: process.env.POSTGRES_USER || 'portfolio',
+  password: process.env.POSTGRES_PASSWORD || 'development-password',
+  database: process.env.POSTGRES_DB || 'portfolio',
+  entities: [Project, Profile],
+  synchronize: true,
+});
 
+async function runSeed() {
+  try {
+    console.log('Initializing database connection for seeding...');
+    await AppDataSource.initialize();
+
+    const projectRepo = AppDataSource.getRepository(Project);
+
+    // Clear existing records to ensure clean state
+    await projectRepo.clear();
+    const profileRepo = AppDataSource.getRepository(Profile);
 const existingProfile = await profileRepo.findOne({ where: {} });
 if (!existingProfile) {
   const defaultProfile = profileRepo.create({
@@ -16,27 +35,6 @@ if (!existingProfile) {
   await profileRepo.save(defaultProfile);
   console.log('Default developer profile seeded successfully!');
 }
-const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-  username: process.env.POSTGRES_USER || 'portfolio',
-  password: process.env.POSTGRES_PASSWORD || 'development-password',
-  database: process.env.POSTGRES_DB || 'portfolio',
-  entities: [Project],
-  synchronize: true,
-});
-
-async function runSeed() {
-  try {
-    console.log('Initializing database connection for seeding...');
-    await AppDataSource.initialize();
-
-    const projectRepo = AppDataSource.getRepository(Project);
-
-    // Clear existing records to ensure clean state
-    await projectRepo.clear();
-
     const sampleProjects: Partial<Project>[] = [
       {
         title: 'Microservices Order Processing Engine',

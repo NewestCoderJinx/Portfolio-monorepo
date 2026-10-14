@@ -20,11 +20,6 @@ export interface Project {
   lessonsLearned?: string;
 }
 
-export const getProjects = async (p0?: () => never[]): Promise<Project[]> => {
-  const res = await fetch(`${API_URL}/projects`);
-  if (!res.ok) throw new Error('Failed to fetch projects');
-  return res.json();
-};
 export const formatUrl = (url?: string): string | undefined => {
   if (!url || !url.trim()) return undefined;
   const trimmed = url.trim();
