@@ -21,11 +21,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: portfolio_user
-      DATABASE_PASSWORD: secret_password
-      DATABASE_NAME: portfolio_db
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: portfolio_user
+      POSTGRES_PASSWORD: secret_password
+      POSTGRES_DB: portfolio_db
       JWT_SECRET: super_secret_jwt_key
     volumes:
       - ./api/uploads:/usr/src/app/uploads
