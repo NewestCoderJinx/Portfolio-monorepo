@@ -1,13 +1,14 @@
 import { DataSource } from 'typeorm';
-import { Project } from './projects/project.entity';
 import { Profile } from './profile/entities/profile.entity';
+import { Project } from './projects/project.entity';
+
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-  username: process.env.POSTGRES_USER || 'portfolio',
-  password: process.env.POSTGRES_PASSWORD || 'development-password',
-  database: process.env.POSTGRES_DB || 'portfolio',
+  host: process.env.POSTGRES_HOST || process.env.DATABASE_HOST || 'localhost',
+  port: parseInt(process.env.POSTGRES_PORT || process.env.DATABASE_PORT || '5432', 10),
+  username: process.env.POSTGRES_USER || process.env.DATABASE_USER || 'portfolio_user',
+  password: process.env.POSTGRES_PASSWORD || process.env.DATABASE_PASSWORD || 'secret_password',
+  database: process.env.POSTGRES_DB || process.env.DATABASE_NAME || 'portfolio_db',
   entities: [Project, Profile],
   synchronize: true,
 });
@@ -18,23 +19,27 @@ async function runSeed() {
     await AppDataSource.initialize();
 
     const projectRepo = AppDataSource.getRepository(Project);
-
-    // Clear existing records to ensure clean state
-    await projectRepo.clear();
     const profileRepo = AppDataSource.getRepository(Profile);
-const existingProfile = await profileRepo.findOne({ where: {} });
-if (!existingProfile) {
-  const defaultProfile = profileRepo.create({
-    name: 'Alonnah',
-    headline: 'Full-Stack Software Engineer & Systems Architect',
-    bio: 'Passionate software engineer specializing in NestJS, React, and cloud-native infrastructure.',
-    location: 'Remote / Available Worldwide',
-    githubUrl: 'https://github.com/alonnah',
-    linkedinUrl: 'https://linkedin.com/in/alonnah',
-  });
-  await profileRepo.save(defaultProfile);
-  console.log('Default developer profile seeded successfully!');
-}
+
+    // Clear existing project records
+    await projectRepo.clear();
+
+    // 1. Seed Profile
+    const existingProfile = await profileRepo.findOne({ where: {} });
+    if (!existingProfile) {
+      const defaultProfile = profileRepo.create({
+        name: 'Alonnah',
+        headline: 'Full-Stack Software Engineer & Systems Architect',
+        bio: 'Passionate software engineer specializing in NestJS, React, and cloud-native infrastructure.',
+        location: 'Remote / Available Worldwide',
+        githubUrl: 'https://github.com/alonnah',
+        linkedinUrl: 'https://linkedin.com/in/alonnah',
+      });
+      await profileRepo.save(defaultProfile);
+      console.log('Default developer profile seeded successfully!');
+    }
+
+    // 2. Seed Projects
     const sampleProjects: Partial<Project>[] = [
       {
         title: 'Microservices Order Processing Engine',
@@ -97,11 +102,13 @@ if (!existingProfile) {
       await projectRepo.save(project);
     }
 
-    console.log('Database seeding completed successfully! 3 sample case studies created.');
+    console.log('Database seeding completed successfully!');
   } catch (error) {
     console.error('Error during database seeding:', error);
   } finally {
-    await AppDataSource.destroy();
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+    }
   }
 }
 
