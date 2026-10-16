@@ -17,7 +17,7 @@ import { ProfileService } from './profile/profile.service';
   username: process.env.POSTGRES_USER || 'portfolio',
   password: process.env.POSTGRES_PASSWORD || 'development-password',
   database: process.env.POSTGRES_DB || 'portfolio',
-  uuidExtension: 'pgcrypto',   // <-- add this
+  uuidExtension: 'pgcrypto',   
   entities: [Project, Profile],
   synchronize: true,
 }),
