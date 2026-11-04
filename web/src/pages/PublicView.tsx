@@ -1,372 +1,202 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
+  Button,
   Container,
   Heading,
-  Text,
-  SimpleGrid,
-  Card,
-  CardBody,
-  Image,
-  Tag,
-  Wrap,
-  WrapItem,
-  VStack,
   HStack,
-  Button,
   Input,
   InputGroup,
   InputLeftElement,
-  Spinner,
-  Badge,
+  SimpleGrid,
+  Skeleton,
+  Text,
   useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  Divider,
+  VStack,
 } from '@chakra-ui/react';
+import { getProfile, type Profile } from '../api/profile';
 import { getProjects, type Project } from '../api/projectstate';
+import { CaseStudyModal } from '../components/public/CaseStudyModal';
+import { ContactSection } from '../components/public/ContactSection';
+import { SearchIcon } from '../components/public/icons';
+import { PortfolioStats } from '../components/public/PortfolioStats';
+import { ProfileHero } from '../components/public/ProfileHero';
+import { ProjectCard } from '../components/public/ProjectCard';
+import { TechStack } from '../components/public/TechStack';
 
-const SearchIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"></circle>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-  </svg>
-);
+const PROJECT_HASH = /^#project-(.+)$/;
 
 export function PublicView() {
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
+  const fetchPortfolio = useCallback(
+    () =>
+      Promise.all([getProfile(), getProjects()])
+        .then(([prof, projs]) => {
+          setProfile(prof);
+          setProjects(projs);
+          setLoadError(false);
+          // Deep link: /#project-<id> opens that project's case study.
+          const match = window.location.hash.match(PROJECT_HASH);
+          if (match) setSelectedProject(projs.find((p) => p.id === match[1]) ?? null);
+        })
+        .catch((err) => {
+          console.error('Failed to load portfolio:', err);
+          setLoadError(true);
+        })
+        .finally(() => setLoading(false)),
+    [],
+  );
+
   useEffect(() => {
-    getProjects()
-      .then((data) => setProjects(data))
-      .catch((err) => {
-        console.error('Failed to load projects:', err);
-        toast({
-          title: 'Unable to load projects',
-          description: 'Please check your connection or server status.',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-        });
-      })
-      .finally(() => setLoading(false));
-  }, [toast]);
+    fetchPortfolio();
+  }, [fetchPortfolio]);
 
-  const handleCopyLink = (url: string, title: string) => {
-    navigator.clipboard.writeText(url);
-    toast({
-      title: 'Link copied!',
-      description: `Copied URL for "${title}" to clipboard.`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-      position: 'bottom-right',
+  const retry = () => {
+    setLoading(true);
+    setLoadError(false);
+    fetchPortfolio();
+  };
+
+  useEffect(() => {
+    document.title = profile ? `${profile.name}${profile.headline ? ` | ${profile.headline}` : ''}` : 'DevPortfolio';
+  }, [profile]);
+
+  const openProject = (p: Project) => {
+    setSelectedProject(p);
+    window.history.replaceState(null, '', `#project-${p.id}`);
+  };
+
+  const closeProject = () => {
+    setSelectedProject(null);
+    window.history.replaceState(null, '', window.location.pathname);
+  };
+
+  const shareProject = async (p: Project) => {
+    const url = `${window.location.origin}${window.location.pathname}#project-${p.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copied', description: `Share link for "${p.title}" copied.`, status: 'success', duration: 3000, position: 'bottom-right' });
+    } catch {
+      toast({ title: 'Copy this link', description: url, status: 'info', duration: 8000, isClosable: true, position: 'bottom-right' });
+    }
+  };
+
+  const selectTag = (tag: string | null) => {
+    setSelectedTag(tag);
+    document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const filteredProjects = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return projects.filter((p) => {
+      const matchesSearch =
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.tags?.some((t) => t.toLowerCase().includes(q));
+      const matchesTag = !selectedTag || p.tags?.includes(selectedTag);
+      return matchesSearch && matchesTag;
     });
+  }, [projects, searchQuery, selectedTag]);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedTag(null);
   };
 
-  const handleOpenCaseStudy = (project: Project) => {
-    setSelectedProject(project);
-    onOpen();
-  };
-
-  const allTags = Array.from(new Set(projects.flatMap((p) => p.tags || [])));
-
-  const filteredProjects = projects.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesTag = selectedTag ? p.tags?.includes(selectedTag) : true;
-
-    return matchesSearch && matchesTag;
-  });
+  if (loadError) {
+    return (
+      <Container maxW="container.md" py={24} textAlign="center">
+        <Heading size="md" mb={2}>Couldn't load the portfolio</Heading>
+        <Text color="gray.600" mb={6}>The server may be offline. Please try again in a moment.</Text>
+        <Button colorScheme="blue" onClick={retry}>Retry</Button>
+      </Container>
+    );
+  }
 
   return (
-    <Box bg="gray.50" minH="calc(100vh - 70px)" py={12}>
+    <Box bg="gray.50" minH="calc(100vh - 70px)" py={{ base: 8, md: 12 }}>
       <Container maxW="container.lg">
-        <VStack spacing={8} align="stretch">
-          
-          {/* Hero Section */}
-          <VStack spacing={3} textAlign="center">
-            <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
-              Full-Stack Software Engineer
-            </Badge>
+        <VStack spacing={10} align="stretch">
+          <ProfileHero profile={profile} loading={loading} />
 
-            <HStack spacing={3} justify="center" wrap="wrap">
-              <Heading as="h1" size="2xl" letterSpacing="tight">
-                Featured Engineering Projects
-              </Heading>
-              <Badge colorScheme="blue" fontSize="0.8em" px={3} py={1} borderRadius="full" variant="subtle">
-                {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
-              </Badge>
-            </HStack>
+          {!loading && <PortfolioStats projects={projects} />}
 
-            <Text color="gray.600" maxW="2xl" fontSize="md">
-              Explore custom web applications, APIs, and microservices built with modern enterprise technologies.
-            </Text>
-          </VStack>
+          {!loading && <TechStack projects={projects} selectedTag={selectedTag} onSelect={selectTag} />}
 
-          {/* Search & Dynamic Filter Section */}
-          <VStack spacing={4} align="stretch" bg="white" p={5} borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
-            <InputGroup size="md">
-              <InputLeftElement pointerEvents="none">
-                <SearchIcon />
-              </InputLeftElement>
-              <Input
-                placeholder="Search by project name or description..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                borderRadius="md"
-              />
-            </InputGroup>
-
-            {allTags.length > 0 && (
-              <HStack spacing={2} flexWrap="wrap" pt={2}>
-                <Text fontSize="xs" fontWeight="bold" color="gray.500" mr={1}>
-                  Filter by Tag:
+          {/* Projects */}
+          <Box id="projects" scrollMarginTop="90px">
+            <HStack justify="space-between" align="end" mb={4} flexWrap="wrap" gap={3}>
+              <Box>
+                <Heading as="h2" size="lg">Projects</Heading>
+                <Text color="gray.500" fontSize="sm">
+                  {selectedTag ? `Showing projects built with ${selectedTag}` : 'What I have built, and how I built it'}
                 </Text>
-                <Tag
-                  size="sm"
-                  cursor="pointer"
-                  colorScheme={selectedTag === null ? 'blue' : 'gray'}
-                  variant={selectedTag === null ? 'solid' : 'subtle'}
-                  onClick={() => setSelectedTag(null)}
-                >
-                  All
-                </Tag>
-                {allTags.map((tag) => (
-                  <Tag
-                    key={tag}
-                    size="sm"
-                    cursor="pointer"
-                    colorScheme={selectedTag === tag ? 'blue' : 'gray'}
-                    variant={selectedTag === tag ? 'solid' : 'subtle'}
-                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                  >
-                    {tag}
-                  </Tag>
-                ))}
-              </HStack>
-            )}
-          </VStack>
-
-          {/* Projects Display Grid */}
-          {loading ? (
-            <VStack py={16}>
-              <Spinner size="xl" color="blue.500" thickness="3px" />
-              <Text color="gray.500" fontSize="sm">Loading portfolio showcase...</Text>
-            </VStack>
-          ) : filteredProjects.length === 0 ? (
-            <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
-              <Text color="gray.500" mb={3}>No projects match your search criteria.</Text>
+              </Box>
               {(searchQuery || selectedTag) && (
-                <Button
-                  size="sm"
-                  colorScheme="blue"
-                  variant="ghost"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedTag(null);
-                  }}
-                >
-                  Clear Search & Filters
+                <Button size="sm" variant="ghost" colorScheme="blue" onClick={clearFilters}>
+                  Clear filters
                 </Button>
               )}
-            </Box>
-          ) : (
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-              {filteredProjects.map((p) => (
-                <Card key={p.id} borderWidth="1px" borderColor="gray.200" borderRadius="xl" overflow="hidden" boxShadow="sm" bg="white">
-                  <CardBody p={5} display="flex" flexDirection="column" justifyContent="space-between">
-                    <Box>
-                      {p.imageUrl && (
-                        <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="160px" w="full" objectFit="cover" mb={4} />
-                      )}
-                      <Heading size="md" color="gray.800" mb={2}>{p.title}</Heading>
-                      <Text color="gray.600" fontSize="sm" mb={4}>
-                        {p.description || 'No description provided.'}
-                      </Text>
+            </HStack>
 
-                      {p.tags && p.tags.length > 0 && (
-                        <Wrap mb={4} spacing={1.5}>
-                          {p.tags.map((tag, idx) => (
-                            <WrapItem key={idx}>
-                              <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
-                                {tag}
-                              </Tag>
-                            </WrapItem>
-                          ))}
-                        </Wrap>
-                      )}
-                    </Box>
+            {projects.length > 0 && (
+              <InputGroup mb={6} bg="white" borderRadius="md">
+                <InputLeftElement pointerEvents="none" color="gray.400">
+                  <SearchIcon />
+                </InputLeftElement>
+                <Input
+                  placeholder="Search projects by name, description or technology..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search projects"
+                />
+              </InputGroup>
+            )}
 
-                    {/* Actions */}
-                    <VStack align="stretch" spacing={2} pt={4} borderTopWidth="1px" borderColor="gray.100">
-                      <Button
-                        size="xs"
-                        colorScheme="blue"
-                        variant="outline"
-                        onClick={() => handleOpenCaseStudy(p)}
-                      >
-                        Read Case Study
-                      </Button>
+            {loading ? (
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} h="360px" borderRadius="xl" />
+                ))}
+              </SimpleGrid>
+            ) : projects.length === 0 ? (
+              <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
+                <Text color="gray.500">Projects are on their way. Check back soon.</Text>
+              </Box>
+            ) : filteredProjects.length === 0 ? (
+              <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
+                <Text color="gray.500" mb={3}>No projects match your search.</Text>
+                <Button size="sm" colorScheme="blue" variant="ghost" onClick={clearFilters}>
+                  Clear search & filters
+                </Button>
+              </Box>
+            ) : (
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                {filteredProjects.map((p) => (
+                  <ProjectCard key={p.id} project={p} onOpen={openProject} onShare={shareProject} />
+                ))}
+              </SimpleGrid>
+            )}
+          </Box>
 
-                      <HStack spacing={2} width="full">
-                        {p.githubUrl && (
-                          <Button
-                            as="a"
-                            href={p.githubUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            size="xs"
-                            variant="outline"
-                            colorScheme="gray"
-                            flex={1}
-                          >
-                            Repository
-                          </Button>
-                        )}
-                        {p.demoUrl && (
-                          <Button
-                            as="a"
-                            href={p.demoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            size="xs"
-                            colorScheme="blue"
-                            flex={1}
-                          >
-                            Live Demo
-                          </Button>
-                        )}
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          colorScheme="teal"
-                          onClick={() => handleCopyLink(p.demoUrl || p.githubUrl || window.location.href, p.title)}
-                        >
-                          Share
-                        </Button>
-                      </HStack>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              ))}
-            </SimpleGrid>
-          )}
+          {!loading && <ContactSection profile={profile} />}
 
+          <Text textAlign="center" fontSize="xs" color="gray.400">
+            © {new Date().getFullYear()} {profile?.name ?? 'DevPortfolio'}
+          </Text>
         </VStack>
       </Container>
 
-      {/* Case Study Detailed Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
-        <ModalOverlay />
-        <ModalContent borderRadius="xl">
-          <ModalHeader>
-            <VStack align="start" spacing={1}>
-              <Badge colorScheme="blue" fontSize="xs">Case Study</Badge>
-              <Heading size="lg">{selectedProject?.title}</Heading>
-            </VStack>
-          </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            {selectedProject && (
-              <VStack align="stretch" spacing={5}>
-                {selectedProject.imageUrl && (
-                  <Image
-                    src={selectedProject.imageUrl}
-                    alt={selectedProject.title}
-                    borderRadius="lg"
-                    maxH="220px"
-                    objectFit="cover"
-                  />
-                )}
-
-                <Tabs variant="soft-rounded" colorScheme="blue" size="sm">
-                  <TabList flexWrap="wrap" gap={1}>
-                    <Tab>Overview</Tab>
-                    <Tab>Problem & Solution</Tab>
-                    <Tab>Decisions & Challenges</Tab>
-                    <Tab>Lessons Learned</Tab>
-                  </TabList>
-                  <Divider my={3} />
-                  <TabPanels>
-                    <TabPanel px={0}>
-                      <VStack align="start" spacing={3}>
-                        <Heading size="xs" color="gray.500" textTransform="uppercase">Summary</Heading>
-                        <Text color="gray.700">{selectedProject.description || 'No overview provided.'}</Text>
-                        
-                        {selectedProject.tags && selectedProject.tags.length > 0 && (
-                          <Box pt={2}>
-                            <Heading size="xs" color="gray.500" textTransform="uppercase" mb={2}>Technologies</Heading>
-                            <Wrap spacing={1.5}>
-                              {selectedProject.tags.map((tag, idx) => (
-                                <WrapItem key={idx}>
-                                  <Tag size="sm" colorScheme="blue">{tag}</Tag>
-                                </WrapItem>
-                              ))}
-                            </Wrap>
-                          </Box>
-                        )}
-                      </VStack>
-                    </TabPanel>
-
-                    <TabPanel px={0}>
-                      <VStack align="start" spacing={4}>
-                        <Box>
-                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>The Problem</Heading>
-                          <Text color="gray.700">{selectedProject.problem || 'No details provided.'}</Text>
-                        </Box>
-                        <Box>
-                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>The Solution</Heading>
-                          <Text color="gray.700">{selectedProject.solution || 'No details provided.'}</Text>
-                        </Box>
-                      </VStack>
-                    </TabPanel>
-
-                    <TabPanel px={0}>
-                      <VStack align="start" spacing={4}>
-                        <Box>
-                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Key Engineering Decisions</Heading>
-                          <Text color="gray.700">{selectedProject.decisions || 'No details provided.'}</Text>
-                        </Box>
-                        <Box>
-                          <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Challenges Encountered</Heading>
-                          <Text color="gray.700">{selectedProject.challenges || 'No details provided.'}</Text>
-                        </Box>
-                      </VStack>
-                    </TabPanel>
-
-                    <TabPanel px={0}>
-                      <Box>
-                        <Heading size="xs" color="gray.500" textTransform="uppercase" mb={1}>Lessons Learned</Heading>
-                        <Text color="gray.700">{selectedProject.lessonsLearned || 'No details provided.'}</Text>
-                      </Box>
-                    </TabPanel>
-                  </TabPanels>
-                </Tabs>
-              </VStack>
-            )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      <CaseStudyModal project={selectedProject} onClose={closeProject} />
     </Box>
   );
 }
