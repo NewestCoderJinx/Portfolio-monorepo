@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+import { API_URL } from './axios';
 
 export const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token');

@@ -222,7 +222,7 @@ export function PublicView() {
                       <Button
                         size="xs"
                         colorScheme="blue"
-                        variant="subtle"
+                        variant="outline"
                         onClick={() => handleOpenCaseStudy(p)}
                       >
                         Read Case Study

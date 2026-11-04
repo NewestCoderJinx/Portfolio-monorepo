@@ -1,7 +1,4 @@
-import { getToken } from './auth';
 import API from './axios';
-
-const API_URL = 'http://localhost:3000';
 
 export interface Project {
   id: string;
@@ -29,53 +26,28 @@ export const formatUrl = (url?: string): string | undefined => {
   return `https://${trimmed}`;
 };
 
+export const getProjects = async (): Promise<Project[]> => {
+  const res = await API.get<Project[]>('/projects');
+  return res.data;
+};
+
 export const createProject = async (projectData: Partial<Project>): Promise<Project> => {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/projects`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(projectData),
-  });
-  if (!res.ok) throw new Error('Failed to create project');
-  return res.json();
+  const res = await API.post<Project>('/projects', projectData);
+  return res.data;
 };
 
 export const updateProject = async (id: string, projectData: Partial<Project>): Promise<Project> => {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/projects/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(projectData),
-  });
-  if (!res.ok) throw new Error('Failed to update project');
-  return res.json();
+  const res = await API.patch<Project>(`/projects/${id}`, projectData);
+  return res.data;
 };
 
 export const deleteProject = async (id: string): Promise<void> => {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/projects/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!res.ok) throw new Error('Failed to delete project');
+  await API.delete(`/projects/${id}`);
 };
+
 export const uploadProjectImage = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('file', file);
-
-  const response = await API.post<{ imageUrl: string }>('/projects/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-  return response.data.imageUrl;
+  const res = await API.post<{ imageUrl: string }>('/projects/upload', formData);
+  return res.data.imageUrl;
 };

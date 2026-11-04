@@ -1,18 +1,21 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     container_name: portfolio_db
     restart: always
     environment:
-      POSTGRES_USER: portfolio_user
-      POSTGRES_PASSWORD: secret_password
-      POSTGRES_DB: portfolio_db
+      POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build: ./api
@@ -21,23 +24,28 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: portfolio_user
-      DATABASE_PASSWORD: secret_password
-      DATABASE_NAME: portfolio_db
-      JWT_SECRET: super_secret_jwt_key
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key}
+      DB_SYNCHRONIZE: "true"
     volumes:
-      - ./api/uploads:/usr/src/app/uploads
+      - ./api/uploads:/app/uploads
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   web:
-    build: ./web
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
     container_name: portfolio_web
     restart: always
     ports:
-      - "5173:5173"
+      - "5173:80"
     depends_on:
       - api
 
