@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -15,12 +16,20 @@ export class ProjectsService {
     return this.projectRepository.find({ order: { createdAt: 'DESC' } });
   }
 
+  async findOne(id: string): Promise<Project> {
+    const project = await this.projectRepository.findOne({ where: { id } });
+    if (!project) {
+      throw new NotFoundException(`Project #${id} not found`);
+    }
+    return project;
+  }
+
   create(dto: CreateProjectDto): Promise<Project> {
     const project = this.projectRepository.create(dto);
     return this.projectRepository.save(project);
   }
 
-  async update(id: string, dto: Partial<CreateProjectDto>): Promise<Project> {
+  async update(id: string, dto: UpdateProjectDto): Promise<Project> {
     const project = await this.projectRepository.preload({ id, ...dto });
     if (!project) {
       throw new NotFoundException(`Project #${id} not found`);

@@ -1,18 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Column, Entity, PrimaryGeneratedColumn, Repository } from 'typeorm';
-
-@Entity()
-class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ unique: true })
-  email: string;
-
-  @Column()
-  passwordHash: string;
-}
+import { Repository } from 'typeorm';
+import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -22,11 +11,11 @@ export class UsersService {
   ) {}
 
   findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    return this.userRepository.findOne({ where: { email: email.toLowerCase() } });
   }
 
   create(email: string, passwordHash: string): Promise<User> {
-    const user = this.userRepository.create({ email, passwordHash });
+    const user = this.userRepository.create({ email: email.toLowerCase(), passwordHash });
     return this.userRepository.save(user);
   }
 }

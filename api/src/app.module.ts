@@ -1,31 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Project } from './projects/project.entity';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { databaseConfig } from './config/database.config';
+import { ProfileModule } from './profile/profile.module';
 import { ProjectsModule } from './projects/projects.module';
-import { Profile } from './profile/entities/profile.entity';
-import { ProfileController } from './profile/profile.controller';
-import { ProfileService } from './profile/profile.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-  type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-  username: process.env.POSTGRES_USER || 'portfolio',
-  password: process.env.POSTGRES_PASSWORD || 'development-password',
-  database: process.env.POSTGRES_DB || 'portfolio',
-  uuidExtension: 'pgcrypto',   
-  entities: [Project, Profile],
-   synchronize: process.env.NODE_ENV !== 'production',
-}),
-    TypeOrmModule.forFeature([Project, Profile]),
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({ useFactory: databaseConfig }),
+    AuthModule,
+    ProfileModule,
     ProjectsModule,
   ],
-  
-  controllers: [ProfileController],
-  providers: [ProfileService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -1,17 +1,16 @@
 import { DataSource } from 'typeorm';
+import { databaseConfig } from './config/database.config';
 import { Profile } from './profile/entities/profile.entity';
 import { Project } from './projects/project.entity';
 
-const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: process.env.POSTGRES_HOST || process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || process.env.DATABASE_PORT || '5432', 10),
-  username: process.env.POSTGRES_USER || process.env.DATABASE_USER || 'portfolio_user',
-  password: process.env.POSTGRES_PASSWORD || process.env.DATABASE_PASSWORD || 'secret_password',
-  database: process.env.POSTGRES_DB || process.env.DATABASE_NAME || 'portfolio_db',
-  entities: [Project, Profile],
-  synchronize: true,
-});
+// Load api/.env when present so the seed uses the same DB as the app.
+try {
+  process.loadEnvFile();
+} catch {
+  /* no .env file — rely on real environment variables */
+}
+
+const AppDataSource = new DataSource({ ...databaseConfig(), synchronize: true });
 
 async function runSeed() {
   try {

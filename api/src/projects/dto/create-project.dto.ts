@@ -1,7 +1,8 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
+  @IsNotEmpty()
   title: string;
 
   @IsString()
@@ -33,6 +34,7 @@ export class CreateProjectDto {
   imageUrl?: string;
 
   @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   tags?: string[];
 
