@@ -18,6 +18,9 @@ export class Profile {
   location: string;
 
   @Column({ nullable: true })
+  email: string;
+
+  @Column({ nullable: true })
   avatarUrl: string;
 
   @Column({ nullable: true })
