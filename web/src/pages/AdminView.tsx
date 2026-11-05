@@ -78,6 +78,8 @@ export function AdminView() {
   const [editChallenges, setEditChallenges] = useState('');
   const [editDecisions, setEditDecisions] = useState('');
   const [editLessonsLearned, setEditLessonsLearned] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editUploading, setEditUploading] = useState(false);
 
   const fetchProjects = () => {
     setLoading(true);
@@ -107,6 +109,21 @@ export function AdminView() {
       toast({ title: 'Failed to upload image', status: 'error', duration: 3000, isClosable: true });
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const handleEditFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setEditUploading(true);
+    try {
+      setEditImageUrl(await uploadProjectImage(file));
+    } catch (err) {
+      toast({ title: 'Failed to upload image', status: 'error', duration: 3000, isClosable: true });
+    } finally {
+      setEditUploading(false);
     }
   };
 
@@ -183,6 +200,7 @@ export function AdminView() {
     setEditChallenges(p.challenges || '');
     setEditDecisions(p.decisions || '');
     setEditLessonsLearned(p.lessonsLearned || '');
+    setEditImageUrl(p.imageUrl || '');
   };
 
   const handleUpdate = async (id: string) => {
@@ -201,8 +219,10 @@ export function AdminView() {
         decisions: editDecisions.trim(),
         lessonsLearned: editLessonsLearned.trim(),
         tags,
-        githubUrl: formatUrl(editGithubUrl),
-        demoUrl: formatUrl(editDemoUrl),
+        imageUrl: editImageUrl.trim() || null,
+        // null (not undefined) so clearing a link actually removes it
+        githubUrl: formatUrl(editGithubUrl) ?? null,
+        demoUrl: formatUrl(editDemoUrl) ?? null,
       });
       setEditingId(null);
       fetchProjects();
@@ -380,6 +400,26 @@ export function AdminView() {
                     {editingId === p.id ? (
                       <VStack spacing={3}>
                         <Heading size="xs" color="blue.600">Edit Project</Heading>
+                        <Box width="full">
+                          {editImageUrl ? (
+                            <Image src={editImageUrl} alt="Cover" borderRadius="md" maxH="120px" w="full" objectFit="cover" />
+                          ) : (
+                            <Box h="60px" borderRadius="md" borderWidth="1px" borderStyle="dashed" borderColor="gray.300" display="flex" alignItems="center" justifyContent="center">
+                              <Text fontSize="xs" color="gray.400">No cover image</Text>
+                            </Box>
+                          )}
+                          <HStack mt={2} spacing={2}>
+                            <Button as="label" size="xs" variant="outline" flex={1} cursor="pointer" isLoading={editUploading} loadingText="Uploading...">
+                              {editImageUrl ? 'Change image' : 'Add image'}
+                              <input type="file" accept="image/*" hidden onChange={handleEditFileUpload} />
+                            </Button>
+                            {editImageUrl && (
+                              <Button size="xs" variant="ghost" colorScheme="red" onClick={() => setEditImageUrl('')} isDisabled={editUploading}>
+                                Remove
+                              </Button>
+                            )}
+                          </HStack>
+                        </Box>
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" placeholder="Title" />
                         <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={2} placeholder="Description" />
                         <Input value={editTagsInput} onChange={(e) => setEditTagsInput(e.target.value)} size="sm" placeholder="Tags (comma-separated)" />
@@ -410,7 +450,7 @@ export function AdminView() {
                         <Input value={editDemoUrl} onChange={(e) => setEditDemoUrl(e.target.value)} size="sm" placeholder="Demo URL" />
 
                         <HStack width="full" pt={2}>
-                          <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)}>
+                          <Button colorScheme="green" size="xs" flex={1} onClick={() => handleUpdate(p.id)} isDisabled={editUploading}>
                             Save
                           </Button>
                           <Button size="xs" flex={1} onClick={() => setEditingId(null)}>

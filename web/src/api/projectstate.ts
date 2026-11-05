@@ -36,7 +36,10 @@ export const createProject = async (projectData: Partial<Project>): Promise<Proj
   return res.data;
 };
 
-export const updateProject = async (id: string, projectData: Partial<Project>): Promise<Project> => {
+/** null clears a field; omitted fields are left unchanged. */
+export type ProjectUpdate = { [K in keyof Omit<Project, 'id'>]?: Project[K] | null };
+
+export const updateProject = async (id: string, projectData: ProjectUpdate): Promise<Project> => {
   const res = await API.patch<Project>(`/projects/${id}`, projectData);
   return res.data;
 };
