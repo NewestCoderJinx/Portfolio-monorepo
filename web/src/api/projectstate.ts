@@ -15,6 +15,8 @@ export interface Project {
   challenges?: string;
   decisions?: string;
   lessonsLearned?: string;
+  featured?: boolean;
+  sortOrder?: number;
 }
 
 export const formatUrl = (url?: string): string | undefined => {
@@ -41,6 +43,12 @@ export type ProjectUpdate = { [K in keyof Omit<Project, 'id'>]?: Project[K] | nu
 
 export const updateProject = async (id: string, projectData: ProjectUpdate): Promise<Project> => {
   const res = await API.patch<Project>(`/projects/${id}`, projectData);
+  return res.data;
+};
+
+/** Saves the display order; ids must be in the desired order. */
+export const reorderProjects = async (ids: string[]): Promise<Project[]> => {
+  const res = await API.patch<Project[]>('/projects/reorder', { ids });
   return res.data;
 };
 

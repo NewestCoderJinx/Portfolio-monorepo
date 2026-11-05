@@ -39,6 +39,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  reorderProjects,
   uploadProjectImage,
   formatUrl,
   type Project,
@@ -174,6 +175,35 @@ export function AdminView() {
       toast({ title: 'Failed to create project', status: 'error', duration: 3000, isClosable: true });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleToggleFeatured = async (p: Project) => {
+    try {
+      await updateProject(p.id, { featured: !p.featured });
+      toast({ title: p.featured ? 'Removed from featured' : 'Featured: pinned to the top', status: 'success', duration: 2500, isClosable: true });
+      fetchProjects();
+    } catch (err) {
+      toast({ title: 'Failed to update project', status: 'error', duration: 3000, isClosable: true });
+    }
+  };
+
+  // Featured projects always sort above the rest, so moves stay within the same group.
+  const canMove = (index: number, dir: -1 | 1) => {
+    const neighbor = projects[index + dir];
+    return Boolean(neighbor) && Boolean(neighbor.featured) === Boolean(projects[index].featured);
+  };
+
+  const handleMove = async (index: number, dir: -1 | 1) => {
+    if (!canMove(index, dir)) return;
+    const next = [...projects];
+    [next[index], next[index + dir]] = [next[index + dir], next[index]];
+    setProjects(next); // optimistic
+    try {
+      await reorderProjects(next.map((p) => p.id));
+    } catch (err) {
+      toast({ title: 'Failed to save new order', status: 'error', duration: 3000, isClosable: true });
+      fetchProjects();
     }
   };
 
@@ -394,7 +424,7 @@ export function AdminView() {
             </Box>
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-              {projects.map((p) => (
+              {projects.map((p, index) => (
                 <Card key={p.id} borderWidth="1px" borderColor="gray.200" borderRadius="xl" overflow="hidden" boxShadow="xs" bg="white">
                   <CardBody p={5}>
                     {editingId === p.id ? (
@@ -481,7 +511,25 @@ export function AdminView() {
                           )}
                         </Box>
 
-                        <HStack width="full" pt={3} borderTopWidth="1px" borderColor="gray.100">
+                        <HStack width="full" pt={3} borderTopWidth="1px" borderColor="gray.100" spacing={1}>
+                          <Button size="xs" variant="ghost" aria-label="Move up" title="Move up" onClick={() => handleMove(index, -1)} isDisabled={!canMove(index, -1)}>
+                            ↑
+                          </Button>
+                          <Button size="xs" variant="ghost" aria-label="Move down" title="Move down" onClick={() => handleMove(index, 1)} isDisabled={!canMove(index, 1)}>
+                            ↓
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant={p.featured ? 'solid' : 'ghost'}
+                            colorScheme="yellow"
+                            onClick={() => handleToggleFeatured(p)}
+                            title={p.featured ? 'Unpin from top' : 'Pin to top of public page'}
+                            flex={1}
+                          >
+                            {p.featured ? '★ Featured' : '☆ Feature'}
+                          </Button>
+                        </HStack>
+                        <HStack width="full" mt={-1}>
                           <Button size="xs" variant="outline" colorScheme="gray" flex={1} onClick={() => startEditing(p)}>
                             Edit
                           </Button>

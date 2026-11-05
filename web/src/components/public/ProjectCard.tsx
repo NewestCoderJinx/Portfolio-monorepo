@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardBody, Flex, Heading, HStack, Image, Tag, Text, Wrap, WrapItem } from '@chakra-ui/react';
+import { Badge, Box, Button, Card, CardBody, Flex, Heading, HStack, Image, Tag, Text, Wrap, WrapItem } from '@chakra-ui/react';
 import { formatUrl, type Project } from '../../api/projectstate';
 import { formatProjectDate, hasCaseStudy } from './caseStudy';
 import { ExternalIcon, GitHubIcon } from './icons';
@@ -29,15 +29,22 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
       transition="all 0.2s"
       _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }}
     >
-      {p.imageUrl ? (
-        <Image src={p.imageUrl} alt={p.title} h="170px" w="full" objectFit="cover" />
-      ) : (
-        <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, blue.500, purple.500)">
-          <Text color="white" fontSize="5xl" fontWeight="bold" opacity={0.85}>
-            {p.title.charAt(0).toUpperCase()}
-          </Text>
-        </Flex>
-      )}
+      <Box position="relative">
+        {p.imageUrl ? (
+          <Image src={p.imageUrl} alt={p.title} h="170px" w="full" objectFit="cover" />
+        ) : (
+          <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, blue.500, purple.500)">
+            <Text color="white" fontSize="5xl" fontWeight="bold" opacity={0.85}>
+              {p.title.charAt(0).toUpperCase()}
+            </Text>
+          </Flex>
+        )}
+        {p.featured && (
+          <Badge position="absolute" top={3} left={3} colorScheme="yellow" variant="solid" borderRadius="full" px={2.5} py={0.5} boxShadow="sm">
+            ★ Featured
+          </Badge>
+        )}
+      </Box>
 
       <CardBody p={5} display="flex" flexDirection="column">
         <Box flex="1">
