@@ -6,7 +6,7 @@ export function ContactSection({ profile }: { profile: Profile | null }) {
   if (!profile || !(profile.email || profile.githubUrl || profile.linkedinUrl || profile.websiteUrl)) return null;
 
   return (
-    <Box id="contact" bg="blue.600" color="white" borderRadius="2xl" p={{ base: 8, md: 12 }} textAlign="center">
+    <Box id="contact" scrollMarginTop="90px" bg="blue.600" color="white" borderRadius="2xl" p={{ base: 8, md: 12 }} textAlign="center">
       <VStack spacing={4}>
         <Heading as="h2" size="lg">
           Let's work together

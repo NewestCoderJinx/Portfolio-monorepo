@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { AdminView } from './pages/AdminView';
-import { PublicView } from './pages/PublicView'; // Check this import path!
-import { AuthForm } from './components/AuthForm';
-import { isAuthenticated, logoutUser } from './api/auth';
 import { useState } from 'react';
+import { Box } from '@chakra-ui/react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { isAuthenticated, logoutUser } from './api/auth';
+import { AuthForm } from './components/AuthForm';
+import { Navbar } from './components/Navbar';
+import { AdminView } from './pages/AdminView';
+import { PublicView } from './pages/PublicView';
 
 export function App() {
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
@@ -15,32 +17,8 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'sans-serif' }}>
-        {/* Navigation Bar */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: '#1e40af', fontSize: '1.25rem', fontWeight: 'bold' }}>
-            DevPortfolio
-          </Link>
-
-          <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <Link to="/" style={{ textDecoration: 'none', color: '#334155', fontWeight: 500 }}>
-              Public View
-            </Link>
-            <Link to="/admin" style={{ textDecoration: 'none', color: '#334155', fontWeight: 500 }}>
-              Admin
-            </Link>
-            {isAuth && (
-              <button
-                onClick={handleLogout}
-                style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
-              >
-                Logout
-              </button>
-            )}
-          </nav>
-        </header>
-
-        {/* Routes */}
+      <Box minH="100vh" bg="gray.50">
+        <Navbar isAuth={isAuth} onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={<PublicView />} />
           <Route
@@ -49,7 +27,7 @@ export function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
+      </Box>
     </BrowserRouter>
   );
 }

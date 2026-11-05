@@ -14,6 +14,8 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { isAuthenticated } from '../api/auth';
 import { getProfile, type Profile } from '../api/profile';
 import { getProjects, type Project } from '../api/projectstate';
 import { CaseStudyModal } from '../components/public/CaseStudyModal';
@@ -35,6 +37,7 @@ export function PublicView() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const toast = useToast();
+  const { hash } = useLocation();
 
   const fetchPortfolio = useCallback(
     () =>
@@ -64,6 +67,12 @@ export function PublicView() {
     setLoadError(false);
     fetchPortfolio();
   };
+
+  // Navbar links (/#projects, /#contact) scroll here once the content exists.
+  useEffect(() => {
+    if (loading || (hash !== '#projects' && hash !== '#contact')) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [hash, loading]);
 
   useEffect(() => {
     document.title = profile ? `${profile.name}${profile.headline ? ` | ${profile.headline}` : ''}` : 'DevPortfolio';
@@ -190,9 +199,17 @@ export function PublicView() {
 
           {!loading && <ContactSection profile={profile} />}
 
-          <Text textAlign="center" fontSize="xs" color="gray.400">
-            © {new Date().getFullYear()} {profile?.name ?? 'DevPortfolio'}
-          </Text>
+          <HStack justify="center" spacing={3} fontSize="xs" color="gray.400">
+            <Text>© {new Date().getFullYear()} {profile?.name ?? 'Portfolio'}</Text>
+            {!isAuthenticated() && (
+              <>
+                <Text aria-hidden>·</Text>
+                <Text as={RouterLink} to="/admin" _hover={{ color: 'gray.600' }}>
+                  Admin
+                </Text>
+              </>
+            )}
+          </HStack>
         </VStack>
       </Container>
 
