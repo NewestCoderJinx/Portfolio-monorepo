@@ -25,6 +25,7 @@ import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
 import { ProjectCard } from '../components/public/ProjectCard';
 import { TechStack } from '../components/public/TechStack';
+import { setMeta, summarize } from '../seo';
 
 const PROJECT_HASH = /^#project-(.+)$/;
 
@@ -74,8 +75,17 @@ export function PublicView() {
     document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [hash, loading]);
 
+  // Keep title/description in sync with the live profile (the static build-time tags are the fallback).
   useEffect(() => {
-    document.title = profile ? `${profile.name}${profile.headline ? ` | ${profile.headline}` : ''}` : 'DevPortfolio';
+    if (!profile) return;
+    const title = `${profile.name}${profile.headline ? ` | ${profile.headline}` : ''}`;
+    document.title = title;
+    setMeta('property', 'og:title', title);
+    const description = profile.bio || profile.headline;
+    if (description) {
+      setMeta('name', 'description', summarize(description));
+      setMeta('property', 'og:description', summarize(description));
+    }
   }, [profile]);
 
   const openProject = (p: Project) => {

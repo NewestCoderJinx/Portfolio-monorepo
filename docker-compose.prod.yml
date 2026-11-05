@@ -42,6 +42,10 @@ services:
       context: ./web
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        VITE_SITE_TITLE: ${VITE_SITE_TITLE:-}
+        VITE_SITE_DESCRIPTION: ${VITE_SITE_DESCRIPTION:-}
+        VITE_SITE_URL: ${VITE_SITE_URL:-}
+        VITE_OG_IMAGE: ${VITE_OG_IMAGE:-}
     container_name: portfolio_web
     restart: always
     ports:
