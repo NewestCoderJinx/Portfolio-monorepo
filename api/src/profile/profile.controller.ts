@@ -1,7 +1,8 @@
-import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
-import { ProfileService } from './profile.service';
-import { Profile } from './entities/profile.entity';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Profile } from './entities/profile.entity';
+import { ProfileService } from './profile.service';
 
 @Controller('profile')
 export class ProfileController {
@@ -14,7 +15,7 @@ export class ProfileController {
 
   @UseGuards(JwtAuthGuard)
   @Patch()
-  updateProfile(@Body() updateData: Partial<Profile>): Promise<Profile> {
-    return this.profileService.updateProfile(updateData);
+  updateProfile(@Body() dto: UpdateProfileDto): Promise<Profile> {
+    return this.profileService.updateProfile(dto);
   }
 }

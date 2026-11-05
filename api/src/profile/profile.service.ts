@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Profile } from './entities/profile.entity';
 
 @Injectable()
@@ -10,21 +11,28 @@ export class ProfileService {
     private readonly profileRepository: Repository<Profile>,
   ) {}
 
+  // The site has a single developer profile: always use the oldest row.
+  private findCurrent(): Promise<Profile | null> {
+    return this.profileRepository.findOne({ where: {}, order: { createdAt: 'ASC' } });
+  }
+
   async getProfile(): Promise<Profile> {
-    const profile = await this.profileRepository.findOne({ where: {} });
+    const profile = await this.findCurrent();
     if (!profile) {
       throw new NotFoundException('Developer profile not found');
     }
     return profile;
   }
 
-  async updateProfile(updateData: Partial<Profile>): Promise<Profile> {
-    let profile = await this.profileRepository.findOne({ where: {} });
+  async updateProfile(dto: UpdateProfileDto): Promise<Profile> {
+    let profile = await this.findCurrent();
     if (!profile) {
-      profile = this.profileRepository.create(updateData);
-    } else {
-      Object.assign(profile, updateData);
+      if (!dto.name?.trim()) {
+        throw new BadRequestException('name is required when creating the profile');
+      }
+      profile = this.profileRepository.create();
     }
+    Object.assign(profile, dto);
     return this.profileRepository.save(profile);
   }
 }
