@@ -24,3 +24,20 @@ export const getProfile = async (): Promise<Profile | null> => {
     throw err;
   }
 };
+
+export type ProfileUpdate = Partial<{ [K in keyof Omit<Profile, 'id'>]: Profile[K] | null }>;
+
+export const updateProfile = async (data: ProfileUpdate): Promise<Profile> => {
+  const res = await API.patch<Profile>('/profile', data);
+  return res.data;
+};
+
+/** Pulls readable validation messages out of an API error response. */
+export const apiErrorMessage = (err: unknown, fallback: string): string => {
+  if (isAxiosError(err)) {
+    const msg = err.response?.data?.error?.message ?? err.response?.data?.message;
+    if (Array.isArray(msg)) return msg.join(', ');
+    if (typeof msg === 'string') return msg;
+  }
+  return fallback;
+};

@@ -27,7 +27,13 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
 } from '@chakra-ui/react';
+import { ProfileEditor } from '../components/admin/ProfileEditor';
 import {
   getProjects,
   createProject,
@@ -220,10 +226,18 @@ export function AdminView() {
               Portfolio Management
             </Heading>
             <Text color="gray.600">
-              Manage your engineering projects stored in PostgreSQL
+              Manage your public profile and engineering projects
             </Text>
           </VStack>
 
+          <Tabs colorScheme="blue" variant="enclosed-colored" isLazy>
+            <TabList>
+              <Tab fontWeight="semibold">Projects</Tab>
+              <Tab fontWeight="semibold">Profile</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel px={0}>
+                <VStack spacing={8} align="stretch">
           {/* Creation Form */}
           <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
             <Heading as="h2" size="sm" mb={4} color="gray.700">
@@ -442,6 +456,13 @@ export function AdminView() {
               ))}
             </SimpleGrid>
           )}
+                </VStack>
+              </TabPanel>
+              <TabPanel px={0}>
+                <ProfileEditor />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </VStack>
       </Container>
     </Box>
