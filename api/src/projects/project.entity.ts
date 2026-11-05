@@ -38,6 +38,14 @@ export class Project {
   @Column({ nullable: true })
   demoUrl: string;
 
+  /** Featured projects are pinned above all others. */
+  @Column({ default: false })
+  featured: boolean;
+
+  /** Manual position; lower comes first. */
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

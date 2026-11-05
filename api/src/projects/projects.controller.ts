@@ -21,6 +21,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { ReorderProjectsDto } from './dto/reorder-projects.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './project.entity';
 import { ProjectsService } from './projects.service';
@@ -45,6 +46,13 @@ export class ProjectsController {
   @Post()
   create(@Body() dto: CreateProjectDto): Promise<Project> {
     return this.projectsService.create(dto);
+  }
+
+  // Must be declared before PATCH :id so "reorder" isn't treated as an id.
+  @UseGuards(JwtAuthGuard)
+  @Patch('reorder')
+  reorder(@Body() dto: ReorderProjectsDto): Promise<Project[]> {
+    return this.projectsService.reorder(dto.ids);
   }
 
   @UseGuards(JwtAuthGuard)

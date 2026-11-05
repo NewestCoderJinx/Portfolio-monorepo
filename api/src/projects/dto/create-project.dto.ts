@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
@@ -45,4 +45,8 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   demoUrl?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  featured?: boolean;
 }

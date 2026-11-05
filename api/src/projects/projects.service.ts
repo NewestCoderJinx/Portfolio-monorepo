@@ -13,7 +13,7 @@ export class ProjectsService {
   ) {}
 
   findAll(): Promise<Project[]> {
-    return this.projectRepository.find({ order: { createdAt: 'DESC' } });
+    return this.projectRepository.find({ order: { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' } });
   }
 
   async findOne(id: string): Promise<Project> {
@@ -24,9 +24,21 @@ export class ProjectsService {
     return project;
   }
 
-  create(dto: CreateProjectDto): Promise<Project> {
-    const project = this.projectRepository.create(dto);
+  async create(dto: CreateProjectDto): Promise<Project> {
+    // New projects go to the top of the manual order.
+    const lowest = (await this.projectRepository.minimum('sortOrder')) ?? 0;
+    const project = this.projectRepository.create({ ...dto, sortOrder: lowest - 1 });
     return this.projectRepository.save(project);
+  }
+
+  /** Persists a new manual order: each id gets its position in the list. */
+  async reorder(ids: string[]): Promise<Project[]> {
+    await this.projectRepository.manager.transaction(async (manager) => {
+      for (const [index, id] of ids.entries()) {
+        await manager.update(Project, { id }, { sortOrder: index });
+      }
+    });
+    return this.findAll();
   }
 
   async update(id: string, dto: UpdateProjectDto): Promise<Project> {
