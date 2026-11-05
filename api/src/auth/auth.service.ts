@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/user.service';
 import * as bcrypt from 'bcrypt';
@@ -8,9 +9,23 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
+  /**
+   * Only the first account (the site owner) may register. After that, registration
+   * is closed unless ALLOW_REGISTRATION=true is set to add another admin.
+   */
+  async isRegistrationOpen(): Promise<boolean> {
+    if (this.config.get<string>('ALLOW_REGISTRATION') === 'true') return true;
+    return (await this.usersService.count()) === 0;
+  }
+
   async register(email: string, pass: string) {
+    if (!(await this.isRegistrationOpen())) {
+      throw new ForbiddenException('Registration is closed');
+    }
+
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('User with this email already exists');

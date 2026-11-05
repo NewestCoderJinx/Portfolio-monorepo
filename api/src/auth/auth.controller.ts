@@ -1,10 +1,15 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('registration-status')
+  async registrationStatus() {
+    return { open: await this.authService.isRegistrationOpen() };
+  }
 
   @Post('register')
   register(@Body() dto: AuthCredentialsDto) {

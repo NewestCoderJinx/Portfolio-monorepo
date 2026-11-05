@@ -14,6 +14,10 @@ export class UsersService {
     return this.userRepository.findOne({ where: { email: email.toLowerCase() } });
   }
 
+  count(): Promise<number> {
+    return this.userRepository.count();
+  }
+
   create(email: string, passwordHash: string): Promise<User> {
     const user = this.userRepository.create({ email: email.toLowerCase(), passwordHash });
     return this.userRepository.save(user);

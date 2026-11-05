@@ -42,7 +42,8 @@ export const registerUser = async (email: string, password: string) => {
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Registration failed');
+    const msg = errorData.error?.message ?? errorData.message;
+    throw new Error((Array.isArray(msg) ? msg.join(', ') : msg) || 'Registration failed');
   }
 
   const data = await res.json();
@@ -50,4 +51,15 @@ export const registerUser = async (email: string, password: string) => {
     localStorage.setItem('access_token', data.access_token);
   }
   return data;
+};
+
+/** True while no admin account exists yet (or registration was explicitly reopened). */
+export const getRegistrationStatus = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(`${API_URL}/auth/registration-status`);
+    if (!res.ok) return false;
+    return Boolean((await res.json()).open);
+  } catch {
+    return false;
+  }
 };

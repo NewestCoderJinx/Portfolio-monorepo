@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -15,7 +15,7 @@ import {
   CardBody,
   Badge,
 } from '@chakra-ui/react';
-import { loginUser, registerUser } from '../api/auth';
+import { getRegistrationStatus, loginUser, registerUser } from '../api/auth';
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -27,6 +27,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [registrationOpen, setRegistrationOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    getRegistrationStatus().then((open) => {
+      setRegistrationOpen(open);
+      // No owner account yet: start on the sign-up form.
+      if (open) setIsLogin(false);
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,12 +70,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                   Admin Access
                 </Badge>
                 <Heading size="lg" color="gray.800" letterSpacing="tight">
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  {isLogin ? 'Sign In' : 'Create Owner Account'}
                 </Heading>
                 <Text color="gray.600" fontSize="sm">
                   {isLogin
-                    ? 'Enter your credentials to access the project dashboard'
-                    : 'Register an account to manage portfolio projects'}
+                    ? 'Enter your credentials to manage your portfolio'
+                    : 'No admin account exists yet. This account becomes the site owner, and sign-ups close afterwards.'}
                 </Text>
               </VStack>
 
@@ -100,7 +109,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                     </FormLabel>
                     <Input
                       type="password"
-                      placeholder="••••••••"
+                      placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       borderRadius="md"
@@ -115,12 +124,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                     isLoading={loading}
                     loadingText={isLogin ? 'Signing in...' : 'Registering...'}
                   >
-                    {isLogin ? 'Sign In' : 'Sign Up'}
+                    {isLogin ? 'Sign In' : 'Create Account'}
                   </Button>
                 </VStack>
               </Box>
 
-              {/* Switch between Login and Register */}
+              {/* Switch between Login and Register (only while sign-ups are open) */}
+              {registrationOpen && (
               <Box textAlign="center" pt={2}>
                 <Button
                   variant="link"
@@ -131,9 +141,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                     setError(null);
                   }}
                 >
-                  {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
+                  {isLogin ? "Don't have an account? Register" : 'Already have an account? Sign in'}
                 </Button>
               </Box>
+              )}
 
             </VStack>
           </CardBody>
