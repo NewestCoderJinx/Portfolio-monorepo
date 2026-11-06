@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Box, Button, Heading, HStack, Input, InputGroup, InputLeftElement, SimpleGrid, Skeleton, Text } from '@chakra-ui/react';
+import { Box, Button, Heading, HStack, Input, InputGroup, InputLeftElement, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
 import type { Project } from '../../api/projectstate';
+import { FeaturedProject } from './FeaturedProject';
 import { SearchIcon } from './icons';
 import { ProjectCard } from './ProjectCard';
 
@@ -43,6 +44,11 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
     [projects, searchQuery, selectedTag],
   );
 
+  // Featured projects get the spotlight only on the unfiltered view; a search or tag shows everything as cards.
+  const isFiltering = Boolean(searchQuery.trim() || selectedTag);
+  const featured = isFiltering ? [] : filteredProjects.filter((p) => p.featured);
+  const gridProjects = isFiltering ? filteredProjects : filteredProjects.filter((p) => !p.featured);
+
   const clearFilters = () => {
     setSearchQuery('');
     onClearTag();
@@ -74,11 +80,18 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
     );
   } else {
     body = (
-      <SimpleGrid columns={GRID_COLUMNS} spacing={6}>
-        {filteredProjects.map((p) => (
-          <ProjectCard key={p.id} project={p} onOpen={onOpen} onShare={onShare} />
+      <VStack spacing={6} align="stretch">
+        {featured.map((p) => (
+          <FeaturedProject key={p.id} project={p} onOpen={onOpen} onShare={onShare} />
         ))}
-      </SimpleGrid>
+        {gridProjects.length > 0 && (
+          <SimpleGrid columns={GRID_COLUMNS} spacing={6}>
+            {gridProjects.map((p) => (
+              <ProjectCard key={p.id} project={p} onOpen={onOpen} onShare={onShare} />
+            ))}
+          </SimpleGrid>
+        )}
+      </VStack>
     );
   }
 
