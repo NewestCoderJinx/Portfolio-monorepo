@@ -1,11 +1,25 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Box, Button, Heading, HStack, Input, InputGroup, InputLeftElement, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, HStack, Input, InputGroup, InputLeftElement, Select, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
 import type { Project } from '../../api/projectstate';
 import { FeaturedProject } from './FeaturedProject';
 import { SearchIcon } from './icons';
 import { ProjectCard } from './ProjectCard';
 
 const GRID_COLUMNS = { base: 1, md: 2, lg: 3 };
+
+const SORTS = {
+  // The owner's manual order from Admin, as the API returns it.
+  default: { label: 'Recommended', compare: null },
+  newest: { label: 'Newest first', compare: (a: Project, b: Project) => dateOf(b) - dateOf(a) },
+  oldest: { label: 'Oldest first', compare: (a: Project, b: Project) => dateOf(a) - dateOf(b) },
+  title: { label: 'Title (A–Z)', compare: (a: Project, b: Project) => a.title.localeCompare(b.title) },
+} as const;
+type SortKey = keyof typeof SORTS;
+
+function dateOf(p: Project) {
+  const t = p.createdAt ? Date.parse(p.createdAt) : NaN;
+  return Number.isNaN(t) ? 0 : t;
+}
 
 interface Props {
   projects: Project[];
@@ -39,15 +53,18 @@ function EmptyState({ children }: { children: ReactNode }) {
 
 export function ProjectsSection({ projects, loading, selectedTag, onClearTag, onOpen, onShare }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredProjects = useMemo(
-    () => filterProjects(projects, searchQuery, selectedTag),
-    [projects, searchQuery, selectedTag],
-  );
+  const [sort, setSort] = useState<SortKey>('default');
+  const filteredProjects = useMemo(() => {
+    const matches = filterProjects(projects, searchQuery, selectedTag);
+    const { compare } = SORTS[sort];
+    return compare ? [...matches].sort(compare) : matches;
+  }, [projects, searchQuery, selectedTag, sort]);
 
-  // Featured projects get the spotlight only on the unfiltered view; a search or tag shows everything as cards.
+  // Featured projects get the spotlight only on the default view; searching, a tag or a sort shows plain cards.
   const isFiltering = Boolean(searchQuery.trim() || selectedTag);
-  const featured = isFiltering ? [] : filteredProjects.filter((p) => p.featured);
-  const gridProjects = isFiltering ? filteredProjects : filteredProjects.filter((p) => !p.featured);
+  const spotlight = !isFiltering && sort === 'default';
+  const featured = spotlight ? filteredProjects.filter((p) => p.featured) : [];
+  const gridProjects = spotlight ? filteredProjects.filter((p) => !p.featured) : filteredProjects;
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -111,18 +128,41 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
         )}
       </HStack>
 
-      {projects.length > 0 && (
-        <InputGroup mb={6} bg="bg.surface" borderRadius="md">
-          <InputLeftElement pointerEvents="none" color="fg.subtle">
-            <SearchIcon />
-          </InputLeftElement>
-          <Input
-            placeholder="Search projects by name, description or technology..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search projects"
-          />
-        </InputGroup>
+      {!loading && projects.length > 0 && (
+        <>
+          <Flex gap={3} mb={2} direction={{ base: 'column', sm: 'row' }}>
+            <InputGroup bg="bg.surface" borderRadius="md" flex={1}>
+              <InputLeftElement pointerEvents="none" color="fg.subtle">
+                <SearchIcon />
+              </InputLeftElement>
+              <Input
+                placeholder="Search projects by name, description or technology..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search projects"
+              />
+            </InputGroup>
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Sort projects"
+              bg="bg.surface"
+              w={{ base: 'full', sm: '190px' }}
+              flexShrink={0}
+            >
+              {Object.entries(SORTS).map(([key, { label }]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Flex>
+          <Text fontSize="xs" color="fg.muted" mb={5} aria-live="polite">
+            {isFiltering
+              ? `Showing ${filteredProjects.length} of ${projects.length} projects`
+              : `${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`}
+          </Text>
+        </>
       )}
 
       {body}
