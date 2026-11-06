@@ -20,12 +20,12 @@ import { apiErrorMessage, getProfile, updateProfile, type Profile } from '../../
 import { formatUrl, uploadProjectImage } from '../../api/projectstate';
 import { ProfileHero } from '../public/ProfileHero';
 
-const FIELDS = ['name', 'headline', 'location', 'email', 'bio', 'avatarUrl', 'githubUrl', 'linkedinUrl', 'websiteUrl'] as const;
+const FIELDS = ['name', 'headline', 'availability', 'location', 'email', 'bio', 'avatarUrl', 'githubUrl', 'linkedinUrl', 'websiteUrl', 'resumeUrl'] as const;
 type Field = (typeof FIELDS)[number];
 type Form = Record<Field, string>;
 
 const BIO_MAX = 3000;
-const URL_FIELDS: Field[] = ['avatarUrl', 'githubUrl', 'linkedinUrl', 'websiteUrl'];
+const URL_FIELDS: Field[] = ['avatarUrl', 'githubUrl', 'linkedinUrl', 'websiteUrl', 'resumeUrl'];
 
 const toForm = (p: Profile | null): Form =>
   Object.fromEntries(FIELDS.map((f) => [f, p?.[f] ?? ''])) as Form;
@@ -152,6 +152,12 @@ export function ProfileEditor() {
             <Input value={form.headline} onChange={set('headline')} placeholder="e.g. Full-Stack Engineer focused on APIs and cloud infrastructure" maxLength={150} />
           </FormControl>
 
+          <FormControl>
+            <FormLabel {...label}>Availability</FormLabel>
+            <Input value={form.availability} onChange={set('availability')} placeholder="e.g. Open to full-time roles" maxLength={80} />
+            <FormHelperText fontSize="xs">Shown as a badge at the top of your page. Leave empty to hide it.</FormHelperText>
+          </FormControl>
+
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel {...label}>Location</FormLabel>
@@ -182,6 +188,11 @@ export function ProfileEditor() {
           <FormControl>
             <FormLabel {...label}>Personal Website</FormLabel>
             <Input value={form.websiteUrl} onChange={set('websiteUrl')} placeholder="yourname.dev" />
+          </FormControl>
+          <FormControl>
+            <FormLabel {...label}>Résumé / CV Link</FormLabel>
+            <Input value={form.resumeUrl} onChange={set('resumeUrl')} placeholder="Link to your PDF, e.g. on Google Drive" />
+            <FormHelperText fontSize="xs">Make sure the link is viewable by anyone who has it.</FormHelperText>
           </FormControl>
 
           <HStack pt={2}>

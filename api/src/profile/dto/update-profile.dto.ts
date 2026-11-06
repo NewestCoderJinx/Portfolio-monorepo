@@ -45,4 +45,13 @@ export class UpdateProfileDto {
   @IsUrl(URL_OPTS)
   @IsOptional()
   linkedinUrl?: string | null;
+
+  @IsString()
+  @MaxLength(80)
+  @IsOptional()
+  availability?: string | null;
+
+  @IsUrl(URL_OPTS)
+  @IsOptional()
+  resumeUrl?: string | null;
 }

@@ -32,6 +32,14 @@ export class Profile {
   @Column({ nullable: true })
   linkedinUrl: string;
 
+  /** Short status shown as a badge on the public page, e.g. "Open to full-time roles". Empty hides it. */
+  @Column({ nullable: true })
+  availability: string;
+
+  /** Link to a downloadable CV/résumé (PDF, Google Drive, etc.). */
+  @Column({ nullable: true })
+  resumeUrl: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

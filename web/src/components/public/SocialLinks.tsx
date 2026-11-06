@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { Button, Wrap, WrapItem } from '@chakra-ui/react';
 import type { Profile } from '../../api/profile';
 import { formatUrl } from '../../api/projectstate';
-import { GitHubIcon, GlobeIcon, LinkedInIcon, MailIcon } from './icons';
+import { FileIcon, GitHubIcon, GlobeIcon, LinkedInIcon, MailIcon } from './icons';
 
 interface Props {
   profile: Profile;
@@ -18,6 +18,7 @@ export function SocialLinks({ profile, size = 'sm', inverted = false }: Props) {
     profile.githubUrl && { label: 'GitHub', href: formatUrl(profile.githubUrl), icon: <GitHubIcon /> },
     profile.linkedinUrl && { label: 'LinkedIn', href: formatUrl(profile.linkedinUrl), icon: <LinkedInIcon /> },
     profile.websiteUrl && { label: 'Website', href: formatUrl(profile.websiteUrl), icon: <GlobeIcon /> },
+    profile.resumeUrl && { label: 'Résumé', href: formatUrl(profile.resumeUrl), icon: <FileIcon /> },
   ].filter(Boolean) as { label: string; href: string; icon: ReactElement; primary?: boolean }[];
 
   if (links.length === 0) return null;

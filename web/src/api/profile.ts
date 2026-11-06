@@ -12,6 +12,8 @@ export interface Profile {
   websiteUrl?: string;
   githubUrl?: string;
   linkedinUrl?: string;
+  availability?: string;
+  resumeUrl?: string;
 }
 
 /** Returns the developer profile, or null if none has been created yet. */

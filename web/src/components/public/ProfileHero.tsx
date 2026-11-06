@@ -1,7 +1,42 @@
 import { Avatar, Box, Heading, HStack, Skeleton, SkeletonCircle, Text, VStack } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import type { Profile } from '../../api/profile';
 import { MapPinIcon } from './icons';
 import { SocialLinks } from './SocialLinks';
+
+const pulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+`;
+
+function AvailabilityBadge({ text }: { text: string }) {
+  return (
+    <HStack
+      spacing={2}
+      px={3}
+      py={1}
+      borderRadius="full"
+      bg="accent.50"
+      color="accent.800"
+      borderWidth="1px"
+      borderColor="accent.200"
+      _dark={{ bg: 'rgba(20, 184, 166, 0.12)', color: 'accent.200', borderColor: 'accent.800' }}
+      fontSize="sm"
+      fontWeight="medium"
+    >
+      <Box
+        boxSize="8px"
+        borderRadius="full"
+        bg="accent.500"
+        animation={`${pulse} 2s infinite`}
+        sx={{ '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}
+        aria-hidden
+      />
+      <Text>{text}</Text>
+    </HStack>
+  );
+}
 
 interface Props {
   profile: Profile | null;
@@ -47,6 +82,7 @@ export function ProfileHero({ profile, loading }: Props) {
       />
 
       <VStack spacing={2}>
+        {profile.availability && <AvailabilityBadge text={profile.availability} />}
         <Heading as="h1" size="2xl" letterSpacing="tight">
           {profile.name}
         </Heading>

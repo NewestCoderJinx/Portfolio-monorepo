@@ -29,7 +29,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
     getProfile()
       .then((p) => {
         setBrand(p?.name || 'Portfolio');
-        setHasContact(Boolean(p && (p.email || p.githubUrl || p.linkedinUrl || p.websiteUrl)));
+        setHasContact(Boolean(p && (p.email || p.githubUrl || p.linkedinUrl || p.websiteUrl || p.resumeUrl)));
       })
       .catch(() => setBrand('Portfolio'));
     getExperience()
