@@ -82,7 +82,7 @@ export function PublicView() {
         </VStack>
       </Container>
 
-      <CaseStudyModal project={selectedProject} onClose={closeProject} />
+      <CaseStudyModal project={selectedProject} projects={projects} onNavigate={openProject} onClose={closeProject} />
       <BackToTop />
     </Box>
   );

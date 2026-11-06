@@ -89,3 +89,15 @@ export const FileIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
   </svg>
 );
+
+export const ArrowLeftIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M19 12H5M12 19l-7-7 7-7" />
+  </svg>
+);
+
+export const ArrowRightIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </svg>
+);
