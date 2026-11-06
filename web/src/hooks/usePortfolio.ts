@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { getExperience, type Experience } from '../api/experience';
 import { getProfile, type Profile } from '../api/profile';
 import { getProjects, type Project } from '../api/projectstate';
 
@@ -6,15 +7,18 @@ import { getProjects, type Project } from '../api/projectstate';
 export function usePortfolio() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [experience, setExperience] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const fetchPortfolio = useCallback(
     () =>
-      Promise.all([getProfile(), getProjects()])
-        .then(([prof, projs]) => {
+      // Experience is optional extra content: if it fails, show the rest of the page without it.
+      Promise.all([getProfile(), getProjects(), getExperience().catch(() => [])])
+        .then(([prof, projs, exp]) => {
           setProfile(prof);
           setProjects(projs);
+          setExperience(exp);
           setError(false);
         })
         .catch((err) => {
@@ -35,5 +39,5 @@ export function usePortfolio() {
     fetchPortfolio();
   };
 
-  return { profile, projects, loading, error, retry };
+  return { profile, projects, experience, loading, error, retry };
 }

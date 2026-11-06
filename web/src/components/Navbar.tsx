@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, Container, Flex, HStack, IconButton, Text, useColorMode } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { getExperience } from '../api/experience';
 import { getProfile } from '../api/profile';
 import { MoonIcon, SunIcon } from './public/icons';
 
@@ -11,6 +12,7 @@ interface NavbarProps {
 
 const SECTIONS = [
   { label: 'Projects', hash: '#projects' },
+  { label: 'Experience', hash: '#experience' },
   { label: 'Contact', hash: '#contact' },
 ];
 
@@ -19,6 +21,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
   const { pathname } = useLocation();
   const [brand, setBrand] = useState<string | null>(null);
   const [hasContact, setHasContact] = useState(false);
+  const [hasExperience, setHasExperience] = useState(false);
   const { colorMode, toggleColorMode } = useColorMode();
   const isDark = colorMode === 'dark';
 
@@ -29,7 +32,15 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
         setHasContact(Boolean(p && (p.email || p.githubUrl || p.linkedinUrl || p.websiteUrl)));
       })
       .catch(() => setBrand('Portfolio'));
+    getExperience()
+      .then((list) => setHasExperience(list.length > 0))
+      .catch(() => setHasExperience(false));
   }, []);
+
+  // Only link to sections that will actually render.
+  const sections = SECTIONS.filter(
+    (s) => (s.hash !== '#contact' || hasContact) && (s.hash !== '#experience' || hasExperience),
+  );
 
   const goToSection = (hash: string) => {
     // Works from any page: PublicView scrolls to the hash once it has rendered.
@@ -68,7 +79,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
           </Text>
 
           <HStack as="nav" spacing={{ base: 1, md: 2 }} flexShrink={0}>
-            {SECTIONS.filter((s) => s.hash !== '#contact' || hasContact).map((s) => (
+            {sections.map((s) => (
               <Button
                 key={s.hash}
                 variant="ghost"
