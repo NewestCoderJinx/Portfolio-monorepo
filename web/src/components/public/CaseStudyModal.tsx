@@ -43,9 +43,9 @@ export function CaseStudyModal({ project, onClose }: Props) {
             <ModalHeader>
               <VStack align="start" spacing={1}>
                 <HStack>
-                  <Badge colorScheme="blue">Case Study</Badge>
+                  <Badge colorScheme="brand">Case Study</Badge>
                   {formatProjectDate(project.createdAt) && (
-                    <Text fontSize="xs" color="gray.400" fontWeight="normal">
+                    <Text fontSize="xs" color="fg.subtle" fontWeight="normal">
                       {formatProjectDate(project.createdAt)}
                     </Text>
                   )}
@@ -61,13 +61,13 @@ export function CaseStudyModal({ project, onClose }: Props) {
                   <Image src={project.imageUrl} alt={project.title} borderRadius="lg" maxH="260px" objectFit="cover" />
                 )}
 
-                {project.description && <Text color="gray.700" fontSize="md">{project.description}</Text>}
+                {project.description && <Text color="fg.default" fontSize="md">{project.description}</Text>}
 
                 {project.tags && project.tags.length > 0 && (
                   <Wrap spacing={1.5}>
                     {project.tags.map((tag) => (
                       <WrapItem key={tag}>
-                        <Tag size="sm" colorScheme="blue" borderRadius="full">
+                        <Tag size="sm" colorScheme="brand" borderRadius="full">
                           {tag}
                         </Tag>
                       </WrapItem>
@@ -79,10 +79,10 @@ export function CaseStudyModal({ project, onClose }: Props) {
 
                 {sections.map((s) => (
                   <Box key={s.key}>
-                    <Heading size="xs" color="blue.600" textTransform="uppercase" letterSpacing="wide" mb={2}>
+                    <Heading size="xs" color="fg.brand" textTransform="uppercase" letterSpacing="wide" mb={2}>
                       {s.title}
                     </Heading>
-                    <Text color="gray.700" whiteSpace="pre-line" lineHeight="tall">
+                    <Text color="fg.default" whiteSpace="pre-line" lineHeight="tall">
                       {project[s.key]}
                     </Text>
                   </Box>
@@ -91,14 +91,14 @@ export function CaseStudyModal({ project, onClose }: Props) {
             </ModalBody>
 
             {(github || demo) && (
-              <ModalFooter gap={2} borderTopWidth="1px" borderColor="gray.100">
+              <ModalFooter gap={2} borderTopWidth="1px" borderColor="border.subtle">
                 {github && (
                   <Button as="a" href={github} target="_blank" rel="noopener noreferrer" variant="outline" leftIcon={<GitHubIcon />}>
                     View Code
                   </Button>
                 )}
                 {demo && (
-                  <Button as="a" href={demo} target="_blank" rel="noopener noreferrer" colorScheme="blue" rightIcon={<ExternalIcon />}>
+                  <Button as="a" href={demo} target="_blank" rel="noopener noreferrer" colorScheme="brand" rightIcon={<ExternalIcon />}>
                     Live Demo
                   </Button>
                 )}

@@ -21,11 +21,11 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
     <Card
       id={`project-${p.id}`}
       borderWidth="1px"
-      borderColor="gray.200"
+      borderColor="border.default"
       borderRadius="xl"
       overflow="hidden"
       boxShadow="sm"
-      bg="white"
+      bg="bg.surface"
       transition="all 0.2s"
       _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }}
     >
@@ -33,7 +33,7 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
         {p.imageUrl ? (
           <Image src={p.imageUrl} alt={p.title} h="170px" w="full" objectFit="cover" />
         ) : (
-          <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, blue.500, purple.500)">
+          <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, brand.600, accent.500)">
             <Text color="white" fontSize="5xl" fontWeight="bold" opacity={0.85}>
               {p.title.charAt(0).toUpperCase()}
             </Text>
@@ -49,14 +49,14 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
       <CardBody p={5} display="flex" flexDirection="column">
         <Box flex="1">
           {date && (
-            <Text fontSize="xs" color="gray.400" mb={1}>
+            <Text fontSize="xs" color="fg.subtle" mb={1}>
               {date}
             </Text>
           )}
-          <Heading size="md" color="gray.800" mb={2}>
+          <Heading size="md" color="fg.heading" mb={2}>
             {p.title}
           </Heading>
-          <Text color="gray.600" fontSize="sm" mb={4} noOfLines={3}>
+          <Text color="fg.secondary" fontSize="sm" mb={4} noOfLines={3}>
             {p.description || 'No description provided.'}
           </Text>
 
@@ -64,7 +64,7 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
             <Wrap mb={4} spacing={1.5}>
               {tags.slice(0, MAX_TAGS).map((tag) => (
                 <WrapItem key={tag}>
-                  <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
+                  <Tag size="sm" colorScheme="brand" variant="subtle" borderRadius="full">
                     {tag}
                   </Tag>
                 </WrapItem>
@@ -80,9 +80,9 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
           )}
         </Box>
 
-        <Box pt={4} borderTopWidth="1px" borderColor="gray.100">
+        <Box pt={4} borderTopWidth="1px" borderColor="border.subtle">
           {hasCaseStudy(p) && (
-            <Button size="sm" colorScheme="blue" variant="outline" w="full" mb={2} onClick={() => onOpen(p)}>
+            <Button size="sm" colorScheme="brand" variant="outline" w="full" mb={2} onClick={() => onOpen(p)}>
               Read Case Study
             </Button>
           )}
@@ -93,11 +93,11 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
               </Button>
             )}
             {demo && (
-              <Button as="a" href={demo} target="_blank" rel="noopener noreferrer" size="xs" colorScheme="blue" rightIcon={<ExternalIcon />} flex={1}>
+              <Button as="a" href={demo} target="_blank" rel="noopener noreferrer" size="xs" colorScheme="brand" rightIcon={<ExternalIcon />} flex={1}>
                 Live Demo
               </Button>
             )}
-            <Button size="xs" variant="ghost" colorScheme="teal" onClick={() => onShare(p)}>
+            <Button size="xs" variant="ghost" colorScheme="accent" onClick={() => onShare(p)}>
               Share
             </Button>
           </HStack>

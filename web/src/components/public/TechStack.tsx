@@ -16,11 +16,11 @@ export function TechStack({ projects, selectedTag, onSelect }: Props) {
   if (ranked.length === 0) return null;
 
   return (
-    <Box bg="white" p={6} borderRadius="xl" borderWidth="1px" borderColor="gray.200">
+    <Box bg="bg.surface" p={6} borderRadius="xl" borderWidth="1px" borderColor="border.default">
       <Heading as="h2" size="md" mb={1}>
         Tech Stack
       </Heading>
-      <Text color="gray.500" fontSize="sm" mb={4}>
+      <Text color="fg.muted" fontSize="sm" mb={4}>
         Technologies used across my projects. Select one to see where I've used it.
       </Text>
       <Wrap spacing={2}>
@@ -32,7 +32,7 @@ export function TechStack({ projects, selectedTag, onSelect }: Props) {
                 as="button"
                 size="lg"
                 borderRadius="full"
-                colorScheme={active ? 'blue' : 'gray'}
+                colorScheme={active ? 'brand' : 'gray'}
                 variant={active ? 'solid' : 'subtle'}
                 onClick={() => onSelect(active ? null : tag)}
                 aria-pressed={active}

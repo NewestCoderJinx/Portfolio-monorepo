@@ -26,7 +26,7 @@ export function ProfileHero({ profile, loading }: Props) {
         <Heading as="h1" size="2xl" letterSpacing="tight">
           Engineering Portfolio
         </Heading>
-        <Text color="gray.600" maxW="2xl">
+        <Text color="fg.secondary" maxW="2xl">
           Selected projects with the problems, decisions and lessons behind them.
         </Text>
       </VStack>
@@ -39,11 +39,11 @@ export function ProfileHero({ profile, loading }: Props) {
         size="2xl"
         name={profile.name}
         src={profile.avatarUrl || undefined}
-        bg="blue.600"
+        bg="brand.600"
         color="white"
         boxShadow="md"
         borderWidth="4px"
-        borderColor="white"
+        borderColor="bg.surface"
       />
 
       <VStack spacing={2}>
@@ -51,12 +51,12 @@ export function ProfileHero({ profile, loading }: Props) {
           {profile.name}
         </Heading>
         {profile.headline && (
-          <Text fontSize="lg" fontWeight="medium" color="blue.700">
+          <Text fontSize="lg" fontWeight="medium" color="fg.brand">
             {profile.headline}
           </Text>
         )}
         {profile.location && (
-          <HStack spacing={1} color="gray.500" fontSize="sm">
+          <HStack spacing={1} color="fg.muted" fontSize="sm">
             <MapPinIcon width={14} height={14} />
             <Text>{profile.location}</Text>
           </HStack>
@@ -65,7 +65,7 @@ export function ProfileHero({ profile, loading }: Props) {
 
       {profile.bio && (
         <Box maxW="2xl">
-          <Text color="gray.600" fontSize="md" lineHeight="tall" whiteSpace="pre-line">
+          <Text color="fg.secondary" fontSize="md" lineHeight="tall" whiteSpace="pre-line">
             {profile.bio}
           </Text>
         </Box>

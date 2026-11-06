@@ -20,11 +20,11 @@ export function PortfolioStats({ projects }: { projects: Project[] }) {
   return (
     <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
       {stats.map((s) => (
-        <Stat key={s.label} bg="white" p={4} borderRadius="xl" borderWidth="1px" borderColor="gray.200" textAlign="center">
-          <StatNumber fontSize="3xl" color="blue.600">
+        <Stat key={s.label} bg="bg.surface" p={4} borderRadius="xl" borderWidth="1px" borderColor="border.default" textAlign="center">
+          <StatNumber fontSize="3xl" color="fg.brand">
             {s.value}
           </StatNumber>
-          <StatLabel color="gray.500" fontSize="xs" textTransform="uppercase" letterSpacing="wide">
+          <StatLabel color="fg.muted" fontSize="xs" textTransform="uppercase" letterSpacing="wide">
             {s.label}
           </StatLabel>
         </Stat>

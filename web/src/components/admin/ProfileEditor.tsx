@@ -110,20 +110,20 @@ export function ProfileEditor() {
   if (loading) {
     return (
       <VStack py={12}>
-        <Spinner color="blue.500" />
+        <Spinner color="brand.500" />
       </VStack>
     );
   }
 
-  const label = { fontSize: 'xs', fontWeight: 'bold', color: 'gray.600', mb: 1 } as const;
+  const label = { fontSize: 'xs', fontWeight: 'bold', color: 'fg.secondary', mb: 1 } as const;
 
   return (
     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} alignItems="start">
-      <Box as="form" onSubmit={handleSubmit} p={6} bg="white" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
-        <Heading as="h2" size="sm" mb={1} color="gray.700">
+      <Box as="form" onSubmit={handleSubmit} p={6} bg="bg.surface" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="border.default">
+        <Heading as="h2" size="sm" mb={1} color="fg.default">
           {exists ? 'Edit Your Profile' : 'Create Your Profile'}
         </Heading>
-        <Text fontSize="sm" color="gray.500" mb={5}>
+        <Text fontSize="sm" color="fg.muted" mb={5}>
           This is the first thing visitors see on your public page.
         </Text>
 
@@ -132,7 +132,7 @@ export function ProfileEditor() {
             <FormLabel {...label}>Profile Photo</FormLabel>
             <HStack spacing={3}>
               <Input type="file" accept="image/*" onChange={handleAvatar} p={1} isDisabled={uploading} />
-              {uploading && <Spinner size="sm" color="blue.500" />}
+              {uploading && <Spinner size="sm" color="brand.500" />}
               {form.avatarUrl && !uploading && (
                 <Button size="sm" variant="ghost" colorScheme="red" onClick={() => setForm((p) => ({ ...p, avatarUrl: '' }))}>
                   Remove
@@ -185,7 +185,7 @@ export function ProfileEditor() {
           </FormControl>
 
           <HStack pt={2}>
-            <Button type="submit" colorScheme="blue" flex={1} isLoading={saving} isDisabled={!dirty || uploading} loadingText="Saving...">
+            <Button type="submit" colorScheme="brand" flex={1} isLoading={saving} isDisabled={!dirty || uploading} loadingText="Saving...">
               {exists ? 'Save Changes' : 'Create Profile'}
             </Button>
             {dirty && (
@@ -199,14 +199,14 @@ export function ProfileEditor() {
 
       <Box position={{ lg: 'sticky' }} top={{ lg: '90px' }}>
         <HStack justify="space-between" mb={2}>
-          <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+          <Text fontSize="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
             Live Preview {dirty && '(unsaved)'}
           </Text>
-          <Button as={RouterLink} to="/" size="xs" variant="link" colorScheme="blue">
+          <Button as={RouterLink} to="/" size="xs" variant="link" colorScheme="brand">
             Open public page
           </Button>
         </HStack>
-        <Box bg="gray.50" borderWidth="1px" borderStyle="dashed" borderColor="gray.300" borderRadius="xl" px={4}>
+        <Box bg="bg.subtle" borderWidth="1px" borderStyle="dashed" borderColor="border.strong" borderRadius="xl" px={4}>
           <ProfileHero profile={preview} loading={false} />
         </Box>
       </Box>

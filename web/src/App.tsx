@@ -17,7 +17,7 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="bg.canvas">
         <Navbar isAuth={isAuth} onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={<PublicView />} />

@@ -263,24 +263,24 @@ export function AdminView() {
   };
 
   return (
-    <Box bg="gray.50" minH="100vh" py={12}>
+    <Box bg="bg.canvas" minH="100vh" py={12}>
       <Container maxW="container.lg">
         <VStack spacing={8} align="stretch">
           
           {/* Header */}
           <VStack spacing={2} textAlign="center">
-            <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
+            <Badge colorScheme="brand" px={3} py={1} borderRadius="full" fontSize="xs">
               Developer Workspace
             </Badge>
             <Heading as="h1" size="xl" letterSpacing="tight">
               Portfolio Management
             </Heading>
-            <Text color="gray.600">
+            <Text color="fg.secondary">
               Manage your public profile and engineering projects
             </Text>
           </VStack>
 
-          <Tabs colorScheme="blue" variant="enclosed-colored" isLazy>
+          <Tabs colorScheme="brand" variant="enclosed-colored" isLazy>
             <TabList>
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
@@ -289,13 +289,13 @@ export function AdminView() {
               <TabPanel px={0}>
                 <VStack spacing={8} align="stretch">
           {/* Creation Form */}
-          <Box as="form" onSubmit={handleCreate} p={6} bg="white" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="gray.200">
-            <Heading as="h2" size="sm" mb={4} color="gray.700">
+          <Box as="form" onSubmit={handleCreate} p={6} bg="bg.surface" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="border.default">
+            <Heading as="h2" size="sm" mb={4} color="fg.default">
               Add New Showcase Item
             </Heading>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Project Title</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Project Title</FormLabel>
                 <Input
                   placeholder="e.g. Microservices Order Processing API"
                   value={title}
@@ -304,7 +304,7 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Short Summary / Description</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Short Summary / Description</FormLabel>
                 <Textarea
                   placeholder="Short technical overview..."
                   value={description}
@@ -314,7 +314,7 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Tech Stack Tags</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Tech Stack Tags</FormLabel>
                 <Input
                   placeholder="Comma-separated: React, NestJS, PostgreSQL"
                   value={tagsInput}
@@ -324,9 +324,9 @@ export function AdminView() {
 
               {/* Case Study Accordion */}
               <Accordion allowToggle width="full" borderStyle="none">
-                <AccordionItem border="1px" borderColor="gray.200" borderRadius="md">
+                <AccordionItem border="1px" borderColor="border.default" borderRadius="md">
                   <h2>
-                    <AccordionButton bg="gray.50" _expanded={{ bg: 'blue.50', color: 'blue.600' }}>
+                    <AccordionButton bg="bg.subtle" _expanded={{ bg: 'bg.brandSubtle', color: 'fg.brand' }}>
                       <Box as="span" flex="1" textAlign="left" fontSize="xs" fontWeight="bold">
                         Detailed Technical Case Study (Optional)
                       </Box>
@@ -336,23 +336,23 @@ export function AdminView() {
                   <AccordionPanel pb={4}>
                     <VStack spacing={3}>
                       <FormControl>
-                        <FormLabel fontSize="xs" color="gray.600">The Problem</FormLabel>
+                        <FormLabel fontSize="xs" color="fg.secondary">The Problem</FormLabel>
                         <Textarea placeholder="What real-world problem did this project address?" value={problem} onChange={(e) => setProblem(e.target.value)} size="sm" rows={2} />
                       </FormControl>
                       <FormControl>
-                        <FormLabel fontSize="xs" color="gray.600">The Solution</FormLabel>
+                        <FormLabel fontSize="xs" color="fg.secondary">The Solution</FormLabel>
                         <Textarea placeholder="Architectural solution implemented..." value={solution} onChange={(e) => setSolution(e.target.value)} size="sm" rows={2} />
                       </FormControl>
                       <FormControl>
-                        <FormLabel fontSize="xs" color="gray.600">Engineering Decisions</FormLabel>
+                        <FormLabel fontSize="xs" color="fg.secondary">Engineering Decisions</FormLabel>
                         <Textarea placeholder="Key trade-offs or technical decisions..." value={decisions} onChange={(e) => setDecisions(e.target.value)} size="sm" rows={2} />
                       </FormControl>
                       <FormControl>
-                        <FormLabel fontSize="xs" color="gray.600">Challenges Encountered</FormLabel>
+                        <FormLabel fontSize="xs" color="fg.secondary">Challenges Encountered</FormLabel>
                         <Textarea placeholder="Technical roadblocks and how they were solved..." value={challenges} onChange={(e) => setChallenges(e.target.value)} size="sm" rows={2} />
                       </FormControl>
                       <FormControl>
-                        <FormLabel fontSize="xs" color="gray.600">Lessons Learned</FormLabel>
+                        <FormLabel fontSize="xs" color="fg.secondary">Lessons Learned</FormLabel>
                         <Textarea placeholder="Key takeaways and future improvements..." value={lessonsLearned} onChange={(e) => setLessonsLearned(e.target.value)} size="sm" rows={2} />
                       </FormControl>
                     </VStack>
@@ -361,18 +361,18 @@ export function AdminView() {
               </Accordion>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Cover Image</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Cover Image</FormLabel>
                 <VStack align="stretch" spacing={2}>
                   <Input type="file" accept="image/*" onChange={handleFileUpload} p={1} />
                   {uploadingImage && (
                     <HStack spacing={2}>
-                      <Spinner size="xs" color="blue.500" />
-                      <Text fontSize="xs" color="gray.500">Uploading image to server...</Text>
+                      <Spinner size="xs" color="brand.500" />
+                      <Text fontSize="xs" color="fg.muted">Uploading image to server...</Text>
                     </HStack>
                   )}
                   {imageUrl && !uploadingImage && (
                     <Box mt={1}>
-                      <Text fontSize="xs" color="gray.500" mb={1}>Preview:</Text>
+                      <Text fontSize="xs" color="fg.muted" mb={1}>Preview:</Text>
                       <Image src={imageUrl} alt="Cover preview" maxH="120px" borderRadius="md" objectFit="cover" />
                     </Box>
                   )}
@@ -380,7 +380,7 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>GitHub Repository URL</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>GitHub Repository URL</FormLabel>
                 <Input
                   placeholder="github.com/username/repository"
                   value={githubUrl}
@@ -389,7 +389,7 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>Live Demo URL</FormLabel>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Live Demo URL</FormLabel>
                 <Input
                   placeholder="my-demo-app.vercel.app"
                   value={demoUrl}
@@ -399,7 +399,7 @@ export function AdminView() {
 
               <Button
                 type="submit"
-                colorScheme="blue"
+                colorScheme="brand"
                 width="full"
                 isLoading={submitting}
                 isDisabled={uploadingImage}
@@ -415,27 +415,27 @@ export function AdminView() {
           {/* Projects Display Grid */}
           {loading ? (
             <VStack py={12}>
-              <Spinner size="xl" color="blue.500" thickness="3px" />
-              <Text color="gray.500" fontSize="sm">Fetching latest records...</Text>
+              <Spinner size="xl" color="brand.500" thickness="3px" />
+              <Text color="fg.muted" fontSize="sm">Fetching latest records...</Text>
             </VStack>
           ) : projects.length === 0 ? (
-            <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderStyle="dashed" borderWidth="2px" borderColor="gray.300">
-              <Text color="gray.500">No projects found. Publish your first item using the form above!</Text>
+            <Box textAlign="center" py={12} bg="bg.surface" borderRadius="xl" borderStyle="dashed" borderWidth="2px" borderColor="border.strong">
+              <Text color="fg.muted">No projects found. Publish your first item using the form above!</Text>
             </Box>
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
               {projects.map((p, index) => (
-                <Card key={p.id} borderWidth="1px" borderColor="gray.200" borderRadius="xl" overflow="hidden" boxShadow="xs" bg="white">
+                <Card key={p.id} borderWidth="1px" borderColor="border.default" borderRadius="xl" overflow="hidden" boxShadow="xs" bg="bg.surface">
                   <CardBody p={5}>
                     {editingId === p.id ? (
                       <VStack spacing={3}>
-                        <Heading size="xs" color="blue.600">Edit Project</Heading>
+                        <Heading size="xs" color="fg.brand">Edit Project</Heading>
                         <Box width="full">
                           {editImageUrl ? (
                             <Image src={editImageUrl} alt="Cover" borderRadius="md" maxH="120px" w="full" objectFit="cover" />
                           ) : (
-                            <Box h="60px" borderRadius="md" borderWidth="1px" borderStyle="dashed" borderColor="gray.300" display="flex" alignItems="center" justifyContent="center">
-                              <Text fontSize="xs" color="gray.400">No cover image</Text>
+                            <Box h="60px" borderRadius="md" borderWidth="1px" borderStyle="dashed" borderColor="border.strong" display="flex" alignItems="center" justifyContent="center">
+                              <Text fontSize="xs" color="fg.subtle">No cover image</Text>
                             </Box>
                           )}
                           <HStack mt={2} spacing={2}>
@@ -455,9 +455,9 @@ export function AdminView() {
                         <Input value={editTagsInput} onChange={(e) => setEditTagsInput(e.target.value)} size="sm" placeholder="Tags (comma-separated)" />
                         
                         <Accordion allowToggle width="full" borderStyle="none">
-                          <AccordionItem border="1px" borderColor="gray.200" borderRadius="md">
+                          <AccordionItem border="1px" borderColor="border.default" borderRadius="md">
                             <h2>
-                              <AccordionButton bg="gray.50" py={1}>
+                              <AccordionButton bg="bg.subtle" py={1}>
                                 <Box as="span" flex="1" textAlign="left" fontSize="xs">
                                   Edit Case Study Details
                                 </Box>
@@ -494,15 +494,15 @@ export function AdminView() {
                           {p.imageUrl && (
                             <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
                           )}
-                          <Heading size="sm" color="gray.800">{p.title}</Heading>
-                          <Text color="gray.600" fontSize="xs" mt={2} noOfLines={3}>
+                          <Heading size="sm" color="fg.heading">{p.title}</Heading>
+                          <Text color="fg.secondary" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
                           {p.tags && p.tags.length > 0 && (
                             <Wrap mt={3} spacing={1.5}>
                               {p.tags.map((tag, idx) => (
                                 <WrapItem key={idx}>
-                                  <Tag size="sm" colorScheme="blue" variant="subtle" borderRadius="full">
+                                  <Tag size="sm" colorScheme="brand" variant="subtle" borderRadius="full">
                                     {tag}
                                   </Tag>
                                 </WrapItem>
@@ -511,7 +511,7 @@ export function AdminView() {
                           )}
                         </Box>
 
-                        <HStack width="full" pt={3} borderTopWidth="1px" borderColor="gray.100" spacing={1}>
+                        <HStack width="full" pt={3} borderTopWidth="1px" borderColor="border.subtle" spacing={1}>
                           <Button size="xs" variant="ghost" aria-label="Move up" title="Move up" onClick={() => handleMove(index, -1)} isDisabled={!canMove(index, -1)}>
                             ↑
                           </Button>

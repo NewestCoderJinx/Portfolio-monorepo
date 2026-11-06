@@ -30,7 +30,7 @@ function filterProjects(projects: Project[], query: string, tag: string | null) 
 
 function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <Box textAlign="center" py={12} bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200">
+    <Box textAlign="center" py={12} bg="bg.surface" borderRadius="xl" borderWidth="1px" borderColor="border.default">
       {children}
     </Box>
   );
@@ -60,14 +60,14 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
   } else if (projects.length === 0) {
     body = (
       <EmptyState>
-        <Text color="gray.500">Projects are on their way. Check back soon.</Text>
+        <Text color="fg.muted">Projects are on their way. Check back soon.</Text>
       </EmptyState>
     );
   } else if (filteredProjects.length === 0) {
     body = (
       <EmptyState>
-        <Text color="gray.500" mb={3}>No projects match your search.</Text>
-        <Button size="sm" colorScheme="blue" variant="ghost" onClick={clearFilters}>
+        <Text color="fg.muted" mb={3}>No projects match your search.</Text>
+        <Button size="sm" colorScheme="brand" variant="ghost" onClick={clearFilters}>
           Clear search & filters
         </Button>
       </EmptyState>
@@ -87,20 +87,20 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
       <HStack justify="space-between" align="end" mb={4} flexWrap="wrap" gap={3}>
         <Box>
           <Heading as="h2" size="lg">Projects</Heading>
-          <Text color="gray.500" fontSize="sm">
+          <Text color="fg.muted" fontSize="sm">
             {selectedTag ? `Showing projects built with ${selectedTag}` : 'What I have built, and how I built it'}
           </Text>
         </Box>
         {(searchQuery || selectedTag) && (
-          <Button size="sm" variant="ghost" colorScheme="blue" onClick={clearFilters}>
+          <Button size="sm" variant="ghost" colorScheme="brand" onClick={clearFilters}>
             Clear filters
           </Button>
         )}
       </HStack>
 
       {projects.length > 0 && (
-        <InputGroup mb={6} bg="white" borderRadius="md">
-          <InputLeftElement pointerEvents="none" color="gray.400">
+        <InputGroup mb={6} bg="bg.surface" borderRadius="md">
+          <InputLeftElement pointerEvents="none" color="fg.subtle">
             <SearchIcon />
           </InputLeftElement>
           <Input

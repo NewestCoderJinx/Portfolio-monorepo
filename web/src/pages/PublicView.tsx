@@ -18,8 +18,8 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <Container maxW="container.md" py={24} textAlign="center">
       <Heading size="md" mb={2}>Couldn't load the portfolio</Heading>
-      <Text color="gray.600" mb={6}>The server may be offline. Please try again in a moment.</Text>
-      <Button colorScheme="blue" onClick={onRetry}>Retry</Button>
+      <Text color="fg.secondary" mb={6}>The server may be offline. Please try again in a moment.</Text>
+      <Button colorScheme="brand" onClick={onRetry}>Retry</Button>
     </Container>
   );
 }
@@ -40,7 +40,7 @@ export function PublicView() {
   if (error) return <LoadError onRetry={retry} />;
 
   return (
-    <Box bg="gray.50" minH="calc(100vh - 70px)" py={{ base: 8, md: 12 }}>
+    <Box bg="bg.canvas" minH="calc(100vh - 70px)" py={{ base: 8, md: 12 }}>
       <Container maxW="container.lg">
         <VStack spacing={10} align="stretch">
           <ProfileHero profile={profile} loading={loading} />

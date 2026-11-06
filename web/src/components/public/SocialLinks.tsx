@@ -35,10 +35,10 @@ export function SocialLinks({ profile, size = 'sm', inverted = false }: Props) {
             leftIcon={l.icon}
             {...(inverted
               ? l.primary
-                ? { bg: 'white', color: 'blue.700', _hover: { bg: 'blue.50' } }
+                ? { bg: 'white', color: 'brand.700', _hover: { bg: 'brand.50' } }
                 : { variant: 'outline', color: 'white', borderColor: 'whiteAlpha.700', _hover: { bg: 'whiteAlpha.200' } }
               : l.primary
-                ? { colorScheme: 'blue' }
+                ? { colorScheme: 'brand' }
                 : { variant: 'outline', bg: 'white' })}
           >
             {l.label}

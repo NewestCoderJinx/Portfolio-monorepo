@@ -58,21 +58,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <Box bg="gray.50" minH="calc(100vh - 80px)" py={12} display="flex" alignItems="center">
+    <Box bg="bg.canvas" minH="calc(100vh - 80px)" py={12} display="flex" alignItems="center">
       <Container maxW="md">
-        <Card borderWidth="1px" borderColor="gray.200" borderRadius="xl" boxShadow="sm" bg="white">
+        <Card borderWidth="1px" borderColor="border.default" borderRadius="xl" boxShadow="sm" bg="bg.surface">
           <CardBody p={8}>
             <VStack spacing={6} align="stretch">
               
               {/* Header Badge & Title */}
               <VStack spacing={2} textAlign="center">
-                <Badge colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="xs">
+                <Badge colorScheme="brand" px={3} py={1} borderRadius="full" fontSize="xs">
                   Admin Access
                 </Badge>
-                <Heading size="lg" color="gray.800" letterSpacing="tight">
+                <Heading size="lg" color="fg.heading" letterSpacing="tight">
                   {isLogin ? 'Sign In' : 'Create Owner Account'}
                 </Heading>
-                <Text color="gray.600" fontSize="sm">
+                <Text color="fg.secondary" fontSize="sm">
                   {isLogin
                     ? 'Enter your credentials to manage your portfolio'
                     : 'No admin account exists yet. This account becomes the site owner, and sign-ups close afterwards.'}
@@ -91,7 +91,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               <Box as="form" onSubmit={handleSubmit}>
                 <VStack spacing={4}>
                   <FormControl isRequired>
-                    <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                    <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>
                       Email Address
                     </FormLabel>
                     <Input
@@ -104,7 +104,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                    <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>
                       Password
                     </FormLabel>
                     <Input
@@ -118,7 +118,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
 
                   <Button
                     type="submit"
-                    colorScheme="blue"
+                    colorScheme="brand"
                     width="full"
                     mt={2}
                     isLoading={loading}
@@ -134,7 +134,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               <Box textAlign="center" pt={2}>
                 <Button
                   variant="link"
-                  colorScheme="blue"
+                  colorScheme="brand"
                   fontSize="sm"
                   onClick={() => {
                     setIsLogin(!isLogin);

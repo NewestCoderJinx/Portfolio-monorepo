@@ -41,10 +41,10 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
   return (
     <Box
       as="header"
-      bg="whiteAlpha.900"
+      bg="bg.navbar"
       backdropFilter="saturate(180%) blur(8px)"
       borderBottomWidth="1px"
-      borderColor="gray.200"
+      borderColor="border.default"
       position="sticky"
       top={0}
       zIndex={100}
@@ -57,7 +57,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             fontSize="lg"
             fontWeight="bold"
-            color="blue.700"
+            color="fg.brand"
             noOfLines={1}
             minW={0}
           >
@@ -85,7 +85,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
                   to="/admin"
                   size="sm"
                   variant={pathname === '/admin' ? 'solid' : 'ghost'}
-                  colorScheme="blue"
+                  colorScheme="brand"
                 >
                   Dashboard
                 </Button>
