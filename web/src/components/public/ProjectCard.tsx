@@ -20,6 +20,7 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
   return (
     <Card
       id={`project-${p.id}`}
+      h="full"
       borderWidth="1px"
       borderColor="border.default"
       borderRadius="xl"

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Box, Button, Container, Heading, Text, VStack } from '@chakra-ui/react';
+import { BackToTop } from '../components/public/BackToTop';
 import { CaseStudyModal } from '../components/public/CaseStudyModal';
 import { ContactSection } from '../components/public/ContactSection';
 import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
 import { ProjectsSection } from '../components/public/ProjectsSection';
 import { PublicFooter } from '../components/public/PublicFooter';
+import { Reveal } from '../components/public/Reveal';
 import { TechStack } from '../components/public/TechStack';
 import { useCaseStudyLink } from '../hooks/useCaseStudyLink';
 import { useHashScroll } from '../hooks/useHashScroll';
@@ -43,12 +45,18 @@ export function PublicView() {
     <Box bg="bg.canvas" minH="calc(100vh - 70px)" py={{ base: 8, md: 12 }}>
       <Container maxW="container.lg">
         <VStack spacing={10} align="stretch">
-          <ProfileHero profile={profile} loading={loading} />
+          <Reveal>
+            <ProfileHero profile={profile} loading={loading} />
+          </Reveal>
 
           {!loading && (
             <>
-              <PortfolioStats projects={projects} />
-              <TechStack projects={projects} selectedTag={selectedTag} onSelect={selectTag} />
+              <Reveal delay={0.1}>
+                <PortfolioStats projects={projects} />
+              </Reveal>
+              <Reveal>
+                <TechStack projects={projects} selectedTag={selectedTag} onSelect={selectTag} />
+              </Reveal>
             </>
           )}
 
@@ -61,13 +69,18 @@ export function PublicView() {
             onShare={shareProject}
           />
 
-          {!loading && <ContactSection profile={profile} />}
+          {!loading && (
+            <Reveal>
+              <ContactSection profile={profile} />
+            </Reveal>
+          )}
 
           <PublicFooter name={profile?.name} />
         </VStack>
       </Container>
 
       <CaseStudyModal project={selectedProject} onClose={closeProject} />
+      <BackToTop />
     </Box>
   );
 }

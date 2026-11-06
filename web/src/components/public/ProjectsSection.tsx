@@ -4,6 +4,7 @@ import type { Project } from '../../api/projectstate';
 import { FeaturedProject } from './FeaturedProject';
 import { SearchIcon } from './icons';
 import { ProjectCard } from './ProjectCard';
+import { Reveal } from './Reveal';
 
 const GRID_COLUMNS = { base: 1, md: 2, lg: 3 };
 
@@ -99,12 +100,17 @@ export function ProjectsSection({ projects, loading, selectedTag, onClearTag, on
     body = (
       <VStack spacing={6} align="stretch">
         {featured.map((p) => (
-          <FeaturedProject key={p.id} project={p} onOpen={onOpen} onShare={onShare} />
+          <Reveal key={p.id}>
+            <FeaturedProject project={p} onOpen={onOpen} onShare={onShare} />
+          </Reveal>
         ))}
         {gridProjects.length > 0 && (
           <SimpleGrid columns={GRID_COLUMNS} spacing={6}>
-            {gridProjects.map((p) => (
-              <ProjectCard key={p.id} project={p} onOpen={onOpen} onShare={onShare} />
+            {gridProjects.map((p, i) => (
+              // Stagger cards within a row; key by id so re-sorting doesn't replay finished animations.
+              <Reveal key={p.id} delay={(i % 3) * 0.08}>
+                <ProjectCard project={p} onOpen={onOpen} onShare={onShare} />
+              </Reveal>
             ))}
           </SimpleGrid>
         )}
