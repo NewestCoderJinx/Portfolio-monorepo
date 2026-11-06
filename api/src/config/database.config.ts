@@ -1,9 +1,10 @@
 import { DataSourceOptions } from 'typeorm';
+import { Experience } from '../experience/experience.entity';
 import { Profile } from '../profile/entities/profile.entity';
 import { Project } from '../projects/project.entity';
 import { User } from '../users/user.entity';
 
-export const ENTITIES = [Project, Profile, User];
+export const ENTITIES = [Project, Profile, User, Experience];
 
 // Single source of truth for DB settings, shared by the app and the seed script.
 export function databaseConfig(): DataSourceOptions {
