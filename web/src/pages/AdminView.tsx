@@ -33,6 +33,7 @@ import {
   TabPanels,
   TabPanel,
 } from '@chakra-ui/react';
+import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
 import {
   getProjects,
@@ -276,7 +277,7 @@ export function AdminView() {
               Portfolio Management
             </Heading>
             <Text color="fg.secondary">
-              Manage your public profile and engineering projects
+              Manage your public profile, projects and experience
             </Text>
           </VStack>
 
@@ -284,6 +285,7 @@ export function AdminView() {
             <TabList>
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
+              <Tab fontWeight="semibold">Experience</Tab>
             </TabList>
             <TabPanels>
               <TabPanel px={0}>
@@ -548,6 +550,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <ProfileEditor />
+              </TabPanel>
+              <TabPanel px={0}>
+                <ExperienceEditor />
               </TabPanel>
             </TabPanels>
           </Tabs>
