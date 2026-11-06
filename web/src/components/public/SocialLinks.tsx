@@ -39,7 +39,7 @@ export function SocialLinks({ profile, size = 'sm', inverted = false }: Props) {
                 : { variant: 'outline', color: 'white', borderColor: 'whiteAlpha.700', _hover: { bg: 'whiteAlpha.200' } }
               : l.primary
                 ? { colorScheme: 'brand' }
-                : { variant: 'outline', bg: 'white' })}
+                : { variant: 'outline', bg: 'bg.surface' })}
           >
             {l.label}
           </Button>

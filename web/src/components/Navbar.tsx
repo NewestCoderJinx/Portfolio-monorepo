@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Container, Flex, HStack, Text } from '@chakra-ui/react';
+import { Box, Button, Container, Flex, HStack, IconButton, Text, useColorMode } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { getProfile } from '../api/profile';
+import { MoonIcon, SunIcon } from './public/icons';
 
 interface NavbarProps {
   isAuth: boolean;
@@ -18,6 +19,8 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
   const { pathname } = useLocation();
   const [brand, setBrand] = useState<string | null>(null);
   const [hasContact, setHasContact] = useState(false);
+  const { colorMode, toggleColorMode } = useColorMode();
+  const isDark = colorMode === 'dark';
 
   useEffect(() => {
     getProfile()
@@ -77,6 +80,15 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
                 {s.label}
               </Button>
             ))}
+
+            <IconButton
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Light mode' : 'Dark mode'}
+              icon={isDark ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+              size="sm"
+            />
 
             {isAuth && (
               <>

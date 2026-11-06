@@ -1,7 +1,8 @@
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
 
+// First visit follows the OS setting; after that the visitor's toggle choice is remembered.
 const config: ThemeConfig = {
-  initialColorMode: 'light',
+  initialColorMode: 'system',
   useSystemColorMode: false,
 };
 
@@ -52,21 +53,21 @@ const colors = {
 
 const semanticTokens = {
   colors: {
-    'bg.canvas': { default: 'gray.50' },
-    'bg.surface': { default: 'white' },
-    'bg.subtle': { default: 'gray.50' },
-    'bg.navbar': { default: 'rgba(255, 255, 255, 0.85)' },
-    'bg.brandSubtle': { default: 'brand.50' },
-    'border.default': { default: 'gray.200' },
-    'border.subtle': { default: 'gray.100' },
-    'border.strong': { default: 'gray.300' },
-    'fg.default': { default: 'gray.700' },
-    'fg.heading': { default: 'gray.900' },
-    'fg.secondary': { default: 'gray.600' },
-    'fg.muted': { default: 'gray.500' },
-    'fg.subtle': { default: 'gray.400' },
-    'fg.brand': { default: 'brand.600' },
-    'fg.accent': { default: 'accent.700' },
+    'bg.canvas': { default: 'gray.50', _dark: 'gray.900' },
+    'bg.surface': { default: 'white', _dark: 'gray.800' },
+    'bg.subtle': { default: 'gray.50', _dark: 'whiteAlpha.50' },
+    'bg.navbar': { default: 'rgba(255, 255, 255, 0.85)', _dark: 'rgba(15, 23, 42, 0.85)' },
+    'bg.brandSubtle': { default: 'brand.50', _dark: 'rgba(118, 153, 220, 0.16)' },
+    'border.default': { default: 'gray.200', _dark: 'whiteAlpha.200' },
+    'border.subtle': { default: 'gray.100', _dark: 'whiteAlpha.100' },
+    'border.strong': { default: 'gray.300', _dark: 'whiteAlpha.300' },
+    'fg.default': { default: 'gray.700', _dark: 'gray.300' },
+    'fg.heading': { default: 'gray.900', _dark: 'gray.50' },
+    'fg.secondary': { default: 'gray.600', _dark: 'gray.400' },
+    'fg.muted': { default: 'gray.500', _dark: 'gray.400' },
+    'fg.subtle': { default: 'gray.400', _dark: 'gray.500' },
+    'fg.brand': { default: 'brand.600', _dark: 'brand.200' },
+    'fg.accent': { default: 'accent.700', _dark: 'accent.300' },
   },
 };
 
