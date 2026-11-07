@@ -5,7 +5,7 @@ import { mkdirSync } from 'fs';
 import { resolve } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { UPLOAD_DIR } from './projects/projects.controller';
+import { UPLOAD_DIR } from './common/uploads';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

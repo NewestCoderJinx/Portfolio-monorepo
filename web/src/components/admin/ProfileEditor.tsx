@@ -16,7 +16,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { apiErrorMessage, getProfile, updateProfile, type Profile } from '../../api/profile';
+import { apiErrorMessage, getProfile, updateProfile, uploadResume, type Profile } from '../../api/profile';
 import { formatUrl, uploadProjectImage } from '../../api/projectstate';
 import { ProfileHero } from '../public/ProfileHero';
 
@@ -48,6 +48,7 @@ export function ProfileEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -84,6 +85,22 @@ export function ProfileEditor() {
       toast({ title: apiErrorMessage(err, 'Failed to upload photo'), status: 'error', duration: 4000, isClosable: true });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleResume = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingResume(true);
+    try {
+      const url = await uploadResume(file);
+      setForm((prev) => ({ ...prev, resumeUrl: url }));
+      toast({ title: 'Résumé uploaded', description: 'Save your profile to publish it.', status: 'info', duration: 4000, isClosable: true });
+    } catch (err) {
+      toast({ title: apiErrorMessage(err, 'Failed to upload résumé'), status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setUploadingResume(false);
     }
   };
 
@@ -191,12 +208,21 @@ export function ProfileEditor() {
           </FormControl>
           <FormControl>
             <FormLabel {...label}>Résumé / CV Link</FormLabel>
-            <Input value={form.resumeUrl} onChange={set('resumeUrl')} placeholder="Link to your PDF, e.g. on Google Drive" />
-            <FormHelperText fontSize="xs">Make sure the link is viewable by anyone who has it.</FormHelperText>
+            <Input value={form.resumeUrl} onChange={set('resumeUrl')} placeholder="Upload a PDF below, or paste a link (e.g. Google Drive)" />
+            <HStack spacing={3} mt={2}>
+              <Input type="file" accept="application/pdf" onChange={handleResume} p={1} isDisabled={uploadingResume} aria-label="Upload résumé PDF" />
+              {uploadingResume && <Spinner size="sm" color="brand.500" />}
+              {form.resumeUrl && !uploadingResume && (
+                <Button as="a" href={formatUrl(form.resumeUrl)} target="_blank" rel="noopener noreferrer" size="sm" variant="ghost" flexShrink={0}>
+                  View
+                </Button>
+              )}
+            </HStack>
+            <FormHelperText fontSize="xs">PDF up to 10 MB. A pasted link must be viewable by anyone who has it.</FormHelperText>
           </FormControl>
 
           <HStack pt={2}>
-            <Button type="submit" colorScheme="brand" flex={1} isLoading={saving} isDisabled={!dirty || uploading} loadingText="Saving...">
+            <Button type="submit" colorScheme="brand" flex={1} isLoading={saving} isDisabled={!dirty || uploading || uploadingResume} loadingText="Saving...">
               {exists ? 'Save Changes' : 'Create Profile'}
             </Button>
             {dirty && (

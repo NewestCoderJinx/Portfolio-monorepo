@@ -34,6 +34,14 @@ export const updateProfile = async (data: ProfileUpdate): Promise<Profile> => {
   return res.data;
 };
 
+/** Uploads a résumé PDF and returns its public URL (save it to the profile separately). */
+export const uploadResume = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await API.post<{ url: string }>('/profile/resume', formData);
+  return res.data.url;
+};
+
 /** Pulls readable validation messages out of an API error response. */
 export const apiErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
