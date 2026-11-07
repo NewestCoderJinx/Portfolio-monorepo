@@ -50,6 +50,10 @@ export class Project {
   @Column({ default: true })
   published: boolean;
 
+  /** Times a visitor opened the case study. Only shown in Admin. */
+  @Column({ type: 'int', default: 0 })
+  views: number;
+
   /** Manual position; lower comes first. */
   @Column({ type: 'int', default: 0 })
   sortOrder: number;

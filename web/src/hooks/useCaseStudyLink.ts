@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@chakra-ui/react';
-import type { Project } from '../api/projectstate';
+import { recordProjectView, type Project } from '../api/projectstate';
 
 const PROJECT_HASH = /^#project-(.+)$/;
 
@@ -15,6 +15,12 @@ export function useCaseStudyLink(projects: Project[]) {
   const [selectedId, setSelectedId] = useState(() => window.location.hash.match(PROJECT_HASH)?.[1] ?? null);
   const selectedProject = projects.find((p) => p.id === selectedId) ?? null;
   const toast = useToast();
+
+  // Count each case study a visitor opens, including ones reached by a shared link.
+  const openedId = selectedProject?.id;
+  useEffect(() => {
+    if (openedId) recordProjectView(openedId);
+  }, [openedId]);
 
   const openProject = (p: Project) => {
     setSelectedId(p.id);

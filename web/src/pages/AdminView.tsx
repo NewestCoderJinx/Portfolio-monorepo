@@ -572,6 +572,11 @@ export function AdminView() {
                           <Text color="fg.secondary" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
+                          {p.published !== false && (
+                            <Text fontSize="xs" color="fg.muted" mt={2} title="Times visitors opened this case study (your own visits while logged in aren't counted)">
+                              {p.views ?? 0} case-study {p.views === 1 ? 'view' : 'views'}
+                            </Text>
+                          )}
                           {p.tags && p.tags.length > 0 && (
                             <Wrap mt={3} spacing={1.5}>
                               {p.tags.map((tag, idx) => (

@@ -5,6 +5,14 @@ import { Project } from './project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
+export type PublicProject = Omit<Project, 'views'>;
+
+const ORDER = { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' } as const;
+
+function toPublic({ views: _views, ...project }: Project): PublicProject {
+  return project;
+}
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -12,21 +20,28 @@ export class ProjectsService {
     private readonly projectRepository: Repository<Project>,
   ) {}
 
-  /** Published projects only, unless `includeDrafts` (for Admin). */
-  findAll(includeDrafts = false): Promise<Project[]> {
-    return this.projectRepository.find({
-      where: includeDrafts ? {} : { published: true },
-      order: { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' },
-    });
+  /** Every project with its view count, drafts included (for Admin). */
+  findAllForAdmin(): Promise<Project[]> {
+    return this.projectRepository.find({ order: ORDER });
+  }
+
+  /** Published projects for the public page, without Admin-only stats. */
+  async findAll(): Promise<PublicProject[]> {
+    return (await this.projectRepository.find({ where: { published: true }, order: ORDER })).map(toPublic);
   }
 
   /** A published project; drafts 404 so their ids can't be probed. */
-  async findOne(id: string): Promise<Project> {
+  async findOne(id: string): Promise<PublicProject> {
     const project = await this.projectRepository.findOne({ where: { id, published: true } });
     if (!project) {
       throw new NotFoundException(`Project #${id} not found`);
     }
-    return project;
+    return toPublic(project);
+  }
+
+  /** Counts one case-study view of a published project. Raw SQL so updatedAt still means "last edited". */
+  async recordView(id: string): Promise<void> {
+    await this.projectRepository.query('UPDATE projects SET views = views + 1 WHERE id = $1 AND published', [id]);
   }
 
   async create(dto: CreateProjectDto): Promise<Project> {
@@ -43,7 +58,7 @@ export class ProjectsService {
         await manager.update(Project, { id }, { sortOrder: index });
       }
     });
-    return this.findAll(true);
+    return this.findAllForAdmin();
   }
 
   async update(id: string, dto: UpdateProjectDto): Promise<Project> {

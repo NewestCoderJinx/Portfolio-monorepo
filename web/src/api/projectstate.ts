@@ -21,6 +21,8 @@ export interface Project {
   /** Extra screenshot URLs shown in the case study. */
   gallery?: string[] | null;
   sortOrder?: number;
+  /** Case-study opens; only returned to Admin. */
+  views?: number;
 }
 
 export const formatUrl = (url?: string): string | undefined => {
@@ -60,6 +62,15 @@ export const updateProject = async (id: string, projectData: ProjectUpdate): Pro
 export const reorderProjects = async (ids: string[]): Promise<Project[]> => {
   const res = await API.patch<Project[]>('/projects/reorder', { ids });
   return res.data;
+};
+
+/**
+ * Counts a case-study view. Fire-and-forget: a failure never affects the visitor.
+ * Skipped when logged in, so the owner's own previews don't inflate the count.
+ */
+export const recordProjectView = (id: string): void => {
+  if (localStorage.getItem('access_token')) return;
+  API.post(`/projects/${id}/view`).catch(() => {});
 };
 
 export const deleteProject = async (id: string): Promise<void> => {
