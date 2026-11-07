@@ -1,4 +1,7 @@
-import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { URL_OPTIONS } from '../../common/url-options';
+
+export const GALLERY_MAX = 8;
 
 export class CreateProjectDto {
   @IsString()
@@ -49,4 +52,10 @@ export class CreateProjectDto {
   @IsBoolean()
   @IsOptional()
   featured?: boolean;
+
+  @IsArray()
+  @ArrayMaxSize(GALLERY_MAX)
+  @IsUrl(URL_OPTIONS, { each: true })
+  @IsOptional()
+  gallery?: string[] | null;
 }

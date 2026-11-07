@@ -1,6 +1,5 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
-
-const URL_OPTS = { require_protocol: true };
+import { URL_OPTIONS as URL_OPTS } from '../../common/url-options';
 
 // Every field is optional so the profile can be updated piece by piece.
 // Send null to clear an optional field.

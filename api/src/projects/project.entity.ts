@@ -38,6 +38,10 @@ export class Project {
   @Column({ nullable: true })
   demoUrl: string;
 
+  /** Extra screenshots shown in the case study. JSON, because URLs may contain commas. */
+  @Column('simple-json', { nullable: true })
+  gallery: string[] | null;
+
   /** Featured projects are pinned above all others. */
   @Column({ default: false })
   featured: boolean;

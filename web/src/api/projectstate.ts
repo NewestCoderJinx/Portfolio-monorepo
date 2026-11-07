@@ -16,6 +16,8 @@ export interface Project {
   decisions?: string;
   lessonsLearned?: string;
   featured?: boolean;
+  /** Extra screenshot URLs shown in the case study. */
+  gallery?: string[] | null;
   sortOrder?: number;
 }
 

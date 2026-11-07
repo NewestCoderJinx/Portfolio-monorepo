@@ -34,6 +34,7 @@ import {
   TabPanel,
 } from '@chakra-ui/react';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
+import { GalleryField } from '../components/admin/GalleryField';
 import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
@@ -60,6 +61,7 @@ export function AdminView() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [gallery, setGallery] = useState<string[]>([]);
   const [tagsInput, setTagsInput] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
@@ -84,6 +86,7 @@ export function AdminView() {
   const [editDecisions, setEditDecisions] = useState('');
   const [editLessonsLearned, setEditLessonsLearned] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
+  const [editGallery, setEditGallery] = useState<string[]>([]);
   const [editUploading, setEditUploading] = useState(false);
 
   const fetchProjects = () => {
@@ -155,6 +158,7 @@ export function AdminView() {
         decisions: decisions.trim(),
         lessonsLearned: lessonsLearned.trim(),
         imageUrl: imageUrl.trim(),
+        gallery: gallery.length ? gallery : undefined,
         tags,
         githubUrl: formatUrl(githubUrl),
         demoUrl: formatUrl(demoUrl),
@@ -169,6 +173,7 @@ export function AdminView() {
       setDecisions('');
       setLessonsLearned('');
       setImageUrl('');
+      setGallery([]);
       setTagsInput('');
       setGithubUrl('');
       setDemoUrl('');
@@ -235,6 +240,7 @@ export function AdminView() {
     setEditDecisions(p.decisions || '');
     setEditLessonsLearned(p.lessonsLearned || '');
     setEditImageUrl(p.imageUrl || '');
+    setEditGallery(p.gallery ?? []);
   };
 
   const handleUpdate = async (id: string) => {
@@ -254,6 +260,7 @@ export function AdminView() {
         lessonsLearned: editLessonsLearned.trim(),
         tags,
         imageUrl: editImageUrl.trim() || null,
+        gallery: editGallery.length ? editGallery : null,
         // null (not undefined) so clearing a link actually removes it
         githubUrl: formatUrl(editGithubUrl) ?? null,
         demoUrl: formatUrl(editDemoUrl) ?? null,
@@ -393,6 +400,11 @@ export function AdminView() {
               </FormControl>
 
               <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Screenshots</FormLabel>
+                <GalleryField value={gallery} onChange={setGallery} />
+              </FormControl>
+
+              <FormControl>
                 <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>GitHub Repository URL</FormLabel>
                 <Input
                   placeholder="github.com/username/repository"
@@ -462,6 +474,10 @@ export function AdminView() {
                               </Button>
                             )}
                           </HStack>
+                        </Box>
+                        <Box width="full">
+                          <Text fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>Screenshots</Text>
+                          <GalleryField value={editGallery} onChange={setEditGallery} />
                         </Box>
                         <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} size="sm" placeholder="Title" />
                         <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} size="sm" rows={2} placeholder="Description" />

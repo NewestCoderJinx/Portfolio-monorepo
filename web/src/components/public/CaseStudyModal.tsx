@@ -20,9 +20,10 @@ import {
   Wrap,
   WrapItem,
 } from '@chakra-ui/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { formatUrl, type Project } from '../../api/projectstate';
 import { CASE_STUDY_SECTIONS, formatProjectDate, hasCaseStudy } from './caseStudy';
+import { CaseStudyGallery } from './CaseStudyGallery';
 import { ArrowLeftIcon, ArrowRightIcon, ExternalIcon, GitHubIcon } from './icons';
 
 interface Props {
@@ -45,17 +46,30 @@ export function CaseStudyModal({ project, projects, onNavigate, onClose }: Props
   const next = index >= 0 && index < stops.length - 1 ? stops[index + 1] : null;
   const showNav = index >= 0 && stops.length > 1;
 
-  // Left/right arrow keys page through case studies while the dialog is open.
+  const gallery = project?.gallery ?? [];
+  // Tied to the project id, so moving to another case study closes the enlarged screenshot.
+  const [zoomState, setZoomState] = useState<{ projectId: string; index: number } | null>(null);
+  const zoom = project && zoomState?.projectId === project.id ? zoomState.index : null;
+  const setZoom = (index: number | null) => setZoomState(index === null || !project ? null : { projectId: project.id, index });
+
+  // Left/right arrow keys page through screenshots when one is enlarged, otherwise through case studies.
   useEffect(() => {
     if (!project) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (e.key === 'ArrowLeft' && prev) onNavigate(prev);
-      if (e.key === 'ArrowRight' && next) onNavigate(next);
+      const step = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+      if (!step) return;
+      if (zoom !== null) {
+        const target = zoom + step;
+        if (target >= 0 && target < gallery.length) setZoomState({ projectId: project.id, index: target });
+        return;
+      }
+      if (step < 0 && prev) onNavigate(prev);
+      if (step > 0 && next) onNavigate(next);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [project, prev, next, onNavigate]);
+  }, [project, prev, next, onNavigate, zoom, gallery.length]);
 
   return (
     <Modal isOpen={Boolean(project)} onClose={onClose} size="2xl" scrollBehavior="inside">
@@ -97,6 +111,8 @@ export function CaseStudyModal({ project, projects, onNavigate, onClose }: Props
                     ))}
                   </Wrap>
                 )}
+
+                <CaseStudyGallery urls={gallery} title={project.title} zoom={zoom} onZoom={setZoom} />
 
                 {sections.length > 0 && <Divider />}
 
