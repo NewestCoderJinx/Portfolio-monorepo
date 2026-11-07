@@ -3,9 +3,10 @@ import { Experience } from '../experience/experience.entity';
 import { Message } from '../messages/message.entity';
 import { Profile } from '../profile/entities/profile.entity';
 import { Project } from '../projects/project.entity';
+import { Testimonial } from '../testimonials/testimonial.entity';
 import { User } from '../users/user.entity';
 
-export const ENTITIES = [Project, Profile, User, Experience, Message];
+export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial];
 
 // Single source of truth for DB settings, shared by the app and the seed script.
 export function databaseConfig(): DataSourceOptions {

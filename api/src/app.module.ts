@@ -9,6 +9,7 @@ import { ExperienceModule } from './experience/experience.module';
 import { MessagesModule } from './messages/messages.module';
 import { ProfileModule } from './profile/profile.module';
 import { ProjectsModule } from './projects/projects.module';
+import { TestimonialsModule } from './testimonials/testimonials.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProjectsModule } from './projects/projects.module';
     ProjectsModule,
     ExperienceModule,
     MessagesModule,
+    TestimonialsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
