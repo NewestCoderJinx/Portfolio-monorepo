@@ -38,6 +38,7 @@ import { GalleryField } from '../components/admin/GalleryField';
 import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
+import { TestimonialsEditor } from '../components/admin/TestimonialsEditor';
 import {
   getAllProjects,
   createProject,
@@ -309,15 +310,17 @@ export function AdminView() {
               Portfolio Management
             </Heading>
             <Text color="fg.secondary">
-              Manage your profile, projects, experience and messages
+              Manage your profile, projects, experience, testimonials and messages
             </Text>
           </VStack>
 
           <Tabs colorScheme="brand" variant="enclosed-colored" isLazy>
-            <TabList>
+            {/* Scrolls sideways on phones instead of widening the page. */}
+            <TabList overflowX="auto" overflowY="hidden" sx={{ scrollbarWidth: 'none', '& > button': { flexShrink: 0 } }}>
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
               <Tab fontWeight="semibold">Experience</Tab>
+              <Tab fontWeight="semibold">Testimonials</Tab>
               <Tab fontWeight="semibold" gap={2}>
                 Inbox
                 {inbox.unread > 0 && (
@@ -632,6 +635,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <ExperienceEditor />
+              </TabPanel>
+              <TabPanel px={0}>
+                <TestimonialsEditor />
               </TabPanel>
               <TabPanel px={0}>
                 <InboxPanel inbox={inbox} />
