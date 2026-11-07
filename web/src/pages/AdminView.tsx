@@ -34,6 +34,8 @@ import {
   TabPanel,
 } from '@chakra-ui/react';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
+import { InboxPanel } from '../components/admin/InboxPanel';
+import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
 import {
   getProjects,
@@ -52,6 +54,7 @@ export function AdminView() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const toast = useToast();
+  const inbox = useInbox();
 
   // Basic Form state
   const [title, setTitle] = useState('');
@@ -277,7 +280,7 @@ export function AdminView() {
               Portfolio Management
             </Heading>
             <Text color="fg.secondary">
-              Manage your public profile, projects and experience
+              Manage your profile, projects, experience and messages
             </Text>
           </VStack>
 
@@ -286,6 +289,14 @@ export function AdminView() {
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
               <Tab fontWeight="semibold">Experience</Tab>
+              <Tab fontWeight="semibold" gap={2}>
+                Inbox
+                {inbox.unread > 0 && (
+                  <Badge colorScheme="accent" variant="solid" borderRadius="full" aria-label={`${inbox.unread} unread`}>
+                    {inbox.unread}
+                  </Badge>
+                )}
+              </Tab>
             </TabList>
             <TabPanels>
               <TabPanel px={0}>
@@ -553,6 +564,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <ExperienceEditor />
+              </TabPanel>
+              <TabPanel px={0}>
+                <InboxPanel inbox={inbox} />
               </TabPanel>
             </TabPanels>
           </Tabs>
