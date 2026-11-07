@@ -32,6 +32,13 @@ export class ProjectsController {
     return this.projectsService.findAll();
   }
 
+  /** Every project, drafts included. Declared before :id so "manage" isn't parsed as an id. */
+  @UseGuards(JwtAuthGuard)
+  @Get('manage')
+  findAllForAdmin(): Promise<Project[]> {
+    return this.projectsService.findAll(true);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Project> {
     return this.projectsService.findOne(id);

@@ -16,6 +16,8 @@ export interface Project {
   decisions?: string;
   lessonsLearned?: string;
   featured?: boolean;
+  /** false = draft, only visible in Admin. */
+  published?: boolean;
   /** Extra screenshot URLs shown in the case study. */
   gallery?: string[] | null;
   sortOrder?: number;
@@ -32,6 +34,12 @@ export const formatUrl = (url?: string): string | undefined => {
 
 export const getProjects = async (): Promise<Project[]> => {
   const res = await API.get<Project[]>('/projects');
+  return res.data;
+};
+
+/** Every project including drafts; requires login. */
+export const getAllProjects = async (): Promise<Project[]> => {
+  const res = await API.get<Project[]>('/projects/manage');
   return res.data;
 };
 

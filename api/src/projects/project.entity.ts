@@ -46,6 +46,10 @@ export class Project {
   @Column({ default: false })
   featured: boolean;
 
+  /** Drafts are only visible in Admin. */
+  @Column({ default: true })
+  published: boolean;
+
   /** Manual position; lower comes first. */
   @Column({ type: 'int', default: 0 })
   sortOrder: number;

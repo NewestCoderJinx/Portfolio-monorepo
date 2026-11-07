@@ -12,12 +12,17 @@ export class ProjectsService {
     private readonly projectRepository: Repository<Project>,
   ) {}
 
-  findAll(): Promise<Project[]> {
-    return this.projectRepository.find({ order: { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' } });
+  /** Published projects only, unless `includeDrafts` (for Admin). */
+  findAll(includeDrafts = false): Promise<Project[]> {
+    return this.projectRepository.find({
+      where: includeDrafts ? {} : { published: true },
+      order: { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' },
+    });
   }
 
+  /** A published project; drafts 404 so their ids can't be probed. */
   async findOne(id: string): Promise<Project> {
-    const project = await this.projectRepository.findOne({ where: { id } });
+    const project = await this.projectRepository.findOne({ where: { id, published: true } });
     if (!project) {
       throw new NotFoundException(`Project #${id} not found`);
     }
@@ -38,7 +43,7 @@ export class ProjectsService {
         await manager.update(Project, { id }, { sortOrder: index });
       }
     });
-    return this.findAll();
+    return this.findAll(true);
   }
 
   async update(id: string, dto: UpdateProjectDto): Promise<Project> {

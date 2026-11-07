@@ -39,7 +39,7 @@ import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
 import {
-  getProjects,
+  getAllProjects,
   createProject,
   updateProject,
   deleteProject,
@@ -91,7 +91,7 @@ export function AdminView() {
 
   const fetchProjects = () => {
     setLoading(true);
-    getProjects()
+    getAllProjects()
       .then((data) => setProjects(data))
       .catch((err) => {
         console.error('Error fetching projects:', err);
@@ -135,8 +135,12 @@ export function AdminView() {
     }
   };
 
-  const handleCreate = async (e: FormEvent) => {
+  const handleCreate = (e: FormEvent) => {
     e.preventDefault();
+    saveNewProject(true);
+  };
+
+  const saveNewProject = async (published: boolean) => {
     if (!title.trim()) {
       toast({ title: 'Project title is required', status: 'warning', duration: 3000, isClosable: true });
       return;
@@ -162,6 +166,7 @@ export function AdminView() {
         tags,
         githubUrl: formatUrl(githubUrl),
         demoUrl: formatUrl(demoUrl),
+        published,
       });
 
       // Reset form fields
@@ -178,7 +183,13 @@ export function AdminView() {
       setGithubUrl('');
       setDemoUrl('');
 
-      toast({ title: 'Project published!', status: 'success', duration: 3000, isClosable: true });
+      toast({
+        title: published ? 'Project published!' : 'Draft saved',
+        description: published ? undefined : 'Only you can see it. Publish it from its card when ready.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
       fetchProjects();
     } catch (err) {
       toast({ title: 'Failed to create project', status: 'error', duration: 3000, isClosable: true });
@@ -193,6 +204,17 @@ export function AdminView() {
       toast({ title: p.featured ? 'Removed from featured' : 'Featured: pinned to the top', status: 'success', duration: 2500, isClosable: true });
       fetchProjects();
     } catch (err) {
+      toast({ title: 'Failed to update project', status: 'error', duration: 3000, isClosable: true });
+    }
+  };
+
+  const handleTogglePublished = async (p: Project) => {
+    const published = p.published === false;
+    try {
+      await updateProject(p.id, { published });
+      setProjects((prev) => prev.map((x) => (x.id === p.id ? { ...x, published } : x)));
+      toast({ title: published ? 'Published: now on your public page' : 'Moved to drafts: hidden from the public page', status: 'success', duration: 2500, isClosable: true });
+    } catch {
       toast({ title: 'Failed to update project', status: 'error', duration: 3000, isClosable: true });
     }
   };
@@ -422,16 +444,26 @@ export function AdminView() {
                 />
               </FormControl>
 
-              <Button
-                type="submit"
-                colorScheme="brand"
-                width="full"
-                isLoading={submitting}
-                isDisabled={uploadingImage}
-                loadingText="Publishing..."
-              >
-                Publish Project
-              </Button>
+              <HStack width="full" spacing={3}>
+                <Button
+                  type="submit"
+                  colorScheme="brand"
+                  flex={1}
+                  isLoading={submitting}
+                  isDisabled={uploadingImage}
+                  loadingText="Saving..."
+                >
+                  Publish Project
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => saveNewProject(false)}
+                  isDisabled={submitting || uploadingImage}
+                  title="Save without showing it on your public page"
+                >
+                  Save as Draft
+                </Button>
+              </HStack>
             </VStack>
           </Box>
 
@@ -450,7 +482,12 @@ export function AdminView() {
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
               {projects.map((p, index) => (
-                <Card key={p.id} borderWidth="1px" borderColor="border.default" borderRadius="xl" overflow="hidden" boxShadow="xs" bg="bg.surface">
+                <Card
+                  key={p.id}
+                  borderWidth="1px"
+                  borderColor={p.published === false ? 'border.strong' : 'border.default'}
+                  borderStyle={p.published === false ? 'dashed' : 'solid'}
+                  borderRadius="xl" overflow="hidden" boxShadow="xs" bg="bg.surface">
                   <CardBody p={5}>
                     {editingId === p.id ? (
                       <VStack spacing={3}>
@@ -523,7 +560,12 @@ export function AdminView() {
                           {p.imageUrl && (
                             <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
                           )}
-                          <Heading size="sm" color="fg.heading">{p.title}</Heading>
+                          <HStack justify="space-between" align="start" gap={2}>
+                            <Heading size="sm" color="fg.heading">{p.title}</Heading>
+                            {p.published === false && (
+                              <Badge colorScheme="gray" variant="outline" flexShrink={0}>Draft</Badge>
+                            )}
+                          </HStack>
                           <Text color="fg.secondary" fontSize="xs" mt={2} noOfLines={3}>
                             {p.description || 'No description provided.'}
                           </Text>
@@ -559,6 +601,16 @@ export function AdminView() {
                           </Button>
                         </HStack>
                         <HStack width="full" mt={-1}>
+                          <Button
+                            size="xs"
+                            variant={p.published === false ? 'solid' : 'ghost'}
+                            colorScheme={p.published === false ? 'brand' : 'gray'}
+                            flex={1}
+                            onClick={() => handleTogglePublished(p)}
+                            title={p.published === false ? 'Show on your public page' : 'Hide from your public page'}
+                          >
+                            {p.published === false ? 'Publish' : 'Unpublish'}
+                          </Button>
                           <Button size="xs" variant="outline" colorScheme="gray" flex={1} onClick={() => startEditing(p)}>
                             Edit
                           </Button>

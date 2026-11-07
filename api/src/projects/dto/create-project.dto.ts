@@ -53,6 +53,11 @@ export class CreateProjectDto {
   @IsOptional()
   featured?: boolean;
 
+  /** false saves the project as a draft, hidden from the public page. */
+  @IsBoolean()
+  @IsOptional()
+  published?: boolean;
+
   @IsArray()
   @ArrayMaxSize(GALLERY_MAX)
   @IsUrl(URL_OPTIONS, { each: true })
