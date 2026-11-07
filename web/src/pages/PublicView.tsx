@@ -10,12 +10,13 @@ import { ProjectsSection } from '../components/public/ProjectsSection';
 import { PublicFooter } from '../components/public/PublicFooter';
 import { Reveal } from '../components/public/Reveal';
 import { TechStack } from '../components/public/TechStack';
+import { TestimonialsSection } from '../components/public/TestimonialsSection';
 import { useCaseStudyLink } from '../hooks/useCaseStudyLink';
 import { useHashScroll } from '../hooks/useHashScroll';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
 
-const NAV_SECTIONS = ['projects', 'experience', 'contact'] as const;
+const NAV_SECTIONS = ['projects', 'experience', 'testimonials', 'contact'] as const;
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -28,7 +29,7 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
 }
 
 export function PublicView() {
-  const { profile, projects, experience, loading, error, retry } = usePortfolio();
+  const { profile, projects, experience, testimonials, loading, error, retry } = usePortfolio();
   const { selectedProject, openProject, closeProject, shareProject } = useCaseStudyLink(projects);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -71,6 +72,8 @@ export function PublicView() {
           />
 
           {!loading && <ExperienceSection experience={experience} />}
+
+          {!loading && <TestimonialsSection testimonials={testimonials} />}
 
           {!loading && (
             <Reveal>
