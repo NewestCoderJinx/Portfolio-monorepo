@@ -36,6 +36,7 @@ import {
 import { AccountPanel } from '../components/admin/AccountPanel';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { GalleryField } from '../components/admin/GalleryField';
+import { OverviewPanel, type AdminTab } from '../components/admin/OverviewPanel';
 import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
@@ -51,7 +52,12 @@ import {
   type Project,
 } from '../api/projectstate';
 
+/** Tab order; the Overview opens first. */
+const TABS = ['overview', 'projects', 'profile', 'experience', 'testimonials', 'inbox', 'account'] as const;
+
 export function AdminView() {
+  const [tabIndex, setTabIndex] = useState(0);
+  const goToTab = (tab: AdminTab) => setTabIndex(TABS.indexOf(tab));
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -315,9 +321,10 @@ export function AdminView() {
             </Text>
           </VStack>
 
-          <Tabs colorScheme="brand" variant="enclosed-colored" isLazy>
+          <Tabs colorScheme="brand" variant="enclosed-colored" isLazy index={tabIndex} onChange={setTabIndex}>
             {/* Scrolls sideways on phones instead of widening the page. */}
             <TabList overflowX="auto" overflowY="hidden" sx={{ scrollbarWidth: 'none', '& > button': { flexShrink: 0 } }}>
+              <Tab fontWeight="semibold">Overview</Tab>
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
               <Tab fontWeight="semibold">Experience</Tab>
@@ -333,6 +340,9 @@ export function AdminView() {
               <Tab fontWeight="semibold">Account</Tab>
             </TabList>
             <TabPanels>
+              <TabPanel px={0}>
+                <OverviewPanel projects={projects} projectsLoading={loading} inbox={inbox} onGoTo={goToTab} />
+              </TabPanel>
               <TabPanel px={0}>
                 <VStack spacing={8} align="stretch">
           {/* Creation Form */}
