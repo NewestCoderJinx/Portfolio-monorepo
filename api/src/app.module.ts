@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { databaseConfig } from './config/database.config';
+import { CredentialsModule } from './credentials/credentials.module';
 import { ExperienceModule } from './experience/experience.module';
 import { MessagesModule } from './messages/messages.module';
 import { ProfileModule } from './profile/profile.module';
@@ -21,6 +22,7 @@ import { TestimonialsModule } from './testimonials/testimonials.module';
     ExperienceModule,
     MessagesModule,
     TestimonialsModule,
+    CredentialsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
