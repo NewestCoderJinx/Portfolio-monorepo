@@ -34,6 +34,7 @@ import {
   TabPanel,
 } from '@chakra-ui/react';
 import { AccountPanel } from '../components/admin/AccountPanel';
+import { CredentialsEditor } from '../components/admin/CredentialsEditor';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { GalleryField } from '../components/admin/GalleryField';
 import { OverviewPanel, type AdminTab } from '../components/admin/OverviewPanel';
@@ -53,7 +54,7 @@ import {
 } from '../api/projectstate';
 
 /** Tab order; the Overview opens first. */
-const TABS = ['overview', 'projects', 'profile', 'experience', 'testimonials', 'inbox', 'account'] as const;
+const TABS = ['overview', 'projects', 'profile', 'experience', 'education', 'testimonials', 'inbox', 'account'] as const;
 
 export function AdminView() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -317,7 +318,7 @@ export function AdminView() {
               Portfolio Management
             </Heading>
             <Text color="fg.secondary">
-              Manage your profile, projects, experience, testimonials and messages
+              Manage your profile, projects, experience, education, testimonials and messages
             </Text>
           </VStack>
 
@@ -328,6 +329,7 @@ export function AdminView() {
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
               <Tab fontWeight="semibold">Experience</Tab>
+              <Tab fontWeight="semibold">Education</Tab>
               <Tab fontWeight="semibold">Testimonials</Tab>
               <Tab fontWeight="semibold" gap={2}>
                 Inbox
@@ -652,6 +654,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <ExperienceEditor />
+              </TabPanel>
+              <TabPanel px={0}>
+                <CredentialsEditor />
               </TabPanel>
               <TabPanel px={0}>
                 <TestimonialsEditor />

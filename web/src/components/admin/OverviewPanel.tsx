@@ -6,7 +6,7 @@ import type { Project } from '../../api/projectstate';
 import { getAllTestimonials, type Testimonial } from '../../api/testimonials';
 import type { useInbox } from '../../hooks/useInbox';
 
-export type AdminTab = 'projects' | 'profile' | 'experience' | 'testimonials' | 'inbox';
+export type AdminTab = 'projects' | 'profile' | 'experience' | 'education' | 'testimonials' | 'inbox';
 
 interface Props {
   projects: Project[];
