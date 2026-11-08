@@ -6,6 +6,7 @@ import { AuthForm } from './components/AuthForm';
 import { Navbar } from './components/Navbar';
 import { AdminView } from './pages/AdminView';
 import { PublicView } from './pages/PublicView';
+import { ResumeView } from './pages/ResumeView';
 
 export function App() {
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
@@ -48,6 +49,7 @@ export function App() {
         <Navbar isAuth={isAuth} onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={<PublicView />} />
+          <Route path="/resume" element={<ResumeView />} />
           <Route
             path="/admin"
             element={

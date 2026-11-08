@@ -8,3 +8,26 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Printing (used by the /resume page): just the sheet, edge to edge, no app chrome. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  .app-navbar,
+  .no-print {
+    display: none !important;
+  }
+  body,
+  #root > div,
+  .resume-page {
+    min-height: 0 !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+  .resume-sheet {
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+}

@@ -55,6 +55,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
   return (
     <Box
       as="header"
+      className="app-navbar"
       bg="bg.navbar"
       backdropFilter="saturate(180%) blur(8px)"
       borderBottomWidth="1px"
