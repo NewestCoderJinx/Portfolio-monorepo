@@ -86,8 +86,8 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => goToSection(s.hash)}
-                // Keep the bar uncluttered on phones when Dashboard/Logout are also shown
-                display={{ base: isAuth ? 'none' : 'inline-flex', sm: 'inline-flex' }}
+                // With Dashboard/Logout also shown the bar needs more room, so section links wait for tablet width.
+                display={isAuth ? { base: 'none', md: 'inline-flex' } : 'inline-flex'}
               >
                 {s.label}
               </Button>
