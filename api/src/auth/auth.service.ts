@@ -1,11 +1,17 @@
-import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/user.service';
 import * as bcrypt from 'bcrypt';
+import { RateLimiter } from '../common/rate-limiter';
+
+/** Wrong current-password attempts allowed per account in the window below. */
+export const PASSWORD_ATTEMPTS = 5;
 
 @Injectable()
 export class AuthService {
+  private readonly passwordAttempts = new RateLimiter(PASSWORD_ATTEMPTS, 15 * 60 * 1000);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -48,6 +54,37 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    return this.generateToken(user.id, user.email);
+  }
+
+  /** The signed-in account, for the Admin Account tab. */
+  async me(userId: string): Promise<{ email: string; passwordChangedAt: Date | null; createdAt: Date }> {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+    return { email: user.email, passwordChangedAt: user.passwordChangedAt, createdAt: user.createdAt };
+  }
+
+  /**
+   * Changes the password after checking the current one. Every other login is revoked
+   * (see JwtStrategy); the caller gets a fresh token so this session continues.
+   */
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      if (!this.passwordAttempts.tryHit(userId)) {
+        throw new HttpException('Too many wrong attempts. Please try again later.', HttpStatus.TOO_MANY_REQUESTS);
+      }
+      throw new BadRequestException('Current password is incorrect');
+    }
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('The new password must be different from the current one');
+    }
+
+    // Whole seconds, because token issue times (iat) are in whole seconds.
+    const changedAt = new Date(Math.floor(Date.now() / 1000) * 1000);
+    await this.usersService.setPassword(user.id, await bcrypt.hash(newPassword, 10), changedAt);
     return this.generateToken(user.id, user.email);
   }
 

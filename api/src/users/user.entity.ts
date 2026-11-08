@@ -11,6 +11,10 @@ export class User {
   @Column()
   passwordHash: string;
 
+  /** Logins issued before this moment are rejected, so a password change signs out other devices. */
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordChangedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }
