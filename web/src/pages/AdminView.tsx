@@ -33,6 +33,7 @@ import {
   TabPanels,
   TabPanel,
 } from '@chakra-ui/react';
+import { AccountPanel } from '../components/admin/AccountPanel';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { GalleryField } from '../components/admin/GalleryField';
 import { InboxPanel } from '../components/admin/InboxPanel';
@@ -329,6 +330,7 @@ export function AdminView() {
                   </Badge>
                 )}
               </Tab>
+              <Tab fontWeight="semibold">Account</Tab>
             </TabList>
             <TabPanels>
               <TabPanel px={0}>
@@ -646,6 +648,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <InboxPanel inbox={inbox} />
+              </TabPanel>
+              <TabPanel px={0}>
+                <AccountPanel />
               </TabPanel>
             </TabPanels>
           </Tabs>

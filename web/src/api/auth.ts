@@ -1,4 +1,4 @@
-import { API_URL } from './axios';
+import API, { API_URL } from './axios';
 
 export const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token');
@@ -84,4 +84,21 @@ export const getRegistrationStatus = async (): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+export interface Account {
+  email: string;
+  createdAt: string;
+  passwordChangedAt: string | null;
+}
+
+export const getAccount = async (): Promise<Account> => {
+  const res = await API.get<Account>('/auth/me');
+  return res.data;
+};
+
+/** Changes the password and keeps this session going with the fresh token; other devices are signed out. */
+export const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  const res = await API.patch<{ access_token: string }>('/auth/password', { currentPassword, newPassword });
+  localStorage.setItem('access_token', res.data.access_token);
 };
