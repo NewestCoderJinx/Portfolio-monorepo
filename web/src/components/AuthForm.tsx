@@ -19,9 +19,11 @@ import { getRegistrationStatus, loginUser, registerUser } from '../api/auth';
 
 interface AuthFormProps {
   onSuccess: () => void;
+  /** Shown above the form, e.g. when an expired session sent the owner here. */
+  notice?: string;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
+export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -78,6 +80,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                     : 'No admin account exists yet. This account becomes the site owner, and sign-ups close afterwards.'}
                 </Text>
               </VStack>
+
+              {notice && !error && (
+                <Alert status="info" borderRadius="md" fontSize="sm">
+                  <AlertIcon />
+                  {notice}
+                </Alert>
+              )}
 
               {/* Error Message */}
               {error && (

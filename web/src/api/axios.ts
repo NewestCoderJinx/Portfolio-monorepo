@@ -17,4 +17,18 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// A 401 on a request that carried our token means the login is no longer valid:
+// clear it and let the app send the owner back to the sign-in form.
+API.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const sentToken = Boolean(error.config?.headers?.Authorization);
+    if (error.response?.status === 401 && sentToken) {
+      localStorage.removeItem('access_token');
+      window.dispatchEvent(new Event('auth:expired'));
+    }
+    return Promise.reject(error);
+  },
+);
+
 export default API;

@@ -23,11 +23,33 @@ export const loginUser = async (email: string, password: string) => {
   localStorage.setItem('access_token', data.access_token);
   return data;
 };
-  export const logoutUser = (): void => {
+export const logoutUser = (): void => {
   localStorage.removeItem('access_token');
 };
+
+/** Fired on window when the API rejects the saved login (expired or revoked). */
+export const SESSION_EXPIRED_EVENT = 'auth:expired';
+
+/** When the token expires, in ms since the epoch; null if it can't be read. */
+export const tokenExpiry = (token: string): number | null => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+};
+
+/** The saved token, or null if there is none or it has expired (an expired one is cleared). */
 export const getToken = (): string | null => {
-  return localStorage.getItem('access_token');
+  const token = localStorage.getItem('access_token');
+  if (!token) return null;
+  const expiry = tokenExpiry(token);
+  if (expiry !== null && expiry <= Date.now()) {
+    logoutUser();
+    return null;
+  }
+  return token;
 };
 
 export const isAuthenticated = (): boolean => {
