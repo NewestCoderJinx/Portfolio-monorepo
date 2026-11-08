@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { Box, Button, Container, Divider, Heading, HStack, Link, Spinner, Text, VStack } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
+import { formatCredentialDates, type Credential } from '../api/credentials';
 import { formatDuration, formatPeriod } from '../api/experience';
 import { formatUrl, type Project } from '../api/projectstate';
 import { ArrowLeftIcon, FileIcon } from '../components/public/icons';
@@ -28,14 +29,48 @@ function collectSkills(lists: (string[] | null | undefined)[]): string[] {
   return [...counts.values()].sort((a, b) => b.n - a.n).slice(0, MAX_SKILLS).map((e) => e.name);
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * A titled block. When printing, the title never ends a page on its own, and short sections
+ * (`keepTogether`) move to the next page whole instead of splitting.
+ */
+function Section({ title, keepTogether = false, children }: { title: string; keepTogether?: boolean; children: ReactNode }) {
   return (
-    <Box as="section" mt={7}>
-      <Heading as="h2" fontSize="sm" textTransform="uppercase" letterSpacing="widest" color="brand.700" mb={1}>
-        {title}
-      </Heading>
-      <Divider borderColor="gray.300" mb={4} />
+    <Box as="section" mt={7} sx={keepTogether ? { breakInside: 'avoid' } : undefined}>
+      <Box sx={{ breakAfter: 'avoid', breakInside: 'avoid' }}>
+        <Heading as="h2" fontSize="sm" textTransform="uppercase" letterSpacing="widest" color="brand.700" mb={1}>
+          {title}
+        </Heading>
+        <Divider borderColor="gray.300" mb={4} />
+      </Box>
       {children}
+    </Box>
+  );
+}
+
+/** One line per degree or certificate: title · institution, dates on the right, optional note and link below. */
+function CredentialEntry({ c }: { c: Credential }) {
+  const dates = formatCredentialDates(c);
+  return (
+    <Box sx={{ breakInside: 'avoid' }}>
+      <HStack justify="space-between" align="baseline" flexWrap="wrap" columnGap={4}>
+        <Text fontWeight="bold" color="gray.900">
+          {c.title}
+          <Text as="span" fontWeight="normal" color="gray.700">
+            {' '}
+            · {c.institution}
+          </Text>
+        </Text>
+        {dates && (
+          <Text fontSize="sm" color="gray.600">
+            {dates}
+          </Text>
+        )}
+      </HStack>
+      {(c.description || c.credentialUrl) && (
+        <Text fontSize="xs" color="gray.600" mt={0.5}>
+          {[c.description, c.credentialUrl && shortUrl(c.credentialUrl)].filter(Boolean).join('  ·  ')}
+        </Text>
+      )}
     </Box>
   );
 }
@@ -62,11 +97,11 @@ function ProjectEntry({ p }: { p: Project }) {
 }
 
 /**
- * A one-page CV built from the portfolio data, styled as a white sheet in both color modes
+ * A CV built from the portfolio data (profile, experience, education, projects, certifications, skills), styled as a white sheet in both color modes
  * and laid out for "Print / Save as PDF".
  */
 export function ResumeView() {
-  const { profile, projects, experience, loading, error, retry } = usePortfolio();
+  const { profile, projects, experience, credentials, loading, error, retry } = usePortfolio();
 
   // The document title becomes the default file name when saving as PDF.
   useEffect(() => {
@@ -113,6 +148,8 @@ export function ResumeView() {
   const selected = [...projects.filter((p) => p.featured), ...projects.filter((p) => !p.featured)].slice(0, MAX_PROJECTS);
   const skills = collectSkills([...experience.map((e) => e.skills), ...projects.map((p) => p.tags)]);
   const pdf = formatUrl(profile.resumeUrl);
+  const education = credentials.filter((c) => c.kind === 'education');
+  const certifications = credentials.filter((c) => c.kind === 'certification');
 
   return (
     <Box bg="bg.canvas" py={{ base: 6, md: 10 }} px={{ base: 4, md: 0 }} className="resume-page">
@@ -160,7 +197,7 @@ export function ResumeView() {
           </Box>
 
           {profile.bio && (
-            <Section title="Summary">
+            <Section title="Summary" keepTogether>
               <Text fontSize="sm" lineHeight="tall" whiteSpace="pre-line">
                 {profile.bio}
               </Text>
@@ -205,6 +242,16 @@ export function ResumeView() {
             </Section>
           )}
 
+          {education.length > 0 && (
+            <Section title="Education" keepTogether>
+              <VStack align="stretch" spacing={3}>
+                {education.map((c) => (
+                  <CredentialEntry key={c.id} c={c} />
+                ))}
+              </VStack>
+            </Section>
+          )}
+
           {selected.length > 0 && (
             <Section title="Selected Projects">
               <VStack align="stretch" spacing={4}>
@@ -215,8 +262,18 @@ export function ResumeView() {
             </Section>
           )}
 
+          {certifications.length > 0 && (
+            <Section title="Certifications" keepTogether>
+              <VStack align="stretch" spacing={3}>
+                {certifications.map((c) => (
+                  <CredentialEntry key={c.id} c={c} />
+                ))}
+              </VStack>
+            </Section>
+          )}
+
           {skills.length > 0 && (
-            <Section title="Skills">
+            <Section title="Skills" keepTogether>
               <Text fontSize="sm" lineHeight="tall">
                 {skills.join('  ·  ')}
               </Text>
