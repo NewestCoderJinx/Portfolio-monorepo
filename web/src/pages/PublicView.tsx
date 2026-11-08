@@ -3,6 +3,7 @@ import { Box, Button, Container, Heading, Text, VStack } from '@chakra-ui/react'
 import { BackToTop } from '../components/public/BackToTop';
 import { CaseStudyModal } from '../components/public/CaseStudyModal';
 import { ContactSection } from '../components/public/ContactSection';
+import { CredentialsSection } from '../components/public/CredentialsSection';
 import { ExperienceSection } from '../components/public/ExperienceSection';
 import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
@@ -16,7 +17,7 @@ import { useHashScroll } from '../hooks/useHashScroll';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
 
-const NAV_SECTIONS = ['projects', 'experience', 'testimonials', 'contact'] as const;
+const NAV_SECTIONS = ['projects', 'experience', 'education', 'testimonials', 'contact'] as const;
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -29,7 +30,7 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
 }
 
 export function PublicView() {
-  const { profile, projects, experience, testimonials, loading, error, retry } = usePortfolio();
+  const { profile, projects, experience, testimonials, credentials, loading, error, retry } = usePortfolio();
   const { selectedProject, openProject, closeProject, shareProject } = useCaseStudyLink(projects);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -72,6 +73,8 @@ export function PublicView() {
           />
 
           {!loading && <ExperienceSection experience={experience} />}
+
+          {!loading && <CredentialsSection credentials={credentials} />}
 
           {!loading && <TestimonialsSection testimonials={testimonials} />}
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { getCredentials, type Credential } from '../api/credentials';
 import { getExperience, type Experience } from '../api/experience';
 import { getProfile, type Profile } from '../api/profile';
 import { getProjects, type Project } from '../api/projectstate';
@@ -10,23 +11,26 @@ export function usePortfolio() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [experience, setExperience] = useState<Experience[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const fetchPortfolio = useCallback(
     () =>
-      // Experience and testimonials are optional extras: if they fail, show the rest of the page without them.
+      // Experience, testimonials and credentials are optional extras: if they fail, show the rest of the page without them.
       Promise.all([
         getProfile(),
         getProjects(),
         getExperience().catch(() => []),
         getTestimonials().catch(() => []),
+        getCredentials().catch(() => []),
       ])
-        .then(([prof, projs, exp, quotes]) => {
+        .then(([prof, projs, exp, quotes, creds]) => {
           setProfile(prof);
           setProjects(projs);
           setExperience(exp);
           setTestimonials(quotes);
+          setCredentials(creds);
           setError(false);
         })
         .catch((err) => {
@@ -47,5 +51,5 @@ export function usePortfolio() {
     fetchPortfolio();
   };
 
-  return { profile, projects, experience, testimonials, loading, error, retry };
+  return { profile, projects, experience, testimonials, credentials, loading, error, retry };
 }
