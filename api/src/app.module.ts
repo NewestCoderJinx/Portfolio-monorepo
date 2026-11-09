@@ -10,6 +10,7 @@ import { ExperienceModule } from './experience/experience.module';
 import { MessagesModule } from './messages/messages.module';
 import { ProfileModule } from './profile/profile.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ShareModule } from './share/share.module';
 import { SkillsModule } from './skills/skills.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 
@@ -25,6 +26,7 @@ import { TestimonialsModule } from './testimonials/testimonials.module';
     TestimonialsModule,
     CredentialsModule,
     SkillsModule,
+    ShareModule,
   ],
   controllers: [AppController],
   providers: [AppService],
