@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Badge, Box, Button, ButtonGroup, Collapse, HStack, Spinner, Text, useToast, VStack } from '@chakra-ui/react';
-import { deleteMessage, updateMessage, type Message, type MessageFlags } from '../../api/messages';
+import { Badge, Box, Button, ButtonGroup, Collapse, HStack, Input, InputGroup, InputLeftElement, InputRightElement, Spinner, Text, useToast, VStack } from '@chakra-ui/react';
+import { deleteMessage, markAllMessagesRead, updateMessage, type Message, type MessageFlags } from '../../api/messages';
 import { apiErrorMessage } from '../../api/profile';
 import type { useInbox } from '../../hooks/useInbox';
 
@@ -31,6 +31,8 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
   const { messages, setMessages, loading, failed, reload, unread } = inbox;
   const [openId, setOpenId] = useState<string | null>(null);
   const [view, setView] = useState<View>('inbox');
+  const [query, setQuery] = useState('');
+  const [markingAll, setMarkingAll] = useState(false);
   const toast = useToast();
 
   const update = (id: string, patch: Partial<Message>) =>
@@ -64,6 +66,21 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
       toast({ title: 'Email address copied', status: 'success', duration: 2000, isClosable: true });
     } catch {
       toast({ title: 'Could not copy', description: m.email, status: 'warning', duration: 5000, isClosable: true });
+    }
+  };
+
+  const markAllRead = async () => {
+    setMarkingAll(true);
+    const before = messages;
+    setMessages((prev) => prev.map((m) => (m.archived ? m : { ...m, read: true })));
+    try {
+      const updated = await markAllMessagesRead();
+      toast({ title: `Marked ${updated} message${updated === 1 ? '' : 's'} as read`, status: 'success', duration: 2500, isClosable: true });
+    } catch (err) {
+      setMessages(before);
+      toast({ title: apiErrorMessage(err, 'Could not mark messages as read'), status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -109,7 +126,9 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
     );
   }
 
-  const shown = messages.filter(VIEWS.find((v) => v.id === view)!.matches);
+  const needle = query.trim().toLowerCase();
+  const matchesQuery = (m: Message) => !needle || [m.name, m.email, m.body].some((t) => t.toLowerCase().includes(needle));
+  const shown = messages.filter(VIEWS.find((v) => v.id === view)!.matches).filter(matchesQuery);
 
   return (
     <VStack align="stretch" spacing={3}>
@@ -143,16 +162,47 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
           <Text fontSize="sm" color="fg.muted">
             {unread} unread
           </Text>
+          {unread > 0 && (
+            <Button size="xs" variant="ghost" colorScheme="brand" onClick={markAllRead} isLoading={markingAll}>
+              Mark all as read
+            </Button>
+          )}
           <Button size="xs" variant="ghost" onClick={reload}>
             Refresh
           </Button>
         </HStack>
       </HStack>
 
+      {messages.length > 0 && (
+        <InputGroup size="sm">
+          <InputLeftElement pointerEvents="none" color="fg.subtle">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="m10.5 10.5 3 3" strokeLinecap="round" />
+            </svg>
+          </InputLeftElement>
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name, email or message"
+            aria-label="Search messages"
+            borderRadius="md"
+            bg="bg.surface"
+          />
+          {query && (
+            <InputRightElement>
+              <Button size="xs" variant="ghost" onClick={() => setQuery('')} aria-label="Clear search">
+                ×
+              </Button>
+            </InputRightElement>
+          )}
+        </InputGroup>
+      )}
+
       {shown.length === 0 && (
         <Box textAlign="center" py={12} bg="bg.surface" borderRadius="xl" borderStyle="dashed" borderWidth="2px" borderColor="border.strong">
           <Text color="fg.muted" fontSize="sm">
-            {messages.length === 0 ? EMPTY_TEXT.inbox : EMPTY_TEXT[view]}
+            {messages.length === 0 ? EMPTY_TEXT.inbox : needle ? `No messages match "${query.trim()}".` : EMPTY_TEXT[view]}
           </Text>
         </Box>
       )}
