@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Box, Button, Heading, HStack, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
+import { getCredentials, type Credential } from '../../api/credentials';
 import { getExperience, type Experience } from '../../api/experience';
 import { getProfile, type Profile } from '../../api/profile';
 import type { Project } from '../../api/projectstate';
@@ -18,6 +19,7 @@ interface Props {
 interface Extras {
   profile: Profile | null;
   experience: Experience[];
+  credentials: Credential[];
   testimonials: Testimonial[];
 }
 
@@ -162,8 +164,9 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     Promise.all([
       getProfile().catch(() => null),
       getExperience().catch(() => []),
+      getCredentials().catch(() => []),
       getAllTestimonials().catch(() => []),
-    ]).then(([profile, experience, testimonials]) => setExtras({ profile, experience, testimonials }));
+    ]).then(([profile, experience, credentials, testimonials]) => setExtras({ profile, experience, credentials, testimonials }));
   }, []);
 
   if (!extras || projectsLoading || inbox.loading) {
@@ -179,7 +182,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     );
   }
 
-  const { profile, experience, testimonials } = extras;
+  const { profile, experience, credentials, testimonials } = extras;
   const published = projects.filter((p) => p.published !== false);
   const drafts = projects.length - published.length;
   const totalViews = published.reduce((sum, p) => sum + (p.views ?? 0), 0);
@@ -194,6 +197,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     { label: 'At least 3 published projects', done: published.length >= 3, tab: 'projects' as const },
     { label: 'A featured project', done: published.some((p) => p.featured), tab: 'projects' as const },
     { label: 'Work experience', done: experience.length > 0, tab: 'experience' as const },
+    { label: 'Education or a certification', done: credentials.length > 0, tab: 'education' as const },
     { label: 'A testimonial', done: shownQuotes > 0, tab: 'testimonials' as const },
   ];
 
