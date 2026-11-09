@@ -39,9 +39,40 @@ function seoMeta(env: Record<string, string>): Plugin {
   };
 }
 
+/** Public pages for the sitemap. Case studies are #fragments of "/", so they aren't separate URLs. */
+const PUBLIC_PATHS = ['/', '/resume'];
+
+/**
+ * Emits robots.txt and, when VITE_SITE_URL is set, sitemap.xml (which needs absolute URLs).
+ * Generated rather than kept in public/ so robots.txt can point to the sitemap.
+ */
+function crawlerFiles(env: Record<string, string>): Plugin {
+  const siteUrl = (env.VITE_SITE_URL || '').replace(/\/+$/, '');
+  return {
+    name: 'crawler-files',
+    apply: 'build',
+    generateBundle() {
+      const robots = ['User-agent: *', 'Allow: /', 'Disallow: /admin'];
+      if (siteUrl) robots.push('', `Sitemap: ${siteUrl}/sitemap.xml`);
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `${robots.join('\n')}\n` });
+
+      if (!siteUrl) return;
+      const lastmod = new Date().toISOString().slice(0, 10);
+      const urls = PUBLIC_PATHS.map(
+        (path) => `  <url>\n    <loc>${escapeAttr(siteUrl + path)}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`,
+      );
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
-    plugins: [react(), seoMeta(env)],
+    plugins: [react(), seoMeta(env), crawlerFiles(env)],
   };
 });
