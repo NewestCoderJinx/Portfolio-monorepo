@@ -190,7 +190,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
   const drafts = projects.length - published.length;
   const totalViews = published.reduce((sum, p) => sum + (p.views ?? 0), 0);
   const shownQuotes = testimonials.filter((t) => t.published !== false).length;
-  const recent = inbox.messages.slice(0, 3);
+  const recent = inbox.messages.filter((m) => !m.archived).slice(0, 3);
 
   const checklist = [
     { label: 'Name and headline', done: Boolean(profile?.name && profile.headline), tab: 'profile' as const },
@@ -213,7 +213,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
         <StatTile
           label="Unread"
           value={inbox.failed ? '–' : inbox.unread}
-          detail={inbox.failed ? 'inbox unavailable' : `of ${plural(inbox.messages.length, 'message')}`}
+          detail={inbox.failed ? 'inbox unavailable' : `of ${plural(inbox.messages.filter((m) => !m.archived).length, 'message')} in the inbox`}
           onClick={() => onGoTo('inbox')}
         />
         <StatTile

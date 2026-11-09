@@ -6,6 +6,10 @@ export interface Message {
   email: string;
   body: string;
   read: boolean;
+  /** Kept, but out of the inbox. */
+  archived: boolean;
+  /** ISO time the owner first replied, or null. */
+  repliedAt: string | null;
   createdAt: string;
 }
 
@@ -27,9 +31,22 @@ export const getMessages = async (): Promise<Message[]> => {
   return res.data;
 };
 
-export const setMessageRead = async (id: string, read: boolean): Promise<Message> => {
-  const res = await API.patch<Message>(`/messages/${id}`, { read });
+export interface MessageFlags {
+  read?: boolean;
+  archived?: boolean;
+  /** true records a reply (keeping the first time); false clears it. */
+  replied?: boolean;
+}
+
+export const updateMessage = async (id: string, flags: MessageFlags): Promise<Message> => {
+  const res = await API.patch<Message>(`/messages/${id}`, flags);
   return res.data;
+};
+
+/** Marks every unread inbox message read (archived ones are left alone). */
+export const markAllMessagesRead = async (): Promise<number> => {
+  const res = await API.patch<{ updated: number }>('/messages/read-all');
+  return res.data.updated;
 };
 
 export const deleteMessage = async (id: string): Promise<void> => {

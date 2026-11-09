@@ -1,10 +1,24 @@
 import { useState } from 'react';
-import { Badge, Box, Button, Collapse, HStack, Spinner, Text, useToast, VStack } from '@chakra-ui/react';
-import { deleteMessage, setMessageRead, type Message } from '../../api/messages';
+import { Badge, Box, Button, ButtonGroup, Collapse, HStack, Spinner, Text, useToast, VStack } from '@chakra-ui/react';
+import { deleteMessage, updateMessage, type Message, type MessageFlags } from '../../api/messages';
 import { apiErrorMessage } from '../../api/profile';
 import type { useInbox } from '../../hooks/useInbox';
 
 type Inbox = ReturnType<typeof useInbox>;
+
+type View = 'inbox' | 'unread' | 'archived';
+
+const VIEWS: { id: View; label: string; matches: (m: Message) => boolean }[] = [
+  { id: 'inbox', label: 'Inbox', matches: (m) => !m.archived },
+  { id: 'unread', label: 'Unread', matches: (m) => !m.archived && !m.read },
+  { id: 'archived', label: 'Archived', matches: (m) => m.archived },
+];
+
+const EMPTY_TEXT: Record<View, string> = {
+  inbox: 'Messages sent through the contact form on your public page will appear here.',
+  unread: 'You are all caught up.',
+  archived: 'Archived messages are kept here, out of your inbox.',
+};
 
 const formatWhen = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -16,19 +30,31 @@ const replyLink = (m: Message) =>
 export function InboxPanel({ inbox }: { inbox: Inbox }) {
   const { messages, setMessages, loading, failed, reload, unread } = inbox;
   const [openId, setOpenId] = useState<string | null>(null);
+  const [view, setView] = useState<View>('inbox');
   const toast = useToast();
 
   const update = (id: string, patch: Partial<Message>) =>
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
 
-  const setRead = async (m: Message, read: boolean) => {
-    update(m.id, { read });
+  /** Optimistic; rolls back to the server's last known state on failure. */
+  const setFlags = async (m: Message, flags: MessageFlags, optimistic: Partial<Message>): Promise<boolean> => {
+    update(m.id, optimistic);
     try {
-      await setMessageRead(m.id, read);
+      update(m.id, await updateMessage(m.id, flags));
+      return true;
     } catch (err) {
-      update(m.id, { read: m.read });
+      update(m.id, m);
       toast({ title: apiErrorMessage(err, 'Could not update message'), status: 'error', duration: 4000, isClosable: true });
+      return false;
     }
+  };
+
+  const setRead = (m: Message, read: boolean) => setFlags(m, { read }, { read });
+
+  const setArchived = async (m: Message, archived: boolean) => {
+    if (openId === m.id) setOpenId(null);
+    if (!(await setFlags(m, { archived }, { archived }))) return;
+    toast({ title: archived ? 'Archived' : 'Moved back to the inbox', status: 'success', duration: 2000, isClosable: true });
   };
 
   const toggle = (m: Message) => {
@@ -67,26 +93,55 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
     );
   }
 
+  const shown = messages.filter(VIEWS.find((v) => v.id === view)!.matches);
+
   return (
     <VStack align="stretch" spacing={3}>
-      <HStack justify="space-between">
-        <Text fontSize="sm" color="fg.muted">
-          {messages.length === 0 ? 'No messages yet.' : `${messages.length} message${messages.length === 1 ? '' : 's'}, ${unread} unread`}
-        </Text>
-        <Button size="xs" variant="ghost" onClick={reload}>
-          Refresh
-        </Button>
+      <HStack justify="space-between" flexWrap="wrap" gap={2}>
+        <ButtonGroup size="sm" isAttached variant="outline" role="tablist" aria-label="Messages">
+          {VIEWS.map((v) => {
+            const count = messages.filter(v.matches).length;
+            return (
+              <Button
+                key={v.id}
+                role="tab"
+                aria-selected={view === v.id}
+                variant={view === v.id ? 'solid' : 'outline'}
+                colorScheme={view === v.id ? 'brand' : 'gray'}
+                onClick={() => {
+                  setView(v.id);
+                  setOpenId(null);
+                }}
+              >
+                {v.label}
+                {count > 0 && (
+                  <Text as="span" ml={1.5} fontWeight="normal" opacity={0.8}>
+                    {count}
+                  </Text>
+                )}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
+        <HStack spacing={2}>
+          <Text fontSize="sm" color="fg.muted">
+            {unread} unread
+          </Text>
+          <Button size="xs" variant="ghost" onClick={reload}>
+            Refresh
+          </Button>
+        </HStack>
       </HStack>
 
-      {messages.length === 0 && (
+      {shown.length === 0 && (
         <Box textAlign="center" py={12} bg="bg.surface" borderRadius="xl" borderStyle="dashed" borderWidth="2px" borderColor="border.strong">
           <Text color="fg.muted" fontSize="sm">
-            Messages sent through the contact form on your public page will appear here.
+            {messages.length === 0 ? EMPTY_TEXT.inbox : EMPTY_TEXT[view]}
           </Text>
         </Box>
       )}
 
-      {messages.map((m) => {
+      {shown.map((m) => {
         const open = openId === m.id;
         return (
           <Box
@@ -148,6 +203,9 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setRead(m, !m.read)}>
                     Mark as {m.read ? 'unread' : 'read'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setArchived(m, !m.archived)}>
+                    {m.archived ? 'Move to inbox' : 'Archive'}
                   </Button>
                   <Button size="sm" variant="ghost" colorScheme="red" onClick={() => remove(m)}>
                     Delete

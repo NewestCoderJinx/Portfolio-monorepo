@@ -23,6 +23,7 @@ export function useInbox() {
     reload();
   }, [reload]);
 
-  const unread = messages.filter((m) => !m.read).length;
+  // Archived messages are filed away, so they don't count as waiting.
+  const unread = messages.filter((m) => !m.read && !m.archived).length;
   return { messages, setMessages, loading, failed, reload, unread };
 }
