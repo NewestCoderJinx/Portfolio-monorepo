@@ -4,7 +4,11 @@ import { recordProjectView, type Project } from '../api/projectstate';
 
 const PROJECT_HASH = /^#project-(.+)$/;
 
-const projectUrl = (p: Project) => `${window.location.origin}${window.location.pathname}#project-${p.id}`;
+/**
+ * The link to share: /p/<id> serves the project's own preview card to LinkedIn, WhatsApp etc. (which
+ * don't run JavaScript) and forwards visitors to the case study at /#project-<id>.
+ */
+const projectUrl = (p: Project) => `${window.location.origin}/p/${p.id}`;
 
 /**
  * Tracks the open case study and mirrors it in the URL hash, so /#project-<id> deep links

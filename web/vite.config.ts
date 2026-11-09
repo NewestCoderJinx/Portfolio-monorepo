@@ -74,5 +74,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
     plugins: [react(), seoMeta(env), crawlerFiles(env)],
+    server: {
+      // Mirrors nginx in production, so share links work in development too.
+      proxy: {
+        '/p/': {
+          target: env.VITE_API_URL || 'http://localhost:3000',
+          rewrite: (path: string) => path.replace(/^\/p\//, '/share/projects/'),
+        },
+      },
+    },
   };
 });
