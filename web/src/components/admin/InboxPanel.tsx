@@ -51,6 +51,22 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
 
   const setRead = (m: Message, read: boolean) => setFlags(m, { read }, { read });
 
+  const markReplied = (m: Message) => {
+    if (m.repliedAt) return;
+    setFlags(m, { replied: true }, { repliedAt: new Date().toISOString(), read: true });
+  };
+
+  const clearReplied = (m: Message) => setFlags(m, { replied: false }, { repliedAt: null });
+
+  const copyEmail = async (m: Message) => {
+    try {
+      await navigator.clipboard.writeText(m.email);
+      toast({ title: 'Email address copied', status: 'success', duration: 2000, isClosable: true });
+    } catch {
+      toast({ title: 'Could not copy', description: m.email, status: 'warning', duration: 5000, isClosable: true });
+    }
+  };
+
   const setArchived = async (m: Message, archived: boolean) => {
     if (openId === m.id) setOpenId(null);
     if (!(await setFlags(m, { archived }, { archived }))) return;
@@ -176,6 +192,11 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
                         New
                       </Badge>
                     )}
+                    {m.repliedAt && (
+                      <Badge colorScheme="green" variant="subtle" borderRadius="full" fontSize="2xs">
+                        Replied
+                      </Badge>
+                    )}
                   </HStack>
                   <Text fontSize="sm" color="fg.muted" noOfLines={1}>
                     {m.email}
@@ -197,9 +218,20 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
                 <Text whiteSpace="pre-wrap" color="fg.default" fontSize="sm" lineHeight="tall" py={3} borderTopWidth="1px" borderColor="border.subtle">
                   {m.body}
                 </Text>
+                {m.repliedAt && (
+                  <HStack spacing={2} mb={3} fontSize="xs" color="fg.muted">
+                    <Text>You replied {formatWhen(m.repliedAt)}.</Text>
+                    <Button size="xs" variant="link" colorScheme="gray" onClick={() => clearReplied(m)}>
+                      Mark as not replied
+                    </Button>
+                  </HStack>
+                )}
                 <HStack spacing={2} flexWrap="wrap">
-                  <Button as="a" href={replyLink(m)} size="sm" colorScheme="brand">
+                  <Button as="a" href={replyLink(m)} size="sm" colorScheme="brand" onClick={() => markReplied(m)}>
                     Reply by email
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => copyEmail(m)}>
+                    Copy email
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setRead(m, !m.read)}>
                     Mark as {m.read ? 'unread' : 'read'}
