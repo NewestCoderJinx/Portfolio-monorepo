@@ -7,6 +7,7 @@ import { CredentialsSection } from '../components/public/CredentialsSection';
 import { ExperienceSection } from '../components/public/ExperienceSection';
 import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
+import { SkillsSection } from '../components/public/SkillsSection';
 import { ProjectsSection } from '../components/public/ProjectsSection';
 import { PublicFooter } from '../components/public/PublicFooter';
 import { Reveal } from '../components/public/Reveal';
@@ -17,7 +18,7 @@ import { useHashScroll } from '../hooks/useHashScroll';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
 
-const NAV_SECTIONS = ['projects', 'experience', 'education', 'testimonials', 'contact'] as const;
+const NAV_SECTIONS = ['projects', 'experience', 'education', 'skills', 'testimonials', 'contact'] as const;
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -30,7 +31,7 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
 }
 
 export function PublicView() {
-  const { profile, projects, experience, testimonials, credentials, loading, error, retry } = usePortfolio();
+  const { profile, projects, experience, testimonials, credentials, skills, loading, error, retry } = usePortfolio();
   const { selectedProject, openProject, closeProject, shareProject } = useCaseStudyLink(projects);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -75,6 +76,8 @@ export function PublicView() {
           {!loading && <ExperienceSection experience={experience} />}
 
           {!loading && <CredentialsSection credentials={credentials} />}
+
+          {!loading && <SkillsSection skills={skills} />}
 
           {!loading && <TestimonialsSection testimonials={testimonials} />}
 
