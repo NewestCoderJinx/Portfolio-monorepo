@@ -18,6 +18,14 @@ export class Message {
   @Column({ default: false })
   read: boolean;
 
+  /** Archived messages are kept but moved out of the inbox. */
+  @Column({ default: false })
+  archived: boolean;
+
+  /** When the owner last opened a reply to this message; null if never. */
+  @Column({ type: 'timestamptz', nullable: true })
+  repliedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

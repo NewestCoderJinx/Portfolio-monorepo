@@ -47,10 +47,17 @@ export class MessagesController {
     return this.messagesService.findAll();
   }
 
+  // Must be declared before PATCH :id so "read-all" isn't treated as an id.
+  @UseGuards(JwtAuthGuard)
+  @Patch('read-all')
+  async markAllRead(): Promise<{ updated: number }> {
+    return { updated: await this.messagesService.markAllRead() };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMessageDto): Promise<Message> {
-    return this.messagesService.setRead(id, dto.read);
+    return this.messagesService.update(id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
