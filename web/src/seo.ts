@@ -57,3 +57,16 @@ export function applyPageMeta({ title, description, image, url }: PageMeta) {
   }
   if (url) setMeta('property', 'og:url', url);
 }
+
+/** Replaces (or adds) one JSON-LD block in <head>, identified by id. null removes it. */
+export function setJsonLd(id: string, data: object | null) {
+  const existing = document.getElementById(id);
+  if (!data) {
+    existing?.remove();
+    return;
+  }
+  const el = existing ?? Object.assign(document.createElement('script'), { id, type: 'application/ld+json' });
+  // "<" is escaped so a value containing "</script>" can't end the block early.
+  el.textContent = JSON.stringify(data).replace(/</g, '\\u003c');
+  if (!existing) document.head.appendChild(el);
+}

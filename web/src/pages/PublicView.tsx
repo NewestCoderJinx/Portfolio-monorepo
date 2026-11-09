@@ -17,6 +17,7 @@ import { useCaseStudyLink } from '../hooks/useCaseStudyLink';
 import { useHashScroll } from '../hooks/useHashScroll';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
+import { useStructuredData } from '../hooks/useStructuredData';
 
 const NAV_SECTIONS = ['projects', 'experience', 'education', 'skills', 'testimonials', 'contact'] as const;
 
@@ -36,6 +37,7 @@ export function PublicView() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   useProfileMeta(profile, selectedProject);
+  useStructuredData(profile, skills);
   useHashScroll(NAV_SECTIONS, !loading);
 
   const selectTag = (tag: string | null) => {
