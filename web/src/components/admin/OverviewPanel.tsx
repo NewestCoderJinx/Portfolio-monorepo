@@ -3,11 +3,12 @@ import { Box, Button, Heading, HStack, SimpleGrid, Skeleton, Text, VStack } from
 import { getCredentials, type Credential } from '../../api/credentials';
 import { getExperience, type Experience } from '../../api/experience';
 import { getProfile, type Profile } from '../../api/profile';
+import { getSkills, type Skill } from '../../api/skills';
 import type { Project } from '../../api/projectstate';
 import { getAllTestimonials, type Testimonial } from '../../api/testimonials';
 import type { useInbox } from '../../hooks/useInbox';
 
-export type AdminTab = 'projects' | 'profile' | 'experience' | 'education' | 'testimonials' | 'inbox';
+export type AdminTab = 'projects' | 'profile' | 'experience' | 'education' | 'skills' | 'testimonials' | 'inbox';
 
 interface Props {
   projects: Project[];
@@ -20,6 +21,7 @@ interface Extras {
   profile: Profile | null;
   experience: Experience[];
   credentials: Credential[];
+  skills: Skill[];
   testimonials: Testimonial[];
 }
 
@@ -165,8 +167,9 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
       getProfile().catch(() => null),
       getExperience().catch(() => []),
       getCredentials().catch(() => []),
+      getSkills().catch(() => []),
       getAllTestimonials().catch(() => []),
-    ]).then(([profile, experience, credentials, testimonials]) => setExtras({ profile, experience, credentials, testimonials }));
+    ]).then(([profile, experience, credentials, skills, testimonials]) => setExtras({ profile, experience, credentials, skills, testimonials }));
   }, []);
 
   if (!extras || projectsLoading || inbox.loading) {
@@ -182,7 +185,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     );
   }
 
-  const { profile, experience, credentials, testimonials } = extras;
+  const { profile, experience, credentials, skills, testimonials } = extras;
   const published = projects.filter((p) => p.published !== false);
   const drafts = projects.length - published.length;
   const totalViews = published.reduce((sum, p) => sum + (p.views ?? 0), 0);
@@ -198,6 +201,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     { label: 'A featured project', done: published.some((p) => p.featured), tab: 'projects' as const },
     { label: 'Work experience', done: experience.length > 0, tab: 'experience' as const },
     { label: 'Education or a certification', done: credentials.length > 0, tab: 'education' as const },
+    { label: 'A skills list', done: skills.length > 0, tab: 'skills' as const },
     { label: 'A testimonial', done: shownQuotes > 0, tab: 'testimonials' as const },
   ];
 
