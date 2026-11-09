@@ -31,6 +31,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key}
       DB_SYNCHRONIZE: "true"
+      # Public address used in /p/<id> share links; falls back to the request host when empty.
+      SITE_URL: ${SITE_URL:-${VITE_SITE_URL:-}}
     volumes:
       - ./api/uploads:/app/uploads
     depends_on:
