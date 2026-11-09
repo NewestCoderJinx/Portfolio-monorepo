@@ -84,6 +84,9 @@ export function AdminView() {
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Drag-to-reorder: the card being dragged and the card it's hovering over.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTagsInput, setEditTagsInput] = useState('');
@@ -229,15 +232,15 @@ export function AdminView() {
   };
 
   // Featured projects always sort above the rest, so moves stay within the same group.
-  const canMove = (index: number, dir: -1 | 1) => {
-    const neighbor = projects[index + dir];
-    return Boolean(neighbor) && Boolean(neighbor.featured) === Boolean(projects[index].featured);
-  };
+  const canMoveTo = (from: number, to: number) =>
+    from !== to && Boolean(projects[from]) && Boolean(projects[to]) && Boolean(projects[from].featured) === Boolean(projects[to].featured);
+  const canMove = (index: number, dir: -1 | 1) => canMoveTo(index, index + dir);
 
-  const handleMove = async (index: number, dir: -1 | 1) => {
-    if (!canMove(index, dir)) return;
+  const moveProject = async (from: number, to: number) => {
+    if (!canMoveTo(from, to)) return;
     const next = [...projects];
-    [next[index], next[index + dir]] = [next[index + dir], next[index]];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     setProjects(next); // optimistic
     try {
       await reorderProjects(next.map((p) => p.id));
@@ -501,6 +504,34 @@ export function AdminView() {
               {projects.map((p, index) => (
                 <Card
                   key={p.id}
+                  draggable={editingId !== p.id}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', p.id); // Firefox won't start a drag without data
+                    setDragIndex(index);
+                  }}
+                  onDragOver={(e) => {
+                    if (dragIndex === null || !canMoveTo(dragIndex, index)) return;
+                    e.preventDefault(); // allows the drop
+                    e.dataTransfer.dropEffect = 'move';
+                    if (dropIndex !== index) setDropIndex(index);
+                  }}
+                  onDragLeave={() => setDropIndex((cur) => (cur === index ? null : cur))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIndex !== null) moveProject(dragIndex, index);
+                    setDragIndex(null);
+                    setDropIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setDropIndex(null);
+                  }}
+                  opacity={dragIndex === index ? 0.4 : 1}
+                  outline={dropIndex === index ? '2px solid' : undefined}
+                  outlineColor="brand.400"
+                  outlineOffset="2px"
+                  transition="opacity 0.15s"
                   borderWidth="1px"
                   borderColor={p.published === false ? 'border.strong' : 'border.default'}
                   borderStyle={p.published === false ? 'dashed' : 'solid'}
@@ -575,7 +606,7 @@ export function AdminView() {
                       <VStack align="start" spacing={3} height="100%" justifyContent="space-between">
                         <Box width="full">
                           {p.imageUrl && (
-                            <Image src={p.imageUrl} alt={p.title} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
+                            <Image src={p.imageUrl} alt={p.title} draggable={false} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
                           )}
                           <HStack justify="space-between" align="start" gap={2}>
                             <Heading size="sm" color="fg.heading">{p.title}</Heading>
@@ -605,10 +636,21 @@ export function AdminView() {
                         </Box>
 
                         <HStack width="full" pt={3} borderTopWidth="1px" borderColor="border.subtle" spacing={1}>
-                          <Button size="xs" variant="ghost" aria-label="Move up" title="Move up" onClick={() => handleMove(index, -1)} isDisabled={!canMove(index, -1)}>
+                          <Text
+                            aria-hidden
+                            title="Drag the card to reorder"
+                            cursor="grab"
+                            color="fg.subtle"
+                            px={1}
+                            display={{ base: 'none', md: 'block' }}
+                            userSelect="none"
+                          >
+                            ⠿
+                          </Text>
+                          <Button size="xs" variant="ghost" aria-label="Move up" title="Move up" onClick={() => moveProject(index, index - 1)} isDisabled={!canMove(index, -1)}>
                             ↑
                           </Button>
-                          <Button size="xs" variant="ghost" aria-label="Move down" title="Move down" onClick={() => handleMove(index, 1)} isDisabled={!canMove(index, 1)}>
+                          <Button size="xs" variant="ghost" aria-label="Move down" title="Move down" onClick={() => moveProject(index, index + 1)} isDisabled={!canMove(index, 1)}>
                             ↓
                           </Button>
                           <Button
