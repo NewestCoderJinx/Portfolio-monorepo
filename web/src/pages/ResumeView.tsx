@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { formatCredentialDates, type Credential } from '../api/credentials';
 import { formatDuration, formatPeriod } from '../api/experience';
 import { formatUrl, type Project } from '../api/projectstate';
+import { groupSkills, type Skill, type SkillGroup } from '../api/skills';
 import { ArrowLeftIcon, FileIcon } from '../components/public/icons';
 import { usePortfolio } from '../hooks/usePortfolio';
 
@@ -27,6 +28,20 @@ function collectSkills(lists: (string[] | null | undefined)[]): string[] {
     }
   }
   return [...counts.values()].sort((a, b) => b.n - a.n).slice(0, MAX_SKILLS).map((e) => e.name);
+}
+
+/**
+ * The curated skills list when there is one, grouped by category; otherwise one unlabelled group
+ * derived from experience entries and project tags, so the section isn't empty before the list is set up.
+ */
+function resumeSkills(curated: Skill[], derived: () => string[]): { label: string | null; names: string[] }[] {
+  if (curated.length === 0) {
+    const names = derived();
+    return names.length ? [{ label: null, names }] : [];
+  }
+  const groups: SkillGroup[] = groupSkills(curated);
+  const labelled = groups.length > 1;
+  return groups.map((g) => ({ label: labelled ? g.category : null, names: g.skills.map((s) => s.name) }));
 }
 
 /**
@@ -101,7 +116,7 @@ function ProjectEntry({ p }: { p: Project }) {
  * and laid out for "Print / Save as PDF".
  */
 export function ResumeView() {
-  const { profile, projects, experience, credentials, loading, error, retry } = usePortfolio();
+  const { profile, projects, experience, credentials, skills: curatedSkills, loading, error, retry } = usePortfolio();
 
   // The document title becomes the default file name when saving as PDF.
   useEffect(() => {
@@ -146,7 +161,7 @@ export function ResumeView() {
     ...[profile.websiteUrl, profile.githubUrl, profile.linkedinUrl].map((u) => formatUrl(u)).filter(Boolean).map((u) => shortUrl(u as string)),
   ].filter(Boolean) as string[];
   const selected = [...projects.filter((p) => p.featured), ...projects.filter((p) => !p.featured)].slice(0, MAX_PROJECTS);
-  const skills = collectSkills([...experience.map((e) => e.skills), ...projects.map((p) => p.tags)]);
+  const skills = resumeSkills(curatedSkills, () => collectSkills([...experience.map((e) => e.skills), ...projects.map((p) => p.tags)]));
   const pdf = formatUrl(profile.resumeUrl);
   const education = credentials.filter((c) => c.kind === 'education');
   const certifications = credentials.filter((c) => c.kind === 'certification');
@@ -274,9 +289,18 @@ export function ResumeView() {
 
           {skills.length > 0 && (
             <Section title="Skills" keepTogether>
-              <Text fontSize="sm" lineHeight="tall">
-                {skills.join('  ·  ')}
-              </Text>
+              <VStack align="stretch" spacing={1}>
+                {skills.map((g) => (
+                  <Text key={g.label ?? ''} fontSize="sm" lineHeight="tall">
+                    {g.label && (
+                      <Text as="span" fontWeight="semibold">
+                        {g.label}:{' '}
+                      </Text>
+                    )}
+                    {g.names.join('  ·  ')}
+                  </Text>
+                ))}
+              </VStack>
             </Section>
           )}
 
