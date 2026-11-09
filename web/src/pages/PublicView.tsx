@@ -35,7 +35,7 @@ export function PublicView() {
   const { selectedProject, openProject, closeProject, shareProject } = useCaseStudyLink(projects);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  useProfileMeta(profile);
+  useProfileMeta(profile, selectedProject);
   useHashScroll(NAV_SECTIONS, !loading);
 
   const selectTag = (tag: string | null) => {
