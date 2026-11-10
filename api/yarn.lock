@@ -427,6 +427,11 @@
   resolved "https://registry.npmjs.org/@resvg/resvg-js-linux-x64-gnu/-/resvg-js-linux-x64-gnu-2.6.2.tgz"
   integrity sha512-IVUe+ckIerA7xMZ50duAZzwf1U7khQe2E0QpUxu5MBJNao5RqC0zwV/Zm965vw6D3gGFUl7j4m+oJjubBVoftw==
 
+"@resvg/resvg-js-linux-x64-musl@2.6.2":
+  version "2.6.2"
+  resolved "https://registry.npmjs.org/@resvg/resvg-js-linux-x64-musl/-/resvg-js-linux-x64-musl-2.6.2.tgz"
+  integrity sha512-UOf83vqTzoYQO9SZ0fPl2ZIFtNIz/Rr/y+7X8XRX1ZnBYsQ/tTb+cj9TE+KHOdmlTFBxhYzVkP2lRByCzqi4jQ==
+
 "@resvg/resvg-js@2.6.2":
   version "2.6.2"
   resolved "https://registry.npmjs.org/@resvg/resvg-js/-/resvg-js-2.6.2.tgz"
@@ -587,19 +592,19 @@
   dependencies:
     "@types/express" "*"
 
-"@types/node@*":
-  version "26.4.1"
-  resolved "https://registry.npmjs.org/@types/node/-/node-26.4.1.tgz"
-  integrity sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA==
-  dependencies:
-    undici-types "~8.3.0"
-
-"@types/node@^20.0.0 || ^22.0.0 || >=24.0.0", "@types/node@^20.19.0 || >=22.12.0", "@types/node@^24.0.0", "@types/node@>=18":
+"@types/node@*", "@types/node@^20.0.0 || ^22.0.0 || >=24.0.0", "@types/node@^20.19.0 || >=22.12.0", "@types/node@^24.0.0", "@types/node@>=18":
   version "24.13.3"
   resolved "https://registry.npmjs.org/@types/node/-/node-24.13.3.tgz"
   integrity sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==
   dependencies:
     undici-types "~7.18.0"
+
+"@types/nodemailer@8.0.2":
+  version "8.0.2"
+  resolved "https://registry.npmjs.org/@types/nodemailer/-/nodemailer-8.0.2.tgz"
+  integrity sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==
+  dependencies:
+    "@types/node" "*"
 
 "@types/passport-jwt@^4.0.1":
   version "4.0.1"
@@ -2000,6 +2005,11 @@ node-gyp-build@^4.8.4:
   version "4.8.4"
   resolved "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.8.4.tgz"
   integrity sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==
+
+nodemailer@10.2.1:
+  version "10.2.1"
+  resolved "https://registry.npmjs.org/nodemailer/-/nodemailer-10.2.1.tgz"
+  integrity sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==
 
 object-assign@^4:
   version "4.1.1"
