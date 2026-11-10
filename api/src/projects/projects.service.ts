@@ -42,11 +42,23 @@ export class ProjectsService {
   /** Counts one case-study view of a published project. Raw SQL so updatedAt still means "last edited". */
   async recordView(id: string): Promise<void> {
     await this.projectRepository.query('UPDATE projects SET views = views + 1 WHERE id = $1 AND published', [id]);
+    await this.bumpDaily(id, 'views');
   }
 
   /** Counts one visit through a share link. Raw SQL so updatedAt (and the preview image version) don't change. */
   async recordShareClick(id: string): Promise<void> {
     await this.projectRepository.query('UPDATE projects SET "shareClicks" = "shareClicks" + 1 WHERE id = $1 AND published', [id]);
+    await this.bumpDaily(id, 'shareClicks');
+  }
+
+  /** Adds one to today's (UTC) row for a published project, creating the row if needed. */
+  private async bumpDaily(id: string, column: 'views' | 'shareClicks'): Promise<void> {
+    await this.projectRepository.query(
+      `INSERT INTO project_daily_stats ("projectId", day, "${column}")
+       SELECT id, (now() AT TIME ZONE 'utc')::date, 1 FROM projects WHERE id = $1 AND published
+       ON CONFLICT ("projectId", day) DO UPDATE SET "${column}" = project_daily_stats."${column}" + 1`,
+      [id],
+    );
   }
 
   async create(dto: CreateProjectDto): Promise<Project> {

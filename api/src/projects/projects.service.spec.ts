@@ -34,6 +34,13 @@ describe('ProjectsService', () => {
     expect(repo.query).toHaveBeenCalledWith(expect.stringContaining('AND published'), ['p1']);
   });
 
+  it('also adds views and share clicks to the daily stats', async () => {
+    await service.recordView('p1');
+    expect(repo.query).toHaveBeenLastCalledWith(expect.stringMatching(/INSERT INTO project_daily_stats .*"views".*ON CONFLICT/s), ['p1']);
+    await service.recordShareClick('p1');
+    expect(repo.query).toHaveBeenLastCalledWith(expect.stringMatching(/"shareClicks" = project_daily_stats\."shareClicks" \+ 1/), ['p1']);
+  });
+
   it('only counts share clicks on published projects', async () => {
     await service.recordShareClick('p1');
     expect(repo.query).toHaveBeenCalledWith(expect.stringMatching(/"shareClicks" \+ 1 .*AND published/), ['p1']);
