@@ -39,6 +39,7 @@ import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { GalleryField } from '../components/admin/GalleryField';
 import { OverviewPanel, type AdminTab } from '../components/admin/OverviewPanel';
 import { SkillsEditor } from '../components/admin/SkillsEditor';
+import { Sparkline } from '../components/admin/Sparkline';
 import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
@@ -52,6 +53,8 @@ import {
   uploadProjectImage,
   formatUrl,
   type Project,
+  getProjectStats,
+  type ProjectStats,
 } from '../api/projectstate';
 
 /** Tab order; the Overview opens first. */
@@ -115,6 +118,14 @@ export function AdminView() {
 
   useEffect(() => {
     fetchProjects();
+  }, []);
+
+  // 30-day trends for the project cards; the cards still work without them.
+  const [stats, setStats] = useState<ProjectStats | null>(null);
+  useEffect(() => {
+    getProjectStats(30)
+      .then(setStats)
+      .catch(() => setStats(null));
   }, []);
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -629,6 +640,11 @@ export function AdminView() {
                                 {p.shareClicks ?? 0} from share {p.shareClicks === 1 ? 'link' : 'links'}
                               </span>
                             </Text>
+                          )}
+                          {p.published !== false && stats?.projects[p.id] && (
+                            <Box mt={2}>
+                              <Sparkline values={stats.projects[p.id].views} label="case-study views" />
+                            </Box>
                           )}
                           {p.tags && p.tags.length > 0 && (
                             <Wrap mt={3} spacing={1.5}>
