@@ -20,6 +20,7 @@ describe('TestimonialRequestsService', () => {
     manager,
   };
   const profiles = { findOne: vi.fn() };
+  const mail = { enabled: true, notifyTo: null as string | null, send: vi.fn() };
   let service: TestimonialRequestsService;
 
   const open = { id: 'r1', token: 'tok', recipientName: 'Ada', note: 'Thanks!', expiresAt: later, usedAt: null };
@@ -28,9 +29,11 @@ describe('TestimonialRequestsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requests.findOne.mockResolvedValue(open);
-    profiles.findOne.mockResolvedValue({ name: 'Alonnah', headline: 'Engineer' });
+    profiles.findOne.mockResolvedValue({ name: 'Alonnah', headline: 'Engineer', email: 'owner@site.dev' });
+    mail.enabled = true;
+    mail.send.mockResolvedValue(undefined);
     manager.update.mockResolvedValue({ affected: 1 });
-    service = new TestimonialRequestsService(requests as any, profiles as any);
+    service = new TestimonialRequestsService(requests as any, profiles as any, mail as any);
   });
 
   it('creates an unguessable 30-day link', async () => {
@@ -73,5 +76,17 @@ describe('TestimonialRequestsService', () => {
   it('drops honeypot submissions without using the link', async () => {
     await expect(service.submit('tok', { ...form, website: 'http://spam' }, now)).resolves.toBeNull();
     expect(manager.transaction).not.toHaveBeenCalled();
+  });
+
+  it('emails the owner about a new testimonial, and survives mail errors', async () => {
+    await service.submit('tok', form, now);
+    await vi.waitFor(() => expect(mail.send).toHaveBeenCalled());
+    expect(mail.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'owner@site.dev', subject: 'Ada Lovelace wrote you a testimonial', text: expect.stringContaining('“Great engineer.”') }),
+    );
+    mail.send.mockRejectedValueOnce(new Error('down'));
+    await expect(service.notifyOwner({ name: 'A', role: null, company: null, quote: 'q' })).resolves.toBe(false);
+    mail.enabled = false;
+    await expect(service.notifyOwner({ name: 'A', role: null, company: null, quote: 'q' })).resolves.toBe(false);
   });
 });

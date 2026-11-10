@@ -1,7 +1,8 @@
-import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
+import { GoneException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { IsNull, MoreThan, Repository } from 'typeorm';
+import { MailService } from '../../mail/mail.service';
 import { Profile } from '../../profile/entities/profile.entity';
 import { Testimonial } from '../testimonial.entity';
 import { CreateTestimonialRequestDto, SubmitTestimonialDto } from './dto';
@@ -25,7 +26,10 @@ export class TestimonialRequestsService {
   constructor(
     @InjectRepository(TestimonialRequest) private readonly requests: Repository<TestimonialRequest>,
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
+    private readonly mail: MailService,
   ) {}
+
+  private readonly logger = new Logger(TestimonialRequestsService.name);
 
   /** Newest first, for Admin. */
   findAll(): Promise<TestimonialRequest[]> {
@@ -69,7 +73,7 @@ export class TestimonialRequestsService {
     const request = await this.usable(token, now);
     if (dto.website?.trim()) return null;
 
-    return this.requests.manager.transaction(async (manager) => {
+    const saved = await this.requests.manager.transaction(async (manager) => {
       const claim = await manager.update(
         TestimonialRequest,
         { id: request.id, usedAt: IsNull(), expiresAt: MoreThan(now) },
@@ -92,6 +96,30 @@ export class TestimonialRequestsService {
       await manager.update(TestimonialRequest, { id: request.id }, { testimonialId: testimonial.id });
       return testimonial;
     });
+    // Not awaited: the person shouldn't wait on (or see errors from) the mail server.
+    void this.notifyOwner(saved);
+    return saved;
+  }
+
+  /** Emails the owner that a testimonial awaits approval (NOTIFY_EMAIL, else the profile email). Never throws. */
+  async notifyOwner(t: Pick<Testimonial, 'name' | 'role' | 'company' | 'quote'>): Promise<boolean> {
+    if (!this.mail.enabled) return false;
+    try {
+      const to = this.mail.notifyTo ?? (await this.profiles.findOne({ where: {}, order: { createdAt: 'ASC' } }))?.email;
+      if (!to) return false;
+      const name = t.name.replace(/[\r\n]+/g, ' ').trim();
+      const who = [t.role, t.company].filter(Boolean).join(', ');
+      const site = process.env.SITE_URL?.trim().replace(/\/+$/, '');
+      await this.mail.send({
+        to,
+        subject: `${name} wrote you a testimonial`,
+        text: `${name}${who ? ` (${who})` : ''} wrote:\n\n“${t.quote}”\n\nIt is hidden until you approve it in Admin → Testimonials.${site ? `\n${site}/admin` : ''}`,
+      });
+      return true;
+    } catch (err) {
+      this.logger.error(`Could not email testimonial alert: ${(err as Error).message}`);
+      return false;
+    }
   }
 
   private async usable(token: string, now: Date): Promise<TestimonialRequest> {
