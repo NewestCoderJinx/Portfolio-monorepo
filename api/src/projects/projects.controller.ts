@@ -17,7 +17,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { optimizeUploadedImage } from '../common/images';
+import { MAX_IMAGE_UPLOAD_BYTES, optimizeUploadedImage } from '../common/images';
 import { RateLimiter } from '../common/rate-limiter';
 import { uploadedFileUrl, uploadOptions } from '../common/uploads';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -106,7 +106,7 @@ export class ProjectsController {
   @UseInterceptors(
     FileInterceptor(
       'file',
-      uploadOptions({ maxBytes: 5 * 1024 * 1024, mimeTypes: /\/(jpg|jpeg|png|webp|gif)$/, error: 'Only image files are allowed!' }),
+      uploadOptions({ maxBytes: MAX_IMAGE_UPLOAD_BYTES, mimeTypes: /\/(jpg|jpeg|png|webp|gif)$/, error: 'Only image files are allowed!' }),
     ),
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {

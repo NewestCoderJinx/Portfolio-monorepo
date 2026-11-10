@@ -6,6 +6,8 @@ import sharp from 'sharp';
 /** Longest side after resizing; plenty for a full-width cover on a retina laptop. */
 export const MAX_IMAGE_SIDE = 1920;
 export const WEBP_QUALITY = 82;
+/** Upload limit; generous because phone photos are large and the stored WebP is small. */
+export const MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 /**
  * Re-encodes an uploaded image in place as WebP: applies EXIF rotation, strips metadata (e.g. GPS),

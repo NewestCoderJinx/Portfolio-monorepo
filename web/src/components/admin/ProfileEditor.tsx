@@ -156,7 +156,7 @@ export function ProfileEditor() {
                 </Button>
               )}
             </HStack>
-            <FormHelperText fontSize="xs">A square photo works best. JPG, PNG, WEBP or GIF up to 5 MB.</FormHelperText>
+            <FormHelperText fontSize="xs">A square photo works best. JPG, PNG, WEBP or GIF up to 15 MB; it’s resized and compressed automatically.</FormHelperText>
           </FormControl>
 
           <FormControl isRequired>
