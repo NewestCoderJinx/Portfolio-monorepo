@@ -17,6 +17,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { optimizeUploadedImage } from '../common/images';
 import { RateLimiter } from '../common/rate-limiter';
 import { uploadedFileUrl, uploadOptions } from '../common/uploads';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -108,7 +109,8 @@ export class ProjectsController {
       uploadOptions({ maxBytes: 5 * 1024 * 1024, mimeTypes: /\/(jpg|jpeg|png|webp|gif)$/, error: 'Only image files are allowed!' }),
     ),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    return { imageUrl: uploadedFileUrl(req, file) };
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    // Resized and re-encoded as WebP; the URL points at the optimised file.
+    return { imageUrl: uploadedFileUrl(req, file && (await optimizeUploadedImage(file))) };
   }
 }
