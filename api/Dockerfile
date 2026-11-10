@@ -18,6 +18,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+# Fonts for generated link-preview images (Alpine ships none).
+COPY assets ./assets
 RUN mkdir -p uploads
 
 EXPOSE 3000
