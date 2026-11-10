@@ -26,6 +26,10 @@ export class Testimonial {
   @Column({ type: 'varchar', nullable: true })
   linkUrl: string | null;
 
+  /** True when the person wrote it through a request link; such testimonials start hidden, awaiting approval. */
+  @Column({ default: false })
+  submitted: boolean;
+
   /** Hidden testimonials stay in Admin only. */
   @Column({ default: true })
   published: boolean;
