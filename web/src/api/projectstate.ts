@@ -85,3 +85,22 @@ export const uploadProjectImage = async (file: File): Promise<string> => {
   const res = await API.post<{ imageUrl: string }>('/projects/upload', formData);
   return res.data.imageUrl;
 };
+
+export interface StatSeries {
+  views: number[];
+  shareClicks: number[];
+}
+
+/** Daily counts, every array aligned with `days` (YYYY-MM-DD, UTC, oldest first). */
+export interface ProjectStats {
+  days: string[];
+  totals: StatSeries;
+  /** Keyed by project id; only projects with activity in the window. */
+  projects: Record<string, StatSeries>;
+}
+
+/** Admin only: daily views and share visits for the last `days` days. */
+export const getProjectStats = async (days = 30): Promise<ProjectStats> => {
+  const res = await API.get<ProjectStats>('/projects/stats', { params: { days } });
+  return res.data;
+};

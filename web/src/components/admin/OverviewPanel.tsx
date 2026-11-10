@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Box, Button, Heading, HStack, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Heading, HStack, SimpleGrid, Skeleton, Text, VStack } from '@chakra-ui/react';
 import { getCredentials, type Credential } from '../../api/credentials';
 import { getExperience, type Experience } from '../../api/experience';
 import { getProfile, type Profile } from '../../api/profile';
 import { getSkills, type Skill } from '../../api/skills';
-import type { Project } from '../../api/projectstate';
+import { getProjectStats, type Project, type ProjectStats } from '../../api/projectstate';
 import { getAllTestimonials, type Testimonial } from '../../api/testimonials';
 import type { useInbox } from '../../hooks/useInbox';
+import { TrendChart } from './TrendChart';
 
 export type AdminTab = 'projects' | 'profile' | 'experience' | 'education' | 'skills' | 'testimonials' | 'inbox';
 
@@ -103,6 +104,85 @@ function TopProjects({ projects }: { projects: Project[] }) {
         </Box>
       ))}
     </VStack>
+  );
+}
+
+const RANGES = [7, 30, 90] as const;
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+/** Daily case-study views and share-link visits, with a 7/30/90-day range. */
+function VisitsTrend() {
+  const [range, setRange] = useState<(typeof RANGES)[number]>(30);
+  const [stats, setStats] = useState<ProjectStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProjectStats(range)
+      .then((s) => {
+        if (cancelled) return;
+        setStats(s);
+        setFailed(false);
+      })
+      .catch(() => !cancelled && setFailed(true))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
+
+  const views = stats ? sum(stats.totals.views) : 0;
+  const shares = stats ? sum(stats.totals.shareClicks) : 0;
+
+  return (
+    <Panel
+      title="Visits over time"
+      action={
+        <ButtonGroup size="xs" isAttached variant="outline" role="radiogroup" aria-label="Date range">
+          {RANGES.map((r) => (
+            <Button
+              key={r}
+              role="radio"
+              aria-checked={range === r}
+              variant={range === r ? 'solid' : 'outline'}
+              colorScheme={range === r ? 'brand' : 'gray'}
+              onClick={() => {
+                if (r === range) return;
+                setLoading(true);
+                setRange(r);
+              }}
+            >
+              {r} days
+            </Button>
+          ))}
+        </ButtonGroup>
+      }
+    >
+      {failed && !stats ? (
+        <Text fontSize="sm" color="fg.muted">
+          Couldn’t load visit history.
+        </Text>
+      ) : !stats ? (
+        <Skeleton h="240px" borderRadius="md" />
+      ) : (
+        // Refetching keeps the previous chart, dimmed, instead of flashing a skeleton.
+        <Box opacity={loading ? 0.5 : 1} transition="opacity 0.15s">
+          <Text fontSize="sm" color="fg.secondary" mb={3}>
+            {plural(views, 'case-study view')} and {plural(shares, 'share-link visit')} in the last {stats.days.length} days.
+            {views + shares === 0 && ' Daily history starts from when this feature was deployed.'}
+          </Text>
+          <TrendChart
+            days={stats.days}
+            ariaLabel={`Daily case-study views and share-link visits, last ${stats.days.length} days`}
+            series={[
+              { label: 'Case-study views', values: stats.totals.views, color: { light: 'brand.500', dark: 'brand.400' } },
+              { label: 'Share-link visits', values: stats.totals.shareClicks, color: { light: 'accent.600', dark: 'accent.600' } },
+            ]}
+          />
+        </Box>
+      )}
+    </Panel>
   );
 }
 
@@ -224,6 +304,8 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
           onClick={() => onGoTo('testimonials')}
         />
       </SimpleGrid>
+
+      <VisitsTrend />
 
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} alignItems="start">
         <VStack align="stretch" spacing={6}>
