@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailService } from '../mail/mail.service';
+import { Profile } from '../profile/entities/profile.entity';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message } from './message.entity';
@@ -10,14 +12,41 @@ export class MessagesService {
   constructor(
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
+    private readonly mail: MailService,
   ) {}
+
+  private readonly logger = new Logger(MessagesService.name);
 
   /** Saves a contact form message. Honeypot hits are dropped silently so bots see a normal success. */
   async receive(dto: CreateMessageDto): Promise<void> {
     if (dto.website?.trim()) return;
-    await this.messageRepository.save(
+    const message = await this.messageRepository.save(
       this.messageRepository.create({ name: dto.name.trim(), email: dto.email.trim(), body: dto.body.trim() }),
     );
+    // Not awaited: the visitor shouldn't wait on (or see errors from) the mail server.
+    void this.notify(message);
+  }
+
+  /**
+   * Emails the owner about a new message, with Reply-To set to the visitor. Goes to NOTIFY_EMAIL, else
+   * the profile email. Never throws: the message is already saved and shows in the Admin inbox anyway.
+   */
+  async notify(message: Pick<Message, 'name' | 'email' | 'body'>): Promise<boolean> {
+    if (!this.mail.enabled) return false;
+    try {
+      const to = this.mail.notifyTo ?? (await this.profileRepository.findOne({ where: {}, order: { createdAt: 'ASC' } }))?.email;
+      if (!to) {
+        this.logger.warn('New message not emailed: set NOTIFY_EMAIL or an email on the profile.');
+        return false;
+      }
+      await this.mail.send({ to, replyTo: message.email, ...newMessageEmail(message) });
+      return true;
+    } catch (err) {
+      this.logger.error(`Could not email new message alert: ${(err as Error).message}`);
+      return false;
+    }
   }
 
   findAll(): Promise<Message[]> {
@@ -52,4 +81,14 @@ export class MessagesService {
       throw new NotFoundException(`Message #${id} not found`);
     }
   }
+}
+
+/** Subject and plain-text body for a new-message alert. */
+export function newMessageEmail(m: Pick<Message, 'name' | 'email' | 'body'>, siteUrl = process.env.SITE_URL?.trim().replace(/\/+$/, '')) {
+  const name = m.name.replace(/[\r\n]+/g, ' ').trim();
+  const inbox = siteUrl ? `\n\nOpen your inbox: ${siteUrl}/admin` : '';
+  return {
+    subject: `New message from ${name} via your portfolio`,
+    text: `${name} <${m.email}> wrote:\n\n${m.body}\n\n---\nReply to this email to answer them directly.${inbox}`,
+  };
 }

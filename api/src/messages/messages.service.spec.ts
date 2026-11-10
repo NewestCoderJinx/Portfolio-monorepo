@@ -1,14 +1,20 @@
 import { NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MessagesService } from './messages.service';
+import { MessagesService, newMessageEmail } from './messages.service';
 
 describe('MessagesService', () => {
   const repo = { create: vi.fn((m) => m), save: vi.fn(async (m) => m), findOne: vi.fn(), delete: vi.fn(), update: vi.fn() };
+  const profiles = { findOne: vi.fn() };
+  const mail = { enabled: true, notifyTo: null as string | null, send: vi.fn() };
   let service: MessagesService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new MessagesService(repo as any);
+    mail.enabled = true;
+    mail.notifyTo = null;
+    profiles.findOne.mockResolvedValue({ email: 'owner@site.dev' });
+    mail.send.mockResolvedValue(undefined);
+    service = new MessagesService(repo as any, profiles as any, mail as any);
   });
 
   it('stores a trimmed message', async () => {
@@ -46,5 +52,48 @@ describe('MessagesService', () => {
     repo.update.mockResolvedValueOnce({ affected: 3 });
     await expect(service.markAllRead()).resolves.toBe(3);
     expect(repo.update).toHaveBeenCalledWith({ read: false, archived: false }, { read: true });
+  });
+
+  describe('new message alerts', () => {
+    const msg = { name: 'Ada', email: 'ada@example.com', body: 'Hello, I have a role for you.' };
+
+    it('emails the profile address with Reply-To set to the visitor', async () => {
+      await expect(service.notify(msg)).resolves.toBe(true);
+      expect(mail.send).toHaveBeenCalledWith(expect.objectContaining({ to: 'owner@site.dev', replyTo: 'ada@example.com' }));
+    });
+
+    it('prefers NOTIFY_EMAIL over the profile email', async () => {
+      mail.notifyTo = 'alerts@site.dev';
+      await service.notify(msg);
+      expect(profiles.findOne).not.toHaveBeenCalled();
+      expect(mail.send).toHaveBeenCalledWith(expect.objectContaining({ to: 'alerts@site.dev' }));
+    });
+
+    it('does nothing when email is off or there is no recipient', async () => {
+      mail.enabled = false;
+      await expect(service.notify(msg)).resolves.toBe(false);
+      mail.enabled = true;
+      profiles.findOne.mockResolvedValue({ email: null });
+      await expect(service.notify(msg)).resolves.toBe(false);
+      expect(mail.send).not.toHaveBeenCalled();
+    });
+
+    it('swallows SMTP errors', async () => {
+      mail.send.mockRejectedValue(new Error('connection refused'));
+      await expect(service.notify(msg)).resolves.toBe(false);
+    });
+
+    it('receive() saves first and still succeeds when the alert fails', async () => {
+      mail.send.mockRejectedValue(new Error('down'));
+      await expect(service.receive(msg)).resolves.toBeUndefined();
+      expect(repo.save).toHaveBeenCalled();
+    });
+
+    it('formats the alert, keeping newlines out of the subject', () => {
+      const email = newMessageEmail({ ...msg, name: 'Ada\r\nBcc: x@y.z' }, 'https://ada.dev');
+      expect(email.subject).toBe('New message from Ada Bcc: x@y.z via your portfolio');
+      expect(email.text).toContain('Hello, I have a role for you.');
+      expect(email.text).toContain('https://ada.dev/admin');
+    });
   });
 });
