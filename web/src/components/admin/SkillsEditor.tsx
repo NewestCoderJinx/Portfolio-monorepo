@@ -50,6 +50,9 @@ export function SkillsEditor() {
   const [saving, setSaving] = useState(false);
   /** Skills already listed on experience entries and project tags, most-used first. */
   const [used, setUsed] = useState<string[]>([]);
+  // Drag-to-reorder within a category: the dragged row and the row it's over.
+  const [drag, setDrag] = useState<{ category: string; index: number } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ category: string; index: number } | null>(null);
   const toast = useToast();
 
   const load = useCallback(
@@ -144,15 +147,18 @@ export function SkillsEditor() {
     }
   };
 
-  /** Swaps a skill with its neighbour in the same group, since that's the order visitors see. */
-  const move = async (group: Skill[], index: number, dir: -1 | 1) => {
-    const a = group[index];
-    const b = group[index + dir];
-    if (!a || !b) return;
-    const next = [...skills];
-    const ia = next.findIndex((s) => s.id === a.id);
-    const ib = next.findIndex((s) => s.id === b.id);
-    [next[ia], next[ib]] = [next[ib], next[ia]];
+  /**
+   * Moves a skill within its group (the order visitors see). The group's skills keep their slots in the
+   * overall list, filled in the new order, so other groups don't move.
+   */
+  const move = async (group: Skill[], from: number, to: number) => {
+    if (from === to || !group[from] || !group[to]) return;
+    const reordered = [...group];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(to, 0, moved);
+    const ids = new Set(group.map((s) => s.id));
+    let slot = 0;
+    const next = skills.map((s) => (ids.has(s.id) ? reordered[slot++] : s));
     setSkills(next); // optimistic
     try {
       await reorderSkills(next.map((s) => s.id));
@@ -254,27 +260,69 @@ export function SkillsEditor() {
                 {g.category}
               </Text>
               <VStack align="stretch" spacing={1}>
-                {g.skills.map((s, i) => (
-                  <HStack key={s.id} justify="space-between" py={1} px={2} borderRadius="md" bg={editingId === s.id ? 'bg.subtle' : undefined}>
-                    <Text fontSize="sm" color="fg.heading" noOfLines={1}>
-                      {s.name}
-                    </Text>
-                    <HStack spacing={0.5} flexShrink={0}>
-                      <Button size="xs" variant="ghost" aria-label={`Move ${s.name} up`} title="Move up" onClick={() => move(g.skills, i, -1)} isDisabled={i === 0}>
-                        ↑
-                      </Button>
-                      <Button size="xs" variant="ghost" aria-label={`Move ${s.name} down`} title="Move down" onClick={() => move(g.skills, i, 1)} isDisabled={i === g.skills.length - 1}>
-                        ↓
-                      </Button>
-                      <Button size="xs" variant="outline" onClick={() => startEdit(s)}>
-                        Edit
-                      </Button>
-                      <Button size="xs" variant="ghost" colorScheme="red" onClick={() => handleDelete(s)}>
-                        Delete
-                      </Button>
+                {g.skills.map((s, i) => {
+                  const canDrop = drag !== null && drag.category === g.category && drag.index !== i;
+                  const isTarget = dropTarget?.category === g.category && dropTarget.index === i;
+                  const endDrag = () => {
+                    setDrag(null);
+                    setDropTarget(null);
+                  };
+                  return (
+                    <HStack
+                      key={s.id}
+                      justify="space-between"
+                      py={1}
+                      px={2}
+                      borderRadius="md"
+                      bg={editingId === s.id ? 'bg.subtle' : undefined}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', s.id); // Firefox won't start a drag without data
+                        setDrag({ category: g.category, index: i });
+                      }}
+                      onDragOver={(e) => {
+                        if (!canDrop) return;
+                        e.preventDefault(); // allows the drop
+                        e.dataTransfer.dropEffect = 'move';
+                        if (!isTarget) setDropTarget({ category: g.category, index: i });
+                      }}
+                      onDragLeave={() => setDropTarget((cur) => (cur?.category === g.category && cur.index === i ? null : cur))}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (canDrop) move(g.skills, drag.index, i);
+                        endDrag();
+                      }}
+                      onDragEnd={endDrag}
+                      opacity={drag?.category === g.category && drag.index === i ? 0.4 : 1}
+                      outline={isTarget ? '2px solid' : undefined}
+                      outlineColor="brand.400"
+                    >
+                      <HStack spacing={2} minW={0}>
+                        <Text aria-hidden title="Drag to reorder" cursor="grab" color="fg.subtle" userSelect="none" display={{ base: 'none', md: 'block' }}>
+                          ⠿
+                        </Text>
+                        <Text fontSize="sm" color="fg.heading" noOfLines={1}>
+                          {s.name}
+                        </Text>
+                      </HStack>
+                      <HStack spacing={0.5} flexShrink={0}>
+                        <Button size="xs" variant="ghost" aria-label={`Move ${s.name} up`} title="Move up" onClick={() => move(g.skills, i, i - 1)} isDisabled={i === 0}>
+                          ↑
+                        </Button>
+                        <Button size="xs" variant="ghost" aria-label={`Move ${s.name} down`} title="Move down" onClick={() => move(g.skills, i, i + 1)} isDisabled={i === g.skills.length - 1}>
+                          ↓
+                        </Button>
+                        <Button size="xs" variant="outline" onClick={() => startEdit(s)}>
+                          Edit
+                        </Button>
+                        <Button size="xs" variant="ghost" colorScheme="red" onClick={() => handleDelete(s)}>
+                          Delete
+                        </Button>
+                      </HStack>
                     </HStack>
-                  </HStack>
-                ))}
+                  );
+                })}
               </VStack>
             </Box>
           ))
