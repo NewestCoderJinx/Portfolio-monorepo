@@ -4,7 +4,11 @@ import type { Request, Response } from 'express';
 import { isUUID } from 'class-validator';
 import { Repository } from 'typeorm';
 import { Profile } from '../profile/entities/profile.entity';
+import { RateLimiter } from '../common/rate-limiter';
 import { Project } from '../projects/project.entity';
+import { VIEW_WINDOW_MS } from '../projects/projects.controller';
+import { ProjectsService } from '../projects/projects.service';
+import { isBot } from './bots';
 import { renderPreviewPng } from './preview-image';
 import { absoluteUrl, renderSharePage } from './share-page';
 
@@ -29,7 +33,11 @@ export class ShareController {
   constructor(
     @InjectRepository(Project) private readonly projects: Repository<Project>,
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
+    private readonly projectsService: ProjectsService,
   ) {}
+
+  /** Like case-study views: one click per visitor per project per window. */
+  private readonly clickLimiter = new RateLimiter(1, VIEW_WINDOW_MS);
 
   private readonly imageCache = new Map<string, Buffer>();
 
@@ -49,6 +57,9 @@ export class ShareController {
     if (!project) {
       res.redirect(302, `${site}/`);
       return;
+    }
+    if (!isBot(req.get('user-agent')) && this.clickLimiter.tryHit(`${req.ip ?? 'unknown'}:${project.id}`)) {
+      await this.projectsService.recordShareClick(project.id);
     }
     const profile = await this.findProfile();
     // Without a cover, use the generated card; the version makes crawlers refetch it after edits.

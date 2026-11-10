@@ -5,11 +5,11 @@ import { Project } from './project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
-export type PublicProject = Omit<Project, 'views'>;
+export type PublicProject = Omit<Project, 'views' | 'shareClicks'>;
 
 const ORDER = { featured: 'DESC', sortOrder: 'ASC', createdAt: 'DESC' } as const;
 
-function toPublic({ views: _views, ...project }: Project): PublicProject {
+function toPublic({ views: _views, shareClicks: _shareClicks, ...project }: Project): PublicProject {
   return project;
 }
 
@@ -42,6 +42,11 @@ export class ProjectsService {
   /** Counts one case-study view of a published project. Raw SQL so updatedAt still means "last edited". */
   async recordView(id: string): Promise<void> {
     await this.projectRepository.query('UPDATE projects SET views = views + 1 WHERE id = $1 AND published', [id]);
+  }
+
+  /** Counts one visit through a share link. Raw SQL so updatedAt (and the preview image version) don't change. */
+  async recordShareClick(id: string): Promise<void> {
+    await this.projectRepository.query('UPDATE projects SET "shareClicks" = "shareClicks" + 1 WHERE id = $1 AND published', [id]);
   }
 
   async create(dto: CreateProjectDto): Promise<Project> {

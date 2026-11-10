@@ -54,6 +54,10 @@ export class Project {
   @Column({ type: 'int', default: 0 })
   views: number;
 
+  /** Times a person (not a link-preview bot) opened a /p/<id> share link. Only shown in Admin. */
+  @Column({ type: 'int', default: 0 })
+  shareClicks: number;
+
   /** Manual position; lower comes first. */
   @Column({ type: 'int', default: 0 })
   sortOrder: number;

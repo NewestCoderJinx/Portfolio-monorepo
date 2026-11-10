@@ -22,16 +22,21 @@ describe('ProjectsService', () => {
     expect(repo.find).toHaveBeenCalledWith(expect.not.objectContaining({ where: expect.anything() }));
   });
 
-  it('hides view counts from the public list and detail', async () => {
-    repo.find.mockResolvedValueOnce([{ id: 'p1', title: 'A', views: 7 }]);
+  it('hides view and share counts from the public list and detail', async () => {
+    repo.find.mockResolvedValueOnce([{ id: 'p1', title: 'A', views: 7, shareClicks: 2 }]);
     await expect(service.findAll()).resolves.toEqual([{ id: 'p1', title: 'A' }]);
-    repo.findOne.mockResolvedValueOnce({ id: 'p1', title: 'A', views: 7 });
+    repo.findOne.mockResolvedValueOnce({ id: 'p1', title: 'A', views: 7, shareClicks: 2 });
     await expect(service.findOne('p1')).resolves.toEqual({ id: 'p1', title: 'A' });
   });
 
   it('only counts views of published projects', async () => {
     await service.recordView('p1');
     expect(repo.query).toHaveBeenCalledWith(expect.stringContaining('AND published'), ['p1']);
+  });
+
+  it('only counts share clicks on published projects', async () => {
+    await service.recordShareClick('p1');
+    expect(repo.query).toHaveBeenCalledWith(expect.stringMatching(/"shareClicks" \+ 1 .*AND published/), ['p1']);
   });
 
   it('404s on a draft looked up by id', async () => {
