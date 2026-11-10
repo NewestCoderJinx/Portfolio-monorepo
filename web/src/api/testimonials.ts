@@ -11,6 +11,8 @@ export interface Testimonial {
   linkUrl?: string | null;
   /** false = hidden from the public page. */
   published?: boolean;
+  /** Written through a request link and awaiting approval (publishing approves it). */
+  submitted?: boolean;
 }
 
 export type TestimonialInput = Omit<Testimonial, 'id'>;

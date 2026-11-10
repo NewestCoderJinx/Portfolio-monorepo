@@ -137,7 +137,9 @@ export function TestimonialsEditor() {
     const published = t.published === false;
     try {
       await updateTestimonial(t.id, { published });
-      setEntries((prev) => prev.map((x) => (x.id === t.id ? { ...x, published } : x)));
+      // Publishing approves a link submission (the API clears `submitted` too).
+      setEntries((prev) => prev.map((x) => (x.id === t.id ? { ...x, published, submitted: published ? false : x.submitted } : x)));
+      if (published && t.submitted) toast({ title: 'Approved: now on your public page', status: 'success', duration: 3000, isClosable: true });
       if (editingId === t.id) setForm((prev) => ({ ...prev, published }));
     } catch (err) {
       toast({ title: 'Could not update', description: apiErrorMessage(err, 'Please try again.'), status: 'error', duration: 6000, isClosable: true });
@@ -158,6 +160,9 @@ export function TestimonialsEditor() {
 
   const label = { fontSize: 'xs', fontWeight: 'bold', color: 'fg.secondary', mb: 1 } as const;
   const visible = entries.filter((t) => t.published !== false).length;
+  // Link submissions waiting for approval come first, so they're not missed.
+  const awaiting = entries.filter((t) => t.submitted && t.published === false);
+  const ordered = [...awaiting, ...entries.filter((t) => !awaiting.includes(t))];
 
   return (
     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} alignItems="start">
@@ -234,6 +239,12 @@ export function TestimonialsEditor() {
         <Heading as="h2" size="sm" color="fg.default">
           Your Testimonials ({entries.length}{entries.length !== visible ? `, ${visible} shown` : ''})
         </Heading>
+        {awaiting.length > 0 && (
+          <Text fontSize="sm" color="fg.secondary">
+            {awaiting.length === 1 ? '1 testimonial is' : `${awaiting.length} testimonials are`} awaiting your approval. Read it, edit if needed,
+            then approve to show it publicly.
+          </Text>
+        )}
         {loading ? (
           <Spinner color="brand.500" alignSelf="center" my={8} />
         ) : entries.length === 0 ? (
@@ -243,8 +254,9 @@ export function TestimonialsEditor() {
             </Text>
           </Box>
         ) : (
-          entries.map((t) => {
+          ordered.map((t) => {
             const hidden = t.published === false;
+            const pending = hidden && t.submitted;
             return (
               <Box
                 key={t.id}
@@ -252,8 +264,8 @@ export function TestimonialsEditor() {
                 bg="bg.surface"
                 borderRadius="lg"
                 borderWidth="1px"
-                borderStyle={hidden ? 'dashed' : 'solid'}
-                borderColor={editingId === t.id ? 'brand.400' : hidden ? 'border.strong' : 'border.default'}
+                borderStyle={hidden && !pending ? 'dashed' : 'solid'}
+                borderColor={editingId === t.id ? 'brand.400' : pending ? 'accent.400' : hidden ? 'border.strong' : 'border.default'}
               >
                 <HStack align="start" spacing={3}>
                   <Avatar size="sm" name={t.name} src={t.avatarUrl ?? undefined} />
@@ -262,10 +274,16 @@ export function TestimonialsEditor() {
                       <Text fontWeight="semibold" color="fg.heading" noOfLines={1}>
                         {t.name}
                       </Text>
-                      {hidden && (
-                        <Badge variant="outline" colorScheme="gray" flexShrink={0}>
-                          Hidden
+                      {pending ? (
+                        <Badge variant="subtle" colorScheme="accent" flexShrink={0}>
+                          Awaiting approval
                         </Badge>
+                      ) : (
+                        hidden && (
+                          <Badge variant="outline" colorScheme="gray" flexShrink={0}>
+                            Hidden
+                          </Badge>
+                        )
                       )}
                     </HStack>
                     {formatAttribution(t) && (
@@ -273,15 +291,21 @@ export function TestimonialsEditor() {
                         {formatAttribution(t)}
                       </Text>
                     )}
-                    <Text fontSize="sm" color="fg.secondary" mt={2} noOfLines={3}>
+                    <Text fontSize="sm" color="fg.secondary" mt={2} noOfLines={pending ? undefined : 3}>
                       “{t.quote}”
                     </Text>
                   </Box>
                 </HStack>
                 <HStack spacing={1} mt={3} justify="end">
-                  <Button size="xs" variant="ghost" onClick={() => togglePublished(t)}>
-                    {hidden ? 'Show' : 'Hide'}
-                  </Button>
+                  {pending ? (
+                    <Button size="xs" colorScheme="brand" onClick={() => togglePublished(t)}>
+                      Approve
+                    </Button>
+                  ) : (
+                    <Button size="xs" variant="ghost" onClick={() => togglePublished(t)}>
+                      {hidden ? 'Show' : 'Hide'}
+                    </Button>
+                  )}
                   <Button size="xs" variant="outline" onClick={() => startEdit(t)}>
                     Edit
                   </Button>

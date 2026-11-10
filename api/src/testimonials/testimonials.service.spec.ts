@@ -35,6 +35,12 @@ describe('TestimonialsService', () => {
     expect(repo.preload).toHaveBeenCalledWith({ id: 't1', published: false });
   });
 
+  it('treats publishing as approval of a link submission', async () => {
+    repo.preload.mockImplementation(async (t) => t);
+    await service.update('t1', { published: true });
+    expect(repo.preload).toHaveBeenCalledWith({ id: 't1', published: true, submitted: false });
+  });
+
   it('404s on unknown ids', async () => {
     repo.preload.mockResolvedValue(undefined);
     await expect(service.update('nope', { name: 'x' })).rejects.toBeInstanceOf(NotFoundException);

@@ -25,7 +25,10 @@ export class TestimonialsService {
   }
 
   async update(id: string, dto: UpdateTestimonialDto): Promise<Testimonial> {
-    const testimonial = await this.testimonialRepository.preload({ id, ...trimmed(dto) });
+    const changes = trimmed(dto);
+    // Publishing is the owner's approval, so a link submission stops counting as awaiting review.
+    if (dto.published === true) changes.submitted = false;
+    const testimonial = await this.testimonialRepository.preload({ id, ...changes });
     if (!testimonial) {
       throw new NotFoundException(`Testimonial #${id} not found`);
     }

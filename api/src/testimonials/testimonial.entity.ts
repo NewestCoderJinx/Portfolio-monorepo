@@ -26,7 +26,7 @@ export class Testimonial {
   @Column({ type: 'varchar', nullable: true })
   linkUrl: string | null;
 
-  /** True when the person wrote it through a request link; such testimonials start hidden, awaiting approval. */
+  /** Written through a request link and not yet approved. Publishing it counts as approval and clears this. */
   @Column({ default: false })
   submitted: boolean;
 
