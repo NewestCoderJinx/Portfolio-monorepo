@@ -52,3 +52,21 @@ export const markAllMessagesRead = async (): Promise<number> => {
 export const deleteMessage = async (id: string): Promise<void> => {
   await API.delete(`/messages/${id}`);
 };
+
+export interface AlertStatus {
+  /** False when the API has no SMTP settings. */
+  enabled: boolean;
+  /** NOTIFY_EMAIL, else the profile email. */
+  recipient: string | null;
+}
+
+export const getAlertStatus = async (): Promise<AlertStatus> => {
+  const res = await API.get<AlertStatus>('/messages/alerts');
+  return res.data;
+};
+
+/** Sends a sample alert; rejects with the mail server's error when SMTP is misconfigured. */
+export const sendTestAlert = async (): Promise<string> => {
+  const res = await API.post<{ recipient: string }>('/messages/alerts/test');
+  return res.data.recipient;
+};

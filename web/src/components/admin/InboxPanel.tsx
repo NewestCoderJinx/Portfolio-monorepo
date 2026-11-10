@@ -3,6 +3,7 @@ import { Badge, Box, Button, ButtonGroup, Collapse, HStack, Input, InputGroup, I
 import { deleteMessage, markAllMessagesRead, updateMessage, type Message, type MessageFlags } from '../../api/messages';
 import { apiErrorMessage } from '../../api/profile';
 import type { useInbox } from '../../hooks/useInbox';
+import { EmailAlertsBar } from './EmailAlertsBar';
 
 type Inbox = ReturnType<typeof useInbox>;
 
@@ -132,6 +133,7 @@ export function InboxPanel({ inbox }: { inbox: Inbox }) {
 
   return (
     <VStack align="stretch" spacing={3}>
+      <EmailAlertsBar />
       <HStack justify="space-between" flexWrap="wrap" gap={2}>
         <ButtonGroup size="sm" isAttached variant="outline" role="tablist" aria-label="Messages">
           {VIEWS.map((v) => {

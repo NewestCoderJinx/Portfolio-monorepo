@@ -47,6 +47,19 @@ export class MessagesController {
     return this.messagesService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('alerts')
+  alertStatus(): Promise<{ enabled: boolean; recipient: string | null }> {
+    return this.messagesService.alertStatus();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('alerts/test')
+  @HttpCode(200)
+  sendTestAlert(): Promise<{ recipient: string }> {
+    return this.messagesService.sendTestAlert();
+  }
+
   // Must be declared before PATCH :id so "read-all" isn't treated as an id.
   @UseGuards(JwtAuthGuard)
   @Patch('read-all')

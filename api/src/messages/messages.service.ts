@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
@@ -33,10 +33,37 @@ export class MessagesService {
    * Emails the owner about a new message, with Reply-To set to the visitor. Goes to NOTIFY_EMAIL, else
    * the profile email. Never throws: the message is already saved and shows in the Admin inbox anyway.
    */
+  /** Where alerts would go right now, for Admin. */
+  async alertStatus(): Promise<{ enabled: boolean; recipient: string | null }> {
+    if (!this.mail.enabled) return { enabled: false, recipient: null };
+    return { enabled: true, recipient: await this.alertRecipient() };
+  }
+
+  /** Sends a sample alert so the owner can check their SMTP settings. Unlike notify(), errors are reported. */
+  async sendTestAlert(): Promise<{ recipient: string }> {
+    if (!this.mail.enabled) throw new BadRequestException('Email alerts are off: set SMTP_HOST and related settings on the API.');
+    const recipient = await this.alertRecipient();
+    if (!recipient) throw new BadRequestException('No recipient: set NOTIFY_EMAIL on the API or add an email to your profile.');
+    try {
+      await this.mail.send({
+        to: recipient,
+        subject: 'Test alert from your portfolio',
+        text: 'Email alerts are working. You will get an email like this whenever someone uses your contact form.',
+      });
+    } catch (err) {
+      throw new ServiceUnavailableException(`The mail server refused the test email: ${(err as Error).message}`);
+    }
+    return { recipient };
+  }
+
+  private async alertRecipient(): Promise<string | null> {
+    return this.mail.notifyTo ?? (await this.profileRepository.findOne({ where: {}, order: { createdAt: 'ASC' } }))?.email ?? null;
+  }
+
   async notify(message: Pick<Message, 'name' | 'email' | 'body'>): Promise<boolean> {
     if (!this.mail.enabled) return false;
     try {
-      const to = this.mail.notifyTo ?? (await this.profileRepository.findOne({ where: {}, order: { createdAt: 'ASC' } }))?.email;
+      const to = await this.alertRecipient();
       if (!to) {
         this.logger.warn('New message not emailed: set NOTIFY_EMAIL or an email on the profile.');
         return false;

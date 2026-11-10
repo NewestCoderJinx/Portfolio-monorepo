@@ -96,4 +96,22 @@ describe('MessagesService', () => {
       expect(email.text).toContain('https://ada.dev/admin');
     });
   });
+
+  describe('test alerts', () => {
+    it('reports status and where alerts go', async () => {
+      await expect(service.alertStatus()).resolves.toEqual({ enabled: true, recipient: 'owner@site.dev' });
+      mail.enabled = false;
+      await expect(service.alertStatus()).resolves.toEqual({ enabled: false, recipient: null });
+    });
+
+    it('sends a test email and explains failures', async () => {
+      await expect(service.sendTestAlert()).resolves.toEqual({ recipient: 'owner@site.dev' });
+      mail.send.mockRejectedValueOnce(new Error('535 Authentication failed'));
+      await expect(service.sendTestAlert()).rejects.toThrow(/535 Authentication failed/);
+      profiles.findOne.mockResolvedValue(null);
+      await expect(service.sendTestAlert()).rejects.toThrow(/No recipient/);
+      mail.enabled = false;
+      await expect(service.sendTestAlert()).rejects.toThrow(/alerts are off/);
+    });
+  });
 });
