@@ -33,6 +33,14 @@ services:
       DB_SYNCHRONIZE: "true"
       # Public address used in /p/<id> share links; falls back to the request host when empty.
       SITE_URL: ${SITE_URL:-${VITE_SITE_URL:-}}
+      # Email alerts for new contact messages; leave SMTP_HOST empty to turn them off.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      NOTIFY_EMAIL: ${NOTIFY_EMAIL:-}
     volumes:
       - ./api/uploads:/app/uploads
     depends_on:
