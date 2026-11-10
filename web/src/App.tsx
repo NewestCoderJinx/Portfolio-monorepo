@@ -7,6 +7,7 @@ import { Navbar } from './components/Navbar';
 import { AdminView } from './pages/AdminView';
 import { PublicView } from './pages/PublicView';
 import { ResumeView } from './pages/ResumeView';
+import { TestimonialRequestView } from './pages/TestimonialRequestView';
 
 export function App() {
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
@@ -50,6 +51,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<PublicView />} />
           <Route path="/resume" element={<ResumeView />} />
+          <Route path="/testimonial/:token" element={<TestimonialRequestView />} />
           <Route
             path="/admin"
             element={

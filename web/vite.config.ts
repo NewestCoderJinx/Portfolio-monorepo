@@ -52,7 +52,7 @@ function crawlerFiles(env: Record<string, string>): Plugin {
     name: 'crawler-files',
     apply: 'build',
     generateBundle() {
-      const robots = ['User-agent: *', 'Allow: /', 'Disallow: /admin'];
+      const robots = ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /testimonial/'];
       if (siteUrl) robots.push('', `Sitemap: ${siteUrl}/sitemap.xml`);
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `${robots.join('\n')}\n` });
 
