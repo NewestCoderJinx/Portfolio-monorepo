@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Query,
   Post,
   Req,
   UploadedFile,
@@ -22,6 +23,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { ReorderProjectsDto } from './dto/reorder-projects.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './project.entity';
+import { ProjectStatsService, type ProjectStats } from './project-stats.service';
 import { ProjectsService, type PublicProject } from './projects.service';
 
 /** A visitor re-opening the same case study within this window isn't counted again. */
@@ -31,7 +33,10 @@ export const VIEW_WINDOW_MS = 30 * 60 * 1000;
 export class ProjectsController {
   private readonly viewLimiter = new RateLimiter(1, VIEW_WINDOW_MS);
 
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly statsService: ProjectStatsService,
+  ) {}
 
   @Get()
   findAll(): Promise<PublicProject[]> {
@@ -43,6 +48,13 @@ export class ProjectsController {
   @Get('manage')
   findAllForAdmin(): Promise<Project[]> {
     return this.projectsService.findAllForAdmin();
+  }
+
+  /** Daily views and share visits for the last `days` days (7–365, default 30). Declared before :id. */
+  @UseGuards(JwtAuthGuard)
+  @Get('stats')
+  stats(@Query('days') days?: string): Promise<ProjectStats> {
+    return this.statsService.forLastDays(parseInt(days ?? '30', 10));
   }
 
   @Get(':id')
