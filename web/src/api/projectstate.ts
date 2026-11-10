@@ -23,6 +23,8 @@ export interface Project {
   sortOrder?: number;
   /** Case-study opens; only returned to Admin. */
   views?: number;
+  /** Admin only: visits by people through /p/<id> share links. */
+  shareClicks?: number;
 }
 
 export const formatUrl = (url?: string): string | undefined => {

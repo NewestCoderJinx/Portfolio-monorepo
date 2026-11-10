@@ -189,6 +189,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
   const published = projects.filter((p) => p.published !== false);
   const drafts = projects.length - published.length;
   const totalViews = published.reduce((sum, p) => sum + (p.views ?? 0), 0);
+  const totalShareClicks = published.reduce((sum, p) => sum + (p.shareClicks ?? 0), 0);
   const shownQuotes = testimonials.filter((t) => t.published !== false).length;
   const recent = inbox.messages.filter((m) => !m.archived).slice(0, 3);
 
@@ -209,7 +210,7 @@ export function OverviewPanel({ projects, projectsLoading, inbox, onGoTo }: Prop
     <VStack align="stretch" spacing={6}>
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
         <StatTile label="Projects" value={published.length} detail={drafts ? `${plural(drafts, 'draft')} not shown` : 'all published'} onClick={() => onGoTo('projects')} />
-        <StatTile label="Case-study views" value={totalViews} detail="since counting began" onClick={() => onGoTo('projects')} />
+        <StatTile label="Case-study views" value={totalViews} detail={`${plural(totalShareClicks, 'visit')} via share links`} onClick={() => onGoTo('projects')} />
         <StatTile
           label="Unread"
           value={inbox.failed ? '–' : inbox.unread}

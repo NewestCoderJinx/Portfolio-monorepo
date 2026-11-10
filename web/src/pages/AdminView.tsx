@@ -620,8 +620,14 @@ export function AdminView() {
                             {p.description || 'No description provided.'}
                           </Text>
                           {p.published !== false && (
-                            <Text fontSize="xs" color="fg.muted" mt={2} title="Times visitors opened this case study (your own visits while logged in aren't counted)">
-                              {p.views ?? 0} case-study {p.views === 1 ? 'view' : 'views'}
+                            <Text fontSize="xs" color="fg.muted" mt={2}>
+                              <span title="Times visitors opened this case study (your own visits while logged in aren't counted)">
+                                {p.views ?? 0} case-study {p.views === 1 ? 'view' : 'views'}
+                              </span>
+                              {' · '}
+                              <span title="Visits by people through this project's share link (link-preview bots aren't counted)">
+                                {p.shareClicks ?? 0} from share {p.shareClicks === 1 ? 'link' : 'links'}
+                              </span>
                             </Text>
                           )}
                           {p.tags && p.tags.length > 0 && (
