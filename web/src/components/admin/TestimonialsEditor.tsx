@@ -29,6 +29,7 @@ import {
   type Testimonial,
   type TestimonialInput,
 } from '../../api/testimonials';
+import { TestimonialRequestsPanel } from './TestimonialRequestsPanel';
 
 const QUOTE_MAX = 1000;
 
@@ -160,71 +161,74 @@ export function TestimonialsEditor() {
 
   return (
     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} alignItems="start">
-      <Box as="form" onSubmit={handleSubmit} p={6} bg="bg.surface" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="border.default">
-        <Heading as="h2" size="sm" mb={1} color="fg.default">
-          {editingId ? 'Edit Testimonial' : 'Add a Testimonial'}
-        </Heading>
-        <Text fontSize="sm" color="fg.muted" mb={4}>
-          Quotes from clients, managers or teammates. Only add what the person agreed to share.
-        </Text>
-        <VStack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel {...label}>What they said</FormLabel>
-            <Textarea value={form.quote} onChange={set('quote')} rows={5} maxLength={QUOTE_MAX} placeholder="e.g. Delivered our new API two weeks early and documented it so well the team could take over on day one." />
-            <FormHelperText fontSize="xs">
-              {form.quote.length} / {QUOTE_MAX}
-            </FormHelperText>
-          </FormControl>
-          <FormControl isRequired>
-            <FormLabel {...label}>Their name</FormLabel>
-            <Input value={form.name} onChange={set('name')} maxLength={100} placeholder="e.g. Grace Nakato" />
-          </FormControl>
-          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4} w="full">
+      <VStack align="stretch" spacing={6}>
+        <Box as="form" onSubmit={handleSubmit} p={6} bg="bg.surface" borderRadius="xl" boxShadow="sm" borderWidth="1px" borderColor="border.default">
+          <Heading as="h2" size="sm" mb={1} color="fg.default">
+            {editingId ? 'Edit Testimonial' : 'Add a Testimonial'}
+          </Heading>
+          <Text fontSize="sm" color="fg.muted" mb={4}>
+            Quotes from clients, managers or teammates. Only add what the person agreed to share.
+          </Text>
+          <VStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel {...label}>What they said</FormLabel>
+              <Textarea value={form.quote} onChange={set('quote')} rows={5} maxLength={QUOTE_MAX} placeholder="e.g. Delivered our new API two weeks early and documented it so well the team could take over on day one." />
+              <FormHelperText fontSize="xs">
+                {form.quote.length} / {QUOTE_MAX}
+              </FormHelperText>
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel {...label}>Their name</FormLabel>
+              <Input value={form.name} onChange={set('name')} maxLength={100} placeholder="e.g. Grace Nakato" />
+            </FormControl>
+            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4} w="full">
+              <FormControl>
+                <FormLabel {...label}>Their role</FormLabel>
+                <Input value={form.role} onChange={set('role')} maxLength={120} placeholder="e.g. Engineering Manager" />
+              </FormControl>
+              <FormControl>
+                <FormLabel {...label}>Company</FormLabel>
+                <Input value={form.company} onChange={set('company')} maxLength={120} placeholder="e.g. Acme Ltd" />
+              </FormControl>
+            </SimpleGrid>
             <FormControl>
-              <FormLabel {...label}>Their role</FormLabel>
-              <Input value={form.role} onChange={set('role')} maxLength={120} placeholder="e.g. Engineering Manager" />
+              <FormLabel {...label}>Profile link</FormLabel>
+              <Input value={form.linkUrl} onChange={set('linkUrl')} placeholder="linkedin.com/in/their-name" />
+              <FormHelperText fontSize="xs">Lets visitors check the person is real.</FormHelperText>
             </FormControl>
             <FormControl>
-              <FormLabel {...label}>Company</FormLabel>
-              <Input value={form.company} onChange={set('company')} maxLength={120} placeholder="e.g. Acme Ltd" />
+              <FormLabel {...label}>Photo</FormLabel>
+              <HStack spacing={3}>
+                <Avatar size="md" name={form.name || undefined} src={form.avatarUrl || undefined} />
+                <Button as="label" size="sm" variant="outline" cursor="pointer" isLoading={uploading} loadingText="Uploading">
+                  {form.avatarUrl ? 'Change photo' : 'Upload photo'}
+                  <input type="file" accept="image/*" hidden onChange={handleAvatar} />
+                </Button>
+                {form.avatarUrl && (
+                  <Button size="sm" variant="ghost" colorScheme="red" onClick={() => setForm((prev) => ({ ...prev, avatarUrl: '' }))}>
+                    Remove
+                  </Button>
+                )}
+              </HStack>
+              <FormHelperText fontSize="xs">Optional. Without one, their initials are shown.</FormHelperText>
             </FormControl>
-          </SimpleGrid>
-          <FormControl>
-            <FormLabel {...label}>Profile link</FormLabel>
-            <Input value={form.linkUrl} onChange={set('linkUrl')} placeholder="linkedin.com/in/their-name" />
-            <FormHelperText fontSize="xs">Lets visitors check the person is real.</FormHelperText>
-          </FormControl>
-          <FormControl>
-            <FormLabel {...label}>Photo</FormLabel>
-            <HStack spacing={3}>
-              <Avatar size="md" name={form.name || undefined} src={form.avatarUrl || undefined} />
-              <Button as="label" size="sm" variant="outline" cursor="pointer" isLoading={uploading} loadingText="Uploading">
-                {form.avatarUrl ? 'Change photo' : 'Upload photo'}
-                <input type="file" accept="image/*" hidden onChange={handleAvatar} />
+            <Checkbox isChecked={form.published} onChange={set('published')} alignSelf="start" colorScheme="brand">
+              Show on my public page
+            </Checkbox>
+            <HStack w="full">
+              <Button type="submit" colorScheme="brand" flex={1} isLoading={saving} isDisabled={uploading} loadingText="Saving">
+                {editingId ? 'Save Changes' : 'Add Testimonial'}
               </Button>
-              {form.avatarUrl && (
-                <Button size="sm" variant="ghost" colorScheme="red" onClick={() => setForm((prev) => ({ ...prev, avatarUrl: '' }))}>
-                  Remove
+              {editingId && (
+                <Button variant="ghost" onClick={reset}>
+                  Cancel
                 </Button>
               )}
             </HStack>
-            <FormHelperText fontSize="xs">Optional. Without one, their initials are shown.</FormHelperText>
-          </FormControl>
-          <Checkbox isChecked={form.published} onChange={set('published')} alignSelf="start" colorScheme="brand">
-            Show on my public page
-          </Checkbox>
-          <HStack w="full">
-            <Button type="submit" colorScheme="brand" flex={1} isLoading={saving} isDisabled={uploading} loadingText="Saving">
-              {editingId ? 'Save Changes' : 'Add Testimonial'}
-            </Button>
-            {editingId && (
-              <Button variant="ghost" onClick={reset}>
-                Cancel
-              </Button>
-            )}
-          </HStack>
-        </VStack>
-      </Box>
+          </VStack>
+        </Box>
+        <TestimonialRequestsPanel />
+      </VStack>
 
       <VStack align="stretch" spacing={3}>
         <Heading as="h2" size="sm" color="fg.default">
