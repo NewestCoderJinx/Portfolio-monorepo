@@ -41,6 +41,10 @@ const PROTECTED: Array<[method: 'get' | 'post' | 'patch' | 'delete', path: strin
   ['post', '/testimonials'],
   ['patch', `/testimonials/${ID}`],
   ['delete', `/testimonials/${ID}`],
+  ['get', '/posts/manage'],
+  ['post', '/posts'],
+  ['patch', `/posts/${ID}`],
+  ['delete', `/posts/${ID}`],
   ['get', '/testimonial-requests'],
   ['post', '/testimonial-requests'],
   ['delete', `/testimonial-requests/${ID}`],
@@ -70,7 +74,7 @@ describe('Admin routes (e2e)', () => {
 
   it('leaves the public routes open', async () => {
     const server = app.getHttpServer();
-    for (const path of ['/projects', '/skills', '/experience', '/credentials', '/testimonials']) {
+    for (const path of ['/projects', '/skills', '/experience', '/credentials', '/testimonials', '/posts']) {
       const res = await request(server).get(path);
       expect(res.status, path).toBe(200);
     }
