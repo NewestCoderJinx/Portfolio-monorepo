@@ -42,6 +42,7 @@ import { SkillsEditor } from '../components/admin/SkillsEditor';
 import { Sparkline } from '../components/admin/Sparkline';
 import { InboxPanel } from '../components/admin/InboxPanel';
 import { useInbox } from '../hooks/useInbox';
+import { PostsEditor } from '../components/admin/PostsEditor';
 import { ProfileEditor } from '../components/admin/ProfileEditor';
 import { TestimonialsEditor } from '../components/admin/TestimonialsEditor';
 import {
@@ -58,7 +59,7 @@ import {
 } from '../api/projectstate';
 
 /** Tab order; the Overview opens first. */
-const TABS = ['overview', 'projects', 'profile', 'experience', 'education', 'skills', 'testimonials', 'inbox', 'account'] as const;
+const TABS = ['overview', 'projects', 'writing', 'profile', 'experience', 'education', 'skills', 'testimonials', 'inbox', 'account'] as const;
 
 export function AdminView() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -342,6 +343,7 @@ export function AdminView() {
             <TabList overflowX="auto" overflowY="hidden" sx={{ scrollbarWidth: 'none', '& > button': { flexShrink: 0 } }}>
               <Tab fontWeight="semibold">Overview</Tab>
               <Tab fontWeight="semibold">Projects</Tab>
+              <Tab fontWeight="semibold">Writing</Tab>
               <Tab fontWeight="semibold">Profile</Tab>
               <Tab fontWeight="semibold">Experience</Tab>
               <Tab fontWeight="semibold">Education</Tab>
@@ -714,6 +716,9 @@ export function AdminView() {
             </SimpleGrid>
           )}
                 </VStack>
+              </TabPanel>
+              <TabPanel px={0}>
+                <PostsEditor />
               </TabPanel>
               <TabPanel px={0}>
                 <ProfileEditor />
