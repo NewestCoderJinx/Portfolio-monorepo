@@ -5,6 +5,7 @@ import { CaseStudyModal } from '../components/public/CaseStudyModal';
 import { ContactSection } from '../components/public/ContactSection';
 import { CredentialsSection } from '../components/public/CredentialsSection';
 import { ExperienceSection } from '../components/public/ExperienceSection';
+import { LatestPostsSection } from '../components/public/LatestPostsSection';
 import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
 import { SkillsSection } from '../components/public/SkillsSection';
@@ -19,7 +20,7 @@ import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
 import { useStructuredData } from '../hooks/useStructuredData';
 
-const NAV_SECTIONS = ['projects', 'experience', 'education', 'skills', 'testimonials', 'contact'] as const;
+const NAV_SECTIONS = ['projects', 'experience', 'education', 'skills', 'testimonials', 'writing', 'contact'] as const;
 
 function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -82,6 +83,8 @@ export function PublicView() {
           {!loading && <SkillsSection skills={skills} />}
 
           {!loading && <TestimonialsSection testimonials={testimonials} />}
+
+          {!loading && <LatestPostsSection />}
 
           {!loading && (
             <Reveal>

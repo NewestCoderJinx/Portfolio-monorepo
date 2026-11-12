@@ -32,7 +32,7 @@ const components: Components = {
       {children}
     </Box>
   ),
-  code: ({ children }) => <Code fontSize="0.9em" px={1} borderRadius="sm" bg="bg.subtle" color="fg.default" whiteSpace="pre">{children}</Code>,
+  code: ({ children }) => <Code fontSize="0.9em" px={1} borderRadius="sm" bg="bg.subtle" color="fg.default">{children}</Code>,
   table: ({ children }) => (
     <Box overflowX="auto" my={5}>
       <Table size="sm" variant="simple">{children}</Table>

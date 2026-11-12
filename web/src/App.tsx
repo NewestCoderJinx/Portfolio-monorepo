@@ -5,6 +5,8 @@ import { getToken, isAuthenticated, logoutUser, SESSION_EXPIRED_EVENT, tokenExpi
 import { AuthForm } from './components/AuthForm';
 import { Navbar } from './components/Navbar';
 import { AdminView } from './pages/AdminView';
+import { BlogListView } from './pages/BlogListView';
+import { BlogPostView } from './pages/BlogPostView';
 import { PublicView } from './pages/PublicView';
 import { ResumeView } from './pages/ResumeView';
 import { TestimonialRequestView } from './pages/TestimonialRequestView';
@@ -51,6 +53,8 @@ export function App() {
         <Routes>
           <Route path="/" element={<PublicView />} />
           <Route path="/resume" element={<ResumeView />} />
+          <Route path="/blog" element={<BlogListView />} />
+          <Route path="/blog/:slug" element={<BlogPostView />} />
           <Route path="/testimonial/:token" element={<TestimonialRequestView />} />
           <Route
             path="/admin"

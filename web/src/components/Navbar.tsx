@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Container, Flex, HStack, IconButton, Text, useColorMode } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { getExperience } from '../api/experience';
+import { getPosts } from '../api/posts';
 import { getProfile } from '../api/profile';
 import { MoonIcon, SunIcon } from './public/icons';
 
@@ -22,6 +23,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
   const [brand, setBrand] = useState<string | null>(null);
   const [hasContact, setHasContact] = useState(false);
   const [hasExperience, setHasExperience] = useState(false);
+  const [hasPosts, setHasPosts] = useState(false);
   const { colorMode, toggleColorMode } = useColorMode();
   const isDark = colorMode === 'dark';
 
@@ -35,6 +37,9 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
     getExperience()
       .then((list) => setHasExperience(list.length > 0))
       .catch(() => setHasExperience(false));
+    getPosts()
+      .then((list) => setHasPosts(list.length > 0))
+      .catch(() => setHasPosts(false));
   }, []);
 
   // Only link to sections that will actually render.
@@ -92,6 +97,18 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
                 {s.label}
               </Button>
             ))}
+
+            {hasPosts && (
+              <Button
+                as={RouterLink}
+                to="/blog"
+                variant={pathname.startsWith('/blog') ? 'solid' : 'ghost'}
+                size="sm"
+                display={isAuth ? { base: 'none', md: 'inline-flex' } : 'inline-flex'}
+              >
+                Blog
+              </Button>
+            )}
 
             <IconButton
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
