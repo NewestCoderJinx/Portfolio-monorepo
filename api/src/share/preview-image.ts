@@ -27,6 +27,8 @@ export interface PreviewContent {
   /** Owner name, shown in the footer. */
   name?: string | null;
   headline?: string | null;
+  /** Small label above the title. Defaults to "Case study". */
+  kicker?: string;
 }
 
 const PAD_X = 80;
@@ -96,7 +98,7 @@ export function buildPreviewSvg(c: PreviewContent): string {
   let y = 150;
 
   parts.push(
-    `<text x="${PAD_X}" y="${y}" font-size="24" font-weight="700" letter-spacing="4" fill="${COLORS.accent}">CASE STUDY</text>`,
+    `<text x="${PAD_X}" y="${y}" font-size="24" font-weight="700" letter-spacing="4" fill="${COLORS.accent}">${escapeXml((c.kicker ?? 'Case study').toUpperCase())}</text>`,
   );
   y += 80;
 

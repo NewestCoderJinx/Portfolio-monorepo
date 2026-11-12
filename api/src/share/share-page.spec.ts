@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { absoluteUrl, renderSharePage, summarize } from './share-page';
+import { absoluteUrl, markdownToText, renderSharePage, summarize } from './share-page';
 import { siteUrl } from './share.controller';
 
 const base = {
@@ -64,5 +64,22 @@ describe('siteUrl', () => {
   it('otherwise uses the forwarded host and protocol', () => {
     expect(siteUrl(req({ host: 'api:3000', 'x-forwarded-host': 'ada.dev', 'x-forwarded-proto': 'https' }))).toBe('https://ada.dev');
     expect(siteUrl(req({ host: 'localhost:3000' }))).toBe('http://localhost:3000');
+  });
+});
+
+describe('blog post share pages', () => {
+  it('stays put for crawlers when forward is false, with the publish date', () => {
+    const url = 'https://ada.dev/blog/hello';
+    const html = renderSharePage({ title: 'Hello', shareUrl: url, targetUrl: url, publishedTime: '2026-11-12T00:00:00.000Z', forward: false });
+    expect(html).toContain('<meta property="article:published_time" content="2026-11-12T00:00:00.000Z" />');
+    expect(html).toContain(`<link rel="canonical" href="${url}" />`);
+    expect(html).not.toContain('http-equiv="refresh"');
+    expect(html).not.toContain('location.replace');
+    expect(html).not.toContain('noindex');
+  });
+
+  it('turns a Markdown body into plain preview text', () => {
+    const md = '## Intro\n\nI used **NestJS** and [Postgres](https://pg.dev).\n\n```ts\nsecret()\n```\n\n- one\n- two\n\n![shot](a.png) <b>done</b>';
+    expect(markdownToText(md)).toBe('Intro I used NestJS and Postgres. one two done');
   });
 });

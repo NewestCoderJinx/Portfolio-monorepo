@@ -7,7 +7,7 @@ import { getProfile, type Profile } from '../api/profile';
 import { Markdown } from '../components/Markdown';
 import { BackToTop } from '../components/public/BackToTop';
 import { PublicFooter } from '../components/public/PublicFooter';
-import { applyPageMeta } from '../seo';
+import { applyPageMeta, setJsonLd, summarize } from '../seo';
 
 type Loaded = { status: 'ready'; post: Post } | { status: 'missing' } | { status: 'error' };
 type State = { status: 'loading' } | Loaded;
@@ -48,6 +48,25 @@ export function BlogPostView() {
       image: post.coverImageUrl || profile?.avatarUrl,
       url: `${window.location.origin}/blog/${post.slug}`,
     });
+  }, [post, profile]);
+
+  // Marks the page as an article for search engines: headline, dates, author and image.
+  useEffect(() => {
+    if (!post) return;
+    const absolute = (u?: string | null) => (u ? new URL(u, window.location.href).href : undefined);
+    setJsonLd('ld-post', {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: post.excerpt ? summarize(post.excerpt) : undefined,
+      image: absolute(post.coverImageUrl),
+      datePublished: post.publishedAt ?? undefined,
+      dateModified: post.updatedAt,
+      keywords: post.tags?.length ? post.tags.join(', ') : undefined,
+      mainEntityOfPage: `${window.location.origin}/blog/${post.slug}`,
+      author: profile?.name ? { '@type': 'Person', name: profile.name, url: `${window.location.origin}/` } : undefined,
+    });
+    return () => setJsonLd('ld-post', null);
   }, [post, profile]);
 
   return (

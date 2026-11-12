@@ -9,6 +9,13 @@ export interface SharePreview {
   /** Where people are sent: the case study on the portfolio. */
   targetUrl: string;
   siteName?: string | null;
+  /** ISO date for article:published_time (blog posts). */
+  publishedTime?: string | null;
+  /**
+   * false when the page is served at the real address to preview crawlers only (blog posts):
+   * then it neither redirects nor asks to be left out of search results. Defaults to true.
+   */
+  forward?: boolean;
 }
 
 const escapeHtml = (v: string) =>
@@ -18,6 +25,19 @@ const escapeHtml = (v: string) =>
 export function summarize(text: string, max = 200): string {
   const clean = text.replace(/\s+/g, ' ').trim();
   return clean.length <= max ? clean : `${clean.slice(0, max - 1).replace(/\s+\S*$/, '')}…`;
+}
+
+/** Rough plain text of a Markdown body, for preview descriptions: drops code blocks, images, link targets and markup. */
+export function markdownToText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/[*_`~|]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** Resolves a possibly relative URL against the site; returns null for anything that isn't http(s). */
@@ -44,6 +64,7 @@ export function renderSharePage(p: SharePreview): string {
     description && `<meta name="description" content="${description}" />`,
     `<link rel="canonical" href="${target}" />`,
     `<meta property="og:type" content="article" />`,
+    p.publishedTime && `<meta property="article:published_time" content="${escapeHtml(p.publishedTime)}" />`,
     `<meta property="og:title" content="${title}" />`,
     description && `<meta property="og:description" content="${description}" />`,
     `<meta property="og:url" content="${escapeHtml(p.shareUrl)}" />`,
@@ -53,8 +74,8 @@ export function renderSharePage(p: SharePreview): string {
     `<meta name="twitter:title" content="${title}" />`,
     description && `<meta name="twitter:description" content="${description}" />`,
     p.image && `<meta name="twitter:image" content="${escapeHtml(p.image)}" />`,
-    `<meta http-equiv="refresh" content="0; url=${target}" />`,
   ].filter(Boolean);
+  const forward = p.forward ?? true;
 
   // JSON.stringify gives a valid JS string; "<" is escaped so the value can't close the script tag.
   const jsTarget = JSON.stringify(p.targetUrl).replace(/</g, '\\u003c');
@@ -64,12 +85,17 @@ export function renderSharePage(p: SharePreview): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    ${tags.join('\n    ')}
-    <script>window.location.replace(${jsTarget});</script>
+    ${[
+      forward && '<meta name="robots" content="noindex" />',
+      ...tags,
+      forward && `<meta http-equiv="refresh" content="0; url=${target}" />`,
+      forward && `<script>window.location.replace(${jsTarget});</script>`,
+    ]
+      .filter(Boolean)
+      .join('\n    ')}
   </head>
   <body>
-    <p><a href="${target}">${title}</a></p>
+    <p><a href="${target}">${title}</a></p>${description ? `\n    <p>${description}</p>` : ''}
   </body>
 </html>
 `;

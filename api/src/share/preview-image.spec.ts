@@ -46,6 +46,13 @@ describe('buildPreviewSvg', () => {
   });
 });
 
+describe('preview label', () => {
+  it('says Case study by default and takes a custom label', () => {
+    expect(buildPreviewSvg({ title: 'T' })).toContain('>CASE STUDY</text>');
+    expect(buildPreviewSvg({ title: 'T', kicker: 'Blog post' })).toContain('>BLOG POST</text>');
+  });
+});
+
 describe('renderPreviewPng', () => {
   it('renders a 1200×630 PNG with the bundled fonts', () => {
     const png = renderPreviewPng({ title: 'Queue Service', description: 'Handles jobs.', tags: ['Go'], name: 'Ada' });

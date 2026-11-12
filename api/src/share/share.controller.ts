@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Request, Response } from 'express';
 import { isUUID } from 'class-validator';
 import { Repository } from 'typeorm';
+import { Post } from '../posts/post.entity';
 import { Profile } from '../profile/entities/profile.entity';
 import { RateLimiter } from '../common/rate-limiter';
 import { Project } from '../projects/project.entity';
@@ -10,7 +11,7 @@ import { VIEW_WINDOW_MS } from '../projects/projects.controller';
 import { ProjectsService } from '../projects/projects.service';
 import { isBot } from './bots';
 import { renderPreviewPng } from './preview-image';
-import { absoluteUrl, renderSharePage } from './share-page';
+import { absoluteUrl, markdownToText, renderSharePage } from './share-page';
 
 /** Rendered previews, keyed by project and the last edits that affect them. */
 const IMAGE_CACHE_LIMIT = 50;
@@ -33,6 +34,7 @@ export class ShareController {
   constructor(
     @InjectRepository(Project) private readonly projects: Repository<Project>,
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
+    @InjectRepository(Post) private readonly posts: Repository<Post>,
     private readonly projectsService: ProjectsService,
   ) {}
 
@@ -43,6 +45,10 @@ export class ShareController {
 
   private findPublished(id: string): Promise<Project | null> {
     return isUUID(id) ? this.projects.findOne({ where: { id, published: true } }) : Promise.resolve(null);
+  }
+
+  private findPublishedPost(slug: string): Promise<Post | null> {
+    return this.posts.findOne({ where: { slug, published: true } });
   }
 
   private findProfile(): Promise<Profile | null> {
@@ -85,16 +91,72 @@ export class ShareController {
       return;
     }
     const profile = await this.findProfile();
-    const key = `${project.id}:${imageVersion(project, profile)}`;
-    let png = this.imageCache.get(key);
-    if (!png) {
-      png = renderPreviewPng({
+    this.sendCard(res, `${project.id}:${imageVersion(project, profile)}`, () =>
+      renderPreviewPng({
         title: project.title,
         description: project.description || project.problem,
         tags: project.tags,
         name: profile?.name,
         headline: profile?.headline,
-      });
+      }),
+    );
+  }
+
+  /**
+   * Preview tags for /blog/<slug>. nginx sends only link-preview crawlers here (people and search
+   * engines get the app), so the page sits at the post's real address and doesn't redirect.
+   */
+  @Get('posts/:slug')
+  async post(@Param('slug') slug: string, @Req() req: Request, @Res() res: Response): Promise<void> {
+    const site = siteUrl(req);
+    const post = await this.findPublishedPost(slug);
+    if (!post) {
+      res.redirect(302, `${site}/blog`);
+      return;
+    }
+    const profile = await this.findProfile();
+    const url = `${site}/blog/${post.slug}`;
+    const generated = `${site}/api/share/posts/${post.slug}/image.png?v=${imageVersion(post, profile)}`;
+
+    const html = renderSharePage({
+      title: profile?.name ? `${post.title} | ${profile.name}` : post.title,
+      description: post.excerpt || markdownToText(post.body) || profile?.headline,
+      image: absoluteUrl(post.coverImageUrl, site) ?? generated,
+      shareUrl: url,
+      targetUrl: url,
+      siteName: profile?.name,
+      publishedTime: post.publishedAt?.toISOString(),
+      forward: false,
+    });
+    res.set('Cache-Control', 'public, max-age=300').type('html').send(html);
+  }
+
+  /** A generated 1200×630 preview card for a post without a cover image. */
+  @Get('posts/:slug/image.png')
+  async postImage(@Param('slug') slug: string, @Res() res: Response): Promise<void> {
+    const post = await this.findPublishedPost(slug);
+    if (!post) {
+      res.status(404).end();
+      return;
+    }
+    const profile = await this.findProfile();
+    this.sendCard(res, `post:${post.id}:${imageVersion(post, profile)}`, () =>
+      renderPreviewPng({
+        kicker: 'Blog post',
+        title: post.title,
+        description: post.excerpt || markdownToText(post.body),
+        tags: post.tags,
+        name: profile?.name,
+        headline: profile?.headline,
+      }),
+    );
+  }
+
+  /** Serves a preview card from the cache, rendering it on a miss. */
+  private sendCard(res: Response, key: string, render: () => Buffer): void {
+    let png = this.imageCache.get(key);
+    if (!png) {
+      png = render();
       if (this.imageCache.size >= IMAGE_CACHE_LIMIT) this.imageCache.delete(this.imageCache.keys().next().value!);
       this.imageCache.set(key, png);
     }
@@ -102,7 +164,7 @@ export class ShareController {
   }
 }
 
-/** Changes whenever the project or profile is edited, so caches keyed on it never go stale. */
-export function imageVersion(project: Pick<Project, 'updatedAt'>, profile: Pick<Profile, 'updatedAt'> | null): string {
-  return Math.max(project.updatedAt.getTime(), profile?.updatedAt?.getTime() ?? 0).toString(36);
+/** Changes whenever the item or profile is edited, so caches keyed on it never go stale. */
+export function imageVersion(item: Pick<Project | Post, 'updatedAt'>, profile: Pick<Profile, 'updatedAt'> | null): string {
+  return Math.max(item.updatedAt.getTime(), profile?.updatedAt?.getTime() ?? 0).toString(36);
 }
