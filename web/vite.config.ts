@@ -39,8 +39,11 @@ function seoMeta(env: Record<string, string>): Plugin {
   };
 }
 
-/** Public pages for the sitemap. Case studies are #fragments of "/", so they aren't separate URLs. */
-const PUBLIC_PATHS = ['/', '/resume'];
+/**
+ * Public pages for the sitemap. Case studies are #fragments of "/", so they aren't separate URLs; blog
+ * posts are added after the build, so crawlers find them through the links on /blog.
+ */
+const PUBLIC_PATHS = ['/', '/resume', '/blog'];
 
 /**
  * Emits robots.txt and, when VITE_SITE_URL is set, sitemap.xml (which needs absolute URLs).
