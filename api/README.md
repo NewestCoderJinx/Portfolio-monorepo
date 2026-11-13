@@ -1,114 +1,86 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Portfolio API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The NestJS + TypeORM + PostgreSQL backend for the portfolio. It serves the public site's data and the Admin area, and builds the link previews for shared projects and blog posts.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+See the [root README](../README.md) for running the whole stack with Docker.
 
-## Description
+## Running it on its own
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+You need Node.js 22 and a PostgreSQL database.
 
 ```bash
-$ yarn install
+cp ../.env.example .env   # then set the database login and JWT_SECRET
+npm ci
+npm run start:dev         # http://localhost:3000, reloads on change
 ```
 
-## Compile and run the project
+On an empty database, the first account to register becomes the admin: open `/admin` on the web app and sign up. `npm run seed` fills in a sample profile and projects.
 
-```bash
-# development
-$ yarn run start
+| Script | What it does |
+| --- | --- |
+| `npm run start:dev` | Run with reload on change |
+| `npm run build` / `npm run start:prod` | Compile to `dist/` and run it |
+| `npm test` | Unit tests (Vitest), no database needed |
+| `npm run test:e2e` | Boots the whole app against the database in `.env` and checks it over HTTP |
+| `npm run lint` | oxlint |
+| `npm run seed` | Sample profile and projects |
 
-# watch mode
-$ yarn run start:dev
+GitHub Actions runs lint, both test suites (with a Postgres service) and the build on every push. See [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
-# production mode
-$ yarn run start:prod
+## Settings
+
+Read from the environment, or from `api/.env` in development.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `POSTGRES_HOST` / `POSTGRES_PORT` | `localhost` / `5432` | Database address |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `portfolio_user` / `secret_password` / `portfolio_db` | Database login |
+| `JWT_SECRET` | a dev-only value | Signs Admin logins. Always set a long random string in production. Logins last one day. |
+| `PORT` | `3000` | HTTP port |
+| `ALLOW_REGISTRATION` | `false` | Only the first account can register. Set to `true` for a moment to add another admin. |
+| `DB_SYNCHRONIZE` | on outside production | Lets TypeORM create and update tables from the entities. There are no migrations yet. |
+| `SITE_URL` | from the request | Public address of the site, used in share links and preview tags |
+| `PUBLIC_API_URL` | from the request | Public address of the API, used in uploaded file URLs |
+| `SMTP_*`, `MAIL_FROM`, `NOTIFY_EMAIL` | off | Email alerts. See [Email alerts](../README.md#email-alerts) in the root README. |
+
+## Endpoints
+
+🔒 needs an Admin login (`Authorization: Bearer <token>` from `POST /auth/login`). Every other route is public.
+
+| Area | Public | Admin 🔒 |
+| --- | --- | --- |
+| Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login` | `GET /auth/me`, `PATCH /auth/password` |
+| Profile | `GET /profile` | `PATCH /profile`, `POST /profile/resume` (PDF) |
+| Projects | `GET /projects`, `GET /projects/:id`, `POST /projects/:id/view` | `GET /projects/manage`, `GET /projects/stats?days=30`, `POST /projects`, `PATCH /projects/reorder`, `PATCH /projects/:id`, `DELETE /projects/:id`, `POST /projects/upload` (image) |
+| Blog posts | `GET /posts` (no bodies), `GET /posts/:slug` | `GET /posts/manage`, `POST /posts`, `PATCH /posts/:id`, `DELETE /posts/:id` |
+| Skills | `GET /skills` | `POST /skills`, `PATCH /skills/reorder`, `PATCH /skills/:id`, `DELETE /skills/:id` |
+| Experience | `GET /experience` | `POST`, `PATCH /:id`, `DELETE /:id` |
+| Education & certifications | `GET /credentials` | `POST`, `PATCH /:id`, `DELETE /:id` |
+| Testimonials | `GET /testimonials` | `GET /testimonials/manage`, `POST`, `PATCH /:id`, `DELETE /:id` |
+| Testimonial requests | `GET /testimonial-requests/:token`, `POST /testimonial-requests/:token` | `GET /testimonial-requests`, `POST /testimonial-requests`, `DELETE /testimonial-requests/:id` |
+| Contact messages | `POST /messages` | `GET /messages`, `GET /messages/alerts`, `POST /messages/alerts/test`, `PATCH /messages/read-all`, `PATCH /messages/:id`, `DELETE /messages/:id` |
+| Link previews | `GET /share/projects/:id`, `GET /share/projects/:id/image.png`, `GET /share/posts/:slug`, `GET /share/posts/:slug/image.png` | |
+
+Drafts (unpublished projects and posts) are only returned on the Admin routes; the public ones answer 404, so their ids can't be guessed.
+
+Public routes that can be abused are rate limited per visitor:
+- Contact form: 5 messages an hour.
+- Testimonial links: 30 lookups and 5 submissions an hour.
+- Project views and share clicks: counted once per visitor every 30 minutes.
+
+Uploaded images (up to 15 MB) are resized, stripped of metadata and saved as WebP under `uploads/`, served at `/uploads/...`.
+
+## Layout
+
 ```
-
-## Run tests
-
-```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+src/
+  auth/          login, registration, JWT guard
+  profile/       the single owner profile and résumé upload
+  projects/      projects, ordering, views and daily stats
+  posts/         blog posts and their URL slugs
+  skills/  experience/  credentials/  testimonials/  messages/
+  share/         link-preview pages and generated preview images
+  mail/          SMTP alerts
+  common/        uploads, image optimisation, rate limiter, error filter
+test/            end-to-end tests
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
