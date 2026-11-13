@@ -1,64 +1,51 @@
-# Full-Stack Engineer Portfolio Application
+# Portfolio Web
 
-A production-ready portfolio web application built using a modern TypeScript stack, containerized with Docker, and architected with a full administrative CRUD workflow.
+The React front end: the public portfolio, the blog, and the Admin area. Built with Vite, TypeScript and Chakra UI, and served by nginx in production.
 
-## 🚀 Key Features
+See the [root README](../README.md) for running the whole stack, and for the link-preview and SEO settings.
 
-* **Public Showcase**: Responsive project grid featuring title search, tag-based dynamic filtering, and direct links to live demos and GitHub repositories.
-* **Admin Dashboard**: Secure control panel for managing portfolio entries with real-time image upload previews.
-* **JWT Authentication**: Password-protected admin routing with persistent session tokens.
-* **Static File Management**: Multi-part image upload handling with volume-backed disk storage.
-* **Container Orchestration**: Multi-stage Docker builds configured for both development hot-reloading and Nginx production reverse proxying.
+## Running it on its own
 
-## 🛠️ Tech Stack
+You need Node.js 22, Yarn, and the API running (see [api/README.md](../api/README.md)).
 
-* **Frontend**: React, TypeScript, Vite, Chakra UI
-* **Backend**: NestJS, TypeScript, TypeORM
-* **Database**: PostgreSQL
-* **Infrastructure**: Docker, Docker Compose, Nginx
+```bash
+yarn install
+echo "VITE_API_URL=http://localhost:3000" > .env
+yarn dev                  # http://localhost:5173
+```
 
----
-
-## ⚡ Quick Start (Local Development)
-
-### Prerequisites
-* Docker & Docker Compose installed
-* Node.js (v18+) & Yarn
-
-
----
-
-## 🔎 SEO & Link Previews
-
-Set these before building the `web` image (e.g. in a `.env` next to `docker-compose.yml`):
-
-| Variable | Used for |
+| Script | What it does |
 | --- | --- |
-| `VITE_SITE_URL` | The public address, e.g. `https://yourname.dev`. Enables `sitemap.xml`, canonical/`og:url` tags and the `Sitemap:` line in `robots.txt`. The API uses it for share links too (override with `SITE_URL`). |
-| `VITE_SITE_TITLE` / `VITE_SITE_DESCRIPTION` | Title and description baked into `index.html`, for crawlers that don't run JavaScript. |
-| `VITE_OG_IMAGE` | Default preview image, absolute or relative to `VITE_SITE_URL`. |
+| `yarn dev` | Dev server with hot reload |
+| `yarn build` | Type-check and build to `dist/`, including `robots.txt` and `sitemap.xml` |
+| `yarn preview` | Serve the built `dist/` locally |
+| `yarn lint` | oxlint |
 
-How it fits together:
+`VITE_*` settings are baked in at build time, so rebuild after changing them. `VITE_API_URL` is the only one needed for development. The rest are listed under [Link previews and SEO](../README.md#link-previews-and-seo).
 
-* **Home page**: the build-time tags above, updated at runtime from the live profile (Google runs JavaScript; LinkedIn, WhatsApp, Slack and X don't). A schema.org `Person` block describes the owner, their links and skills.
-* **Case studies**: the Share button copies `/p/<project id>`. nginx forwards that to the API, which returns the project's own title, description and cover image as preview tags, then sends visitors on to `/#project-<id>`. Drafts and unknown ids redirect home.
-* **Crawling**: `robots.txt` keeps `/admin` out of search results; `sitemap.xml` lists `/` and `/resume`.
+## Pages
 
-Check a preview with [LinkedIn's Post Inspector](https://www.linkedin.com/post-inspector/) or [opengraph.xyz](https://www.opengraph.xyz/) once deployed.
-
----
-
-## ✉️ Email Alerts for New Messages
-
-The API can email you whenever someone uses the contact form. Replying to the alert answers the visitor directly (Reply-To is their address). Set these for the `api` service, e.g. in the `.env` next to `docker-compose.yml`:
-
-| Variable | Meaning |
+| Route | Page |
 | --- | --- |
-| `SMTP_HOST` | Mail server, e.g. `smtp.gmail.com`, `smtp.resend.com`. Leave empty to turn alerts off. |
-| `SMTP_PORT` | `587` (STARTTLS, default) or `465` (TLS). |
-| `SMTP_SECURE` | Optional override: `true` for implicit TLS, `false` otherwise. Defaults from the port. |
-| `SMTP_USER` / `SMTP_PASS` | Login. For Gmail use an [app password](https://support.google.com/accounts/answer/185833), not your normal password. |
-| `MAIL_FROM` | Sender, e.g. `Portfolio <alerts@yourname.dev>`. Defaults to `SMTP_USER`. Many providers require a verified address. |
-| `NOTIFY_EMAIL` | Where alerts go. Defaults to the email on your profile. |
+| `/` | Portfolio: profile, projects and case studies, experience, education, skills, testimonials, latest posts, contact form |
+| `/resume` | Printable résumé |
+| `/blog`, `/blog/:slug` | Post list with tag filter, and single posts rendered from Markdown |
+| `/testimonial/:token` | Form behind a private testimonial request link |
+| `/admin` | Sign-in, then the Admin tabs: Overview, Projects, Writing, Profile, Experience, Education, Skills, Testimonials, Inbox, Account |
 
-The Admin **Inbox** shows whether alerts are on and has a **Send test email** button that reports any error from the mail server. Messages are always saved, so a mail problem never loses one.
+Post bodies are rendered with `react-markdown` and `remark-gfm` (tables, task lists). Raw HTML in a post is shown as text, never run.
+
+## Layout
+
+```
+src/
+  api/         one file per API area (axios client in axios.ts)
+  pages/       one component per route
+  components/
+    public/    sections and cards for the public pages
+    admin/     editors and panels for the Admin tabs
+  hooks/       data loading, page meta and structured data
+  seo.ts       helpers for <title>, meta tags and JSON-LD
+  theme.ts     Chakra theme and colour tokens (light and dark)
+nginx.conf     production server: the app, /api and /uploads proxies, share links, crawler routing for blog posts
+```
