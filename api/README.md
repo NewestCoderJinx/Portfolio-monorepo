@@ -24,6 +24,8 @@ On an empty database, the first account to register becomes the admin: open `/ad
 | `npm run test:e2e` | Boots the whole app against the database in `.env` and checks it over HTTP |
 | `npm run lint` | oxlint |
 | `npm run seed` | Sample profile and projects |
+| `npm run migration:generate -- src/migrations/Name` | Write a migration for your entity changes (see below) |
+| `npm run migration:show` / `migration:run` / `migration:revert` | List, apply or undo migrations by hand |
 
 GitHub Actions runs lint, both test suites (with a Postgres service) and the build on every push. See [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
@@ -38,10 +40,23 @@ Read from the environment, or from `api/.env` in development.
 | `JWT_SECRET` | a dev-only value | Signs Admin logins. Always set a long random string in production. Logins last one day. |
 | `PORT` | `3000` | HTTP port |
 | `ALLOW_REGISTRATION` | `false` | Only the first account can register. Set to `true` for a moment to add another admin. |
-| `DB_SYNCHRONIZE` | on outside production | Lets TypeORM create and update tables from the entities. There are no migrations yet. |
 | `SITE_URL` | from the request | Public address of the site, used in share links and preview tags |
 | `PUBLIC_API_URL` | from the request | Public address of the API, used in uploaded file URLs |
 | `SMTP_*`, `MAIL_FROM`, `NOTIFY_EMAIL` | off | Email alerts. See [Email alerts](../README.md#email-alerts) in the root README. |
+
+## Database migrations
+
+Tables change only through migrations in `src/migrations/`. The app applies pending ones when it starts (`migrationsRun`), and records each in the `migrations` table. TypeORM's `synchronize` is off.
+
+To change the schema:
+
+1. Edit the entity (`*.entity.ts`).
+2. With your database running and up to date, run `npm run migration:generate -- src/migrations/AddSomething`. It compares the entities with the database and writes the SQL.
+3. Read the generated file. Column type and rename changes come out as drop-and-add, which deletes that column's data. Rewrite those with `ALTER COLUMN ... TYPE ... USING` or `RENAME COLUMN`, like `1794772308676-TimestampsWithTimeZone.ts`.
+4. Add the class to `MIGRATIONS` in `src/config/database.config.ts`. Migrations are listed there explicitly, not loaded from a folder.
+5. Restart the app, or run `npm run migration:run`.
+
+The first migration, `InitialSchema`, only adds what's missing, so databases built by the older `synchronize` setup are taken over without losing data.
 
 ## Endpoints
 

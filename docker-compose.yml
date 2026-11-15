@@ -30,7 +30,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
       POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key}
-      DB_SYNCHRONIZE: "true"
       # Public address used in /p/<id> share links; falls back to the request host when empty.
       SITE_URL: ${SITE_URL:-${VITE_SITE_URL:-}}
       # Email alerts for new contact messages; leave SMTP_HOST empty to turn them off.

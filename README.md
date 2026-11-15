@@ -40,7 +40,7 @@ To work on one app with live reload instead, see the README in `api/` or `web/`.
 - `VITE_SITE_URL`: your public address, e.g. `https://yourname.dev`.
 - `VITE_API_URL`: the address the browser should use for the API.
 
-The database tables are created and updated automatically from the code (`DB_SYNCHRONIZE`). There are no migrations yet, so back up the database before deploying big changes.
+The API applies any pending database migrations when it starts, so deploying a new version updates the tables. Back up the database before deploying a version with new migrations. See [Database migrations](api/README.md#database-migrations).
 
 Every push to `main` runs lint, tests and builds on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
