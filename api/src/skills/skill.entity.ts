@@ -18,9 +18,9 @@ export class Skill {
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

@@ -26,6 +26,6 @@ export class Message {
   @Column({ type: 'timestamptz', nullable: true })
   repliedAt: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

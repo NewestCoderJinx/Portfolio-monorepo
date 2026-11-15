@@ -30,9 +30,9 @@ export class Experience {
   @Column('simple-array', { nullable: true })
   skills: string[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

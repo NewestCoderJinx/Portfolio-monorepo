@@ -34,7 +34,6 @@ export class Post {
   @Column({ type: 'timestamptz', nullable: true })
   publishedAt: Date | null;
 
-  // timestamptz, like publishedAt, so all three dates mean the same instant whatever the server's time zone.
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

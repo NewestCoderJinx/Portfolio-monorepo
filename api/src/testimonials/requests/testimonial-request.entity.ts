@@ -29,6 +29,6 @@ export class TestimonialRequest {
   @Column({ type: 'uuid', nullable: true })
   testimonialId: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

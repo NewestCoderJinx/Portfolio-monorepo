@@ -15,6 +15,6 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   passwordChangedAt: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

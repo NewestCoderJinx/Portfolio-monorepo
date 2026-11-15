@@ -1,6 +1,7 @@
 import { DataSourceOptions } from 'typeorm';
 import { Credential } from '../credentials/credential.entity';
 import { InitialSchema1794771932836 } from '../migrations/1794771932836-InitialSchema';
+import { TimestampsWithTimeZone1794772308676 } from '../migrations/1794772308676-TimestampsWithTimeZone';
 import { Experience } from '../experience/experience.entity';
 import { Message } from '../messages/message.entity';
 import { Post } from '../posts/post.entity';
@@ -13,7 +14,7 @@ import { Testimonial } from '../testimonials/testimonial.entity';
 import { User } from '../users/user.entity';
 
 /** Applied in this order. Add each new migration class here (see api/README.md). */
-export const MIGRATIONS = [InitialSchema1794771932836];
+export const MIGRATIONS = [InitialSchema1794771932836, TimestampsWithTimeZone1794772308676];
 
 export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial, Credential, Skill, ProjectDailyStat, TestimonialRequest, Post];
 
