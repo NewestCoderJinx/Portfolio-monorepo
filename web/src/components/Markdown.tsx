@@ -42,10 +42,11 @@ const components: Components = {
   td: ({ children }) => <Td borderColor="border.default">{children}</Td>,
 };
 
+// "& > :not(* + *)" is the first child; it avoids :first-child, which Emotion warns about.
 /** Renders a post body. GitHub-flavoured: tables, task lists, strikethrough and bare links. */
 export function Markdown({ source }: { source: string }) {
   return (
-    <Box color="fg.default" fontSize={{ base: 'md', md: 'lg' }} sx={{ '& > :first-child': { mt: 0 } }}>
+    <Box color="fg.default" fontSize={{ base: 'md', md: 'lg' }} sx={{ '& > :not(* + *)': { mt: 0 } }}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {source}
       </ReactMarkdown>
