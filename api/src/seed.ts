@@ -10,7 +10,8 @@ try {
   /* no .env file — rely on real environment variables */
 }
 
-const AppDataSource = new DataSource({ ...databaseConfig(), synchronize: true });
+// Runs any pending migrations on initialize, so the tables exist before seeding.
+const AppDataSource = new DataSource(databaseConfig());
 
 async function runSeed() {
   try {

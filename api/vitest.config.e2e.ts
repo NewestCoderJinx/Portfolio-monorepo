@@ -7,5 +7,7 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // Each file boots the app, which runs pending migrations; in parallel they'd race on a fresh database.
+    fileParallelism: false,
   },
 });

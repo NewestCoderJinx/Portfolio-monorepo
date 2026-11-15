@@ -1,5 +1,6 @@
 import { DataSourceOptions } from 'typeorm';
 import { Credential } from '../credentials/credential.entity';
+import { InitialSchema1794771932836 } from '../migrations/1794771932836-InitialSchema';
 import { Experience } from '../experience/experience.entity';
 import { Message } from '../messages/message.entity';
 import { Post } from '../posts/post.entity';
@@ -10,6 +11,9 @@ import { Skill } from '../skills/skill.entity';
 import { TestimonialRequest } from '../testimonials/requests/testimonial-request.entity';
 import { Testimonial } from '../testimonials/testimonial.entity';
 import { User } from '../users/user.entity';
+
+/** Applied in this order. Add each new migration class here (see api/README.md). */
+export const MIGRATIONS = [InitialSchema1794771932836];
 
 export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial, Credential, Skill, ProjectDailyStat, TestimonialRequest, Post];
 
@@ -24,6 +28,9 @@ export function databaseConfig(): DataSourceOptions {
     database: process.env.POSTGRES_DB || 'portfolio_db',
     uuidExtension: 'pgcrypto',
     entities: ENTITIES,
-    synchronize: process.env.NODE_ENV !== 'production' || process.env.DB_SYNCHRONIZE === 'true',
+    // The schema only changes through migrations, which the app runs at startup.
+    synchronize: false,
+    migrations: MIGRATIONS,
+    migrationsRun: true,
   };
 }
