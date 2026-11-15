@@ -6,6 +6,8 @@ import sharp from 'sharp';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MAX_IMAGE_SIDE, optimizeUploadedImage } from './images';
 
+const SLOW = { timeout: 30_000 };
+
 describe('optimizeUploadedImage', () => {
   let dir: string;
   beforeEach(() => {
@@ -20,7 +22,8 @@ describe('optimizeUploadedImage', () => {
 
   const solid = (width: number, height: number) => sharp({ create: { width, height, channels: 3, background: '#2c56ad' } });
 
-  it('converts to WebP, shrinks large images and removes the original', async () => {
+  // Encoding multi-megapixel images is slow when the whole suite runs in parallel (as in CI).
+  it('converts to WebP, shrinks large images and removes the original', SLOW, async () => {
     const file = await upload('big.jpg', await solid(4000, 2000).jpeg().toBuffer());
     const out = await optimizeUploadedImage(file);
     expect(out.filename).toBe('big.webp');
@@ -46,7 +49,7 @@ describe('optimizeUploadedImage', () => {
     expect(meta.exif).toBeUndefined();
   });
 
-  it('re-encodes an uploaded WebP in place', async () => {
+  it('re-encodes an uploaded WebP in place', SLOW, async () => {
     const out = await optimizeUploadedImage(await upload('a.webp', await solid(2500, 2500).webp().toBuffer()));
     expect(out.filename).toBe('a.webp');
     expect((await sharp(out.path).metadata()).width).toBe(MAX_IMAGE_SIDE);
