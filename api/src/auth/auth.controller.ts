@@ -21,8 +21,8 @@ export class AuthController {
   }
 
   @Post('login')
-  login(@Body() dto: AuthCredentialsDto) {
-    return this.authService.login(dto.email, dto.password);
+  login(@Body() dto: AuthCredentialsDto, @Req() req: Request) {
+    return this.authService.login(dto.email, dto.password, req.ip ?? 'unknown');
   }
 
   @UseGuards(JwtAuthGuard)

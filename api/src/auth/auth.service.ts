@@ -7,10 +7,14 @@ import { RateLimiter } from '../common/rate-limiter';
 
 /** Wrong current-password attempts allowed per account in the window below. */
 export const PASSWORD_ATTEMPTS = 5;
+/** Failed logins allowed per client IP in the window below; a successful login clears the count. */
+export const LOGIN_ATTEMPTS = 10;
+const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
-  private readonly passwordAttempts = new RateLimiter(PASSWORD_ATTEMPTS, 15 * 60 * 1000);
+  private readonly passwordAttempts = new RateLimiter(PASSWORD_ATTEMPTS, ATTEMPT_WINDOW_MS);
+  private readonly loginFailures = new RateLimiter(LOGIN_ATTEMPTS, ATTEMPT_WINDOW_MS);
 
   constructor(
     private readonly usersService: UsersService,
@@ -43,17 +47,19 @@ export class AuthService {
     return this.generateToken(user.id, user.email);
   }
 
-  async login(email: string, pass: string) {
+  /** `clientKey` (the caller's IP) is blocked after LOGIN_ATTEMPTS failures, before the password is even checked. */
+  async login(email: string, pass: string, clientKey = 'unknown') {
+    if (this.loginFailures.isLimited(clientKey)) {
+      throw new HttpException('Too many failed sign-in attempts. Please try again in 15 minutes.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
     const user = await this.usersService.findByEmail(email);
-    if (!user) {
+    if (!user || !(await bcrypt.compare(pass, user.passwordHash))) {
+      this.loginFailures.tryHit(clientKey);
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
+    this.loginFailures.reset(clientKey);
     return this.generateToken(user.id, user.email);
   }
 

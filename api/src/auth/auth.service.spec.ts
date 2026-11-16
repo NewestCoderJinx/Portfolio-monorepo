@@ -1,7 +1,7 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthService, PASSWORD_ATTEMPTS } from './auth.service';
+import { AuthService, LOGIN_ATTEMPTS, PASSWORD_ATTEMPTS } from './auth.service';
 import { isRevoked } from './jwt.strategy';
 
 describe('AuthService registration', () => {
@@ -78,6 +78,45 @@ describe('AuthService password change', () => {
 
   it('rejects reusing the current password', async () => {
     await expect(service.changePassword('u1', 'old-password', 'old-password')).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('AuthService login', () => {
+  const users = { findByEmail: vi.fn() };
+  const jwt = { sign: vi.fn(() => 'token') };
+  let service: AuthService;
+  let hash: string;
+
+  beforeAll(async () => {
+    hash = await bcrypt.hash('right-password', 4);
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    users.findByEmail.mockImplementation(async (email: string) =>
+      email === 'owner@example.com' ? { id: 'u1', email, passwordHash: hash } : null,
+    );
+    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any);
+  });
+
+  it('blocks an IP after too many failures, even with the right password', async () => {
+    for (let i = 0; i < LOGIN_ATTEMPTS; i++) {
+      const email = i % 2 ? 'owner@example.com' : 'nobody@example.com';
+      await expect(service.login(email, 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+    }
+    await expect(service.login('owner@example.com', 'right-password', '1.2.3.4')).rejects.toMatchObject({ status: 429 });
+    await expect(service.login('owner@example.com', 'right-password', '5.6.7.8')).resolves.toEqual({ access_token: 'token' });
+  });
+
+  it('clears the count after a successful login', async () => {
+    for (let i = 0; i < LOGIN_ATTEMPTS - 1; i++) {
+      await expect(service.login('owner@example.com', 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+    }
+    await service.login('owner@example.com', 'right-password', '1.2.3.4');
+    for (let i = 0; i < LOGIN_ATTEMPTS - 1; i++) {
+      await expect(service.login('owner@example.com', 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+    }
+    await expect(service.login('owner@example.com', 'right-password', '1.2.3.4')).resolves.toEqual({ access_token: 'token' });
   });
 });
 

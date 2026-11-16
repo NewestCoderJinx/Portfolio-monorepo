@@ -25,6 +25,17 @@ export class RateLimiter {
     return true;
   }
 
+  /** True if `key` has used up its hits in the current window (does not record a hit). */
+  isLimited(key: string): boolean {
+    const now = this.now();
+    return (this.hits.get(key) ?? []).filter((t) => now - t < this.windowMs).length >= this.limit;
+  }
+
+  /** Forgets every hit for `key`. */
+  reset(key: string): void {
+    this.hits.delete(key);
+  }
+
   private sweep(now: number) {
     for (const [key, times] of this.hits) {
       if (times.every((t) => now - t >= this.windowMs)) this.hits.delete(key);

@@ -16,6 +16,10 @@ export const loginUser = async (email: string, password: string) => {
   });
 
   if (!res.ok) {
+    if (res.status === 429) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error?.message ?? errorData.message ?? 'Too many failed sign-in attempts. Please try again later.');
+    }
     throw new Error('Invalid credentials');
   }
 
