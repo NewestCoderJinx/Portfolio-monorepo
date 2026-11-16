@@ -11,7 +11,7 @@ export class User {
   @Column()
   passwordHash: string;
 
-  /** Logins issued before this moment are rejected, so a password change signs out other devices. */
+  /** Shown on the Admin Account tab. Changing the password also signs out every other session. */
   @Column({ type: 'timestamptz', nullable: true })
   passwordChangedAt: Date | null;
 

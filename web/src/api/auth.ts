@@ -27,8 +27,17 @@ export const loginUser = async (email: string, password: string) => {
   localStorage.setItem('access_token', data.access_token);
   return data;
 };
+/** Forgets the saved login in this browser only. */
 export const logoutUser = (): void => {
   localStorage.removeItem('access_token');
+};
+
+/** Ends this session on the server too, so the token stops working even if it was copied. */
+export const signOut = async (): Promise<void> => {
+  const token = localStorage.getItem('access_token');
+  logoutUser();
+  if (!token) return;
+  await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
 };
 
 /** Fired on window when the API rejects the saved login (expired or revoked). */
@@ -101,8 +110,48 @@ export const getAccount = async (): Promise<Account> => {
   return res.data;
 };
 
-/** Changes the password and keeps this session going with the fresh token; other devices are signed out. */
+/** Changes the password; this session continues and every other one is signed out. */
 export const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-  const res = await API.patch<{ access_token: string }>('/auth/password', { currentPassword, newPassword });
-  localStorage.setItem('access_token', res.data.access_token);
+  await API.patch('/auth/password', { currentPassword, newPassword });
+};
+
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+  /** The session this browser is using. */
+  current: boolean;
+}
+
+export const getSessions = async (): Promise<SessionInfo[]> => (await API.get<SessionInfo[]>('/auth/sessions')).data;
+
+export const revokeSession = async (id: string): Promise<void> => {
+  await API.delete(`/auth/sessions/${id}`);
+};
+
+/** Signs out every session but this one; returns how many were ended. */
+export const revokeOtherSessions = async (): Promise<number> => (await API.delete<{ signedOut: number }>('/auth/sessions')).data.signedOut;
+
+/** "Firefox on Linux" from a User-Agent header; good enough to tell your own devices apart. */
+export const describeUserAgent = (ua: string | null): string => {
+  if (!ua) return 'Unknown device';
+  const browser =
+    /Edg\//.test(ua) ? 'Edge'
+    : /OPR\/|Opera/.test(ua) ? 'Opera'
+    : /Firefox\//.test(ua) ? 'Firefox'
+    : /Chrome\//.test(ua) ? 'Chrome'
+    : /Safari\//.test(ua) ? 'Safari'
+    : /curl|PostmanRuntime|axios|node/i.test(ua) ? 'API client'
+    : 'Browser';
+  const os =
+    /iPhone|iPad|iPod/.test(ua) ? 'iOS'
+    : /Android/.test(ua) ? 'Android'
+    : /Windows/.test(ua) ? 'Windows'
+    : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+    : /CrOS/.test(ua) ? 'ChromeOS'
+    : /Linux/.test(ua) ? 'Linux'
+    : null;
+  return os ? `${browser} on ${os}` : browser;
 };

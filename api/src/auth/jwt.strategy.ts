@@ -4,10 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 import { isUUID } from 'class-validator';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../users/user.service';
+import { SessionsService } from './sessions.service';
 
 export interface AuthUser {
   userId: string;
   email: string;
+  sessionId: string;
 }
 
 @Injectable()
@@ -15,6 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
     private readonly usersService: UsersService,
+    private readonly sessions: SessionsService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -23,22 +26,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  /** Beyond the signature: the account must still exist, and the token must postdate the last password change. */
-  async validate(payload: { sub: string; email: string; iat?: number }): Promise<AuthUser> {
-    // A non-uuid sub would make Postgres throw (a 500), so treat it as unknown.
-    const user = isUUID(payload?.sub) ? await this.usersService.findById(payload.sub) : null;
-    if (!user) {
-      throw new UnauthorizedException();
+  /** Beyond the signature: the account must still exist and the token's session must still be live. */
+  async validate(payload: { sub?: string; email?: string; sid?: string }): Promise<AuthUser> {
+    // A non-uuid id would make Postgres throw (a 500), so treat it as unknown.
+    // Tokens from before sessions existed have no sid and are refused, which just means signing in again.
+    if (!isUUID(payload?.sub) || !isUUID(payload?.sid)) throw new UnauthorizedException();
+    const user = await this.usersService.findById(payload.sub!);
+    if (!user) throw new UnauthorizedException();
+    if (!(await this.sessions.validate(payload.sid!, user.id))) {
+      throw new UnauthorizedException('This session has been signed out');
     }
-    if (isRevoked(payload.iat, user.passwordChangedAt)) {
-      throw new UnauthorizedException('Session ended by a password change');
-    }
-    return { userId: user.id, email: user.email };
+    return { userId: user.id, email: user.email, sessionId: payload.sid! };
   }
-}
-
-/** True when the token was issued before the password was last changed. */
-export function isRevoked(iat: number | undefined, passwordChangedAt: Date | null): boolean {
-  if (!passwordChangedAt) return false;
-  return iat === undefined || iat * 1000 < passwordChangedAt.getTime();
 }

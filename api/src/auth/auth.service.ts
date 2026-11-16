@@ -4,6 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/user.service';
 import * as bcrypt from 'bcrypt';
 import { RateLimiter } from '../common/rate-limiter';
+import { SessionsService } from './sessions.service';
+
+/** Where a sign-in came from, stored on its session. */
+export interface ClientInfo {
+  ip?: string;
+  userAgent?: string;
+}
 
 /** Wrong current-password attempts allowed per account in the window below. */
 export const PASSWORD_ATTEMPTS = 5;
@@ -20,6 +27,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly sessions: SessionsService,
   ) {}
 
   /**
@@ -31,7 +39,7 @@ export class AuthService {
     return (await this.usersService.count()) === 0;
   }
 
-  async register(email: string, pass: string) {
+  async register(email: string, pass: string, client: ClientInfo = {}) {
     if (!(await this.isRegistrationOpen())) {
       throw new ForbiddenException('Registration is closed');
     }
@@ -44,11 +52,12 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(pass, 10);
     const user = await this.usersService.create(email, passwordHash);
 
-    return this.generateToken(user.id, user.email);
+    return this.startSession(user.id, user.email, client);
   }
 
-  /** `clientKey` (the caller's IP) is blocked after LOGIN_ATTEMPTS failures, before the password is even checked. */
-  async login(email: string, pass: string, clientKey = 'unknown') {
+  /** The caller's IP is blocked after LOGIN_ATTEMPTS failures, before the password is even checked. */
+  async login(email: string, pass: string, client: ClientInfo = {}) {
+    const clientKey = client.ip ?? 'unknown';
     if (this.loginFailures.isLimited(clientKey)) {
       throw new HttpException('Too many failed sign-in attempts. Please try again in 15 minutes.', HttpStatus.TOO_MANY_REQUESTS);
     }
@@ -60,7 +69,7 @@ export class AuthService {
     }
 
     this.loginFailures.reset(clientKey);
-    return this.generateToken(user.id, user.email);
+    return this.startSession(user.id, user.email, client);
   }
 
   /** The signed-in account, for the Admin Account tab. */
@@ -70,11 +79,8 @@ export class AuthService {
     return { email: user.email, passwordChangedAt: user.passwordChangedAt, createdAt: user.createdAt };
   }
 
-  /**
-   * Changes the password after checking the current one. Every other login is revoked
-   * (see JwtStrategy); the caller gets a fresh token so this session continues.
-   */
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  /** Changes the password after checking the current one, and signs out every other session. */
+  async changePassword(userId: string, sessionId: string, currentPassword: string, newPassword: string): Promise<{ signedOut: number }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
 
@@ -88,15 +94,14 @@ export class AuthService {
       throw new BadRequestException('The new password must be different from the current one');
     }
 
-    // Whole seconds, because token issue times (iat) are in whole seconds.
-    const changedAt = new Date(Math.floor(Date.now() / 1000) * 1000);
-    await this.usersService.setPassword(user.id, await bcrypt.hash(newPassword, 10), changedAt);
-    return this.generateToken(user.id, user.email);
+    await this.usersService.setPassword(user.id, await bcrypt.hash(newPassword, 10), new Date());
+    return { signedOut: await this.sessions.revokeOthers(user.id, sessionId) };
   }
 
-  private generateToken(userId: string, email: string) {
+  private async startSession(userId: string, email: string, client: ClientInfo) {
+    const session = await this.sessions.create(userId, client.userAgent, client.ip);
     return {
-      access_token: this.jwtService.sign({ sub: userId, email }),
+      access_token: this.jwtService.sign({ sub: userId, email, sid: session.id }),
     };
   }
 }

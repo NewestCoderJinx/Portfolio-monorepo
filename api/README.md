@@ -64,7 +64,7 @@ The first migration, `InitialSchema`, only adds what's missing, so databases bui
 
 | Area | Public | Admin 🔒 |
 | --- | --- | --- |
-| Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login` | `GET /auth/me`, `PATCH /auth/password` |
+| Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login` | `GET /auth/me`, `PATCH /auth/password`, `POST /auth/logout`, `GET /auth/sessions`, `DELETE /auth/sessions` (all but this one), `DELETE /auth/sessions/:id` |
 | Profile | `GET /profile` | `PATCH /profile`, `POST /profile/resume` (PDF) |
 | Projects | `GET /projects`, `GET /projects/:id`, `POST /projects/:id/view` | `GET /projects/manage`, `GET /projects/stats?days=30`, `POST /projects`, `PATCH /projects/reorder`, `PATCH /projects/:id`, `DELETE /projects/:id`, `POST /projects/upload` (image) |
 | Blog posts | `GET /posts` (no bodies), `GET /posts/:slug` | `GET /posts/manage`, `POST /posts`, `PATCH /posts/:id`, `DELETE /posts/:id` |
@@ -89,7 +89,7 @@ Uploaded images (up to 15 MB) are resized, stripped of metadata and saved as Web
 
 ```
 src/
-  auth/          login, registration, JWT guard
+  auth/          login, registration, sessions, JWT guard
   profile/       the single owner profile and résumé upload
   projects/      projects, ordering, views and daily stats
   posts/         blog posts and their URL slugs

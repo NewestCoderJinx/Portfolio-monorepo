@@ -2,11 +2,11 @@ import { BadRequestException, ConflictException, ForbiddenException, Unauthorize
 import * as bcrypt from 'bcrypt';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService, LOGIN_ATTEMPTS, PASSWORD_ATTEMPTS } from './auth.service';
-import { isRevoked } from './jwt.strategy';
 
 describe('AuthService registration', () => {
   const users = { count: vi.fn(), findByEmail: vi.fn(), create: vi.fn() };
   const jwt = { sign: vi.fn(() => 'token') };
+  const sessions = { create: vi.fn(async () => ({ id: 's1' })) };
   const env: Record<string, string | undefined> = {};
   const config = { get: vi.fn((k: string) => env[k]) };
   let service: AuthService;
@@ -16,7 +16,7 @@ describe('AuthService registration', () => {
     delete env.ALLOW_REGISTRATION;
     users.findByEmail.mockResolvedValue(null);
     users.create.mockResolvedValue({ id: 'u1', email: 'owner@example.com' });
-    service = new AuthService(users as any, jwt as any, config as any);
+    service = new AuthService(users as any, jwt as any, config as any, sessions as any);
   });
 
   it('lets the first user register', async () => {
@@ -46,7 +46,8 @@ describe('AuthService registration', () => {
 
 describe('AuthService password change', () => {
   const users = { findById: vi.fn(), setPassword: vi.fn() };
-  const jwt = { sign: vi.fn(() => 'fresh-token') };
+  const jwt = { sign: vi.fn() };
+  const sessions = { revokeOthers: vi.fn(async () => 2) };
   let service: AuthService;
   let hash: string;
 
@@ -57,33 +58,36 @@ describe('AuthService password change', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     users.findById.mockResolvedValue({ id: 'u1', email: 'owner@example.com', passwordHash: hash });
-    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any);
+    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any);
   });
 
-  it('saves the new hash, records the change time and returns a fresh token', async () => {
-    await expect(service.changePassword('u1', 'old-password', 'new-password')).resolves.toEqual({ access_token: 'fresh-token' });
+  it('saves the new hash and signs out every other session', async () => {
+    await expect(service.changePassword('u1', 's1', 'old-password', 'new-password')).resolves.toEqual({ signedOut: 2 });
     const [id, newHash, changedAt] = users.setPassword.mock.calls[0];
     expect(id).toBe('u1');
     await expect(bcrypt.compare('new-password', newHash)).resolves.toBe(true);
-    expect(changedAt.getTime() % 1000).toBe(0);
+    expect(changedAt).toBeInstanceOf(Date);
+    expect(sessions.revokeOthers).toHaveBeenCalledWith('u1', 's1');
   });
 
   it('rejects a wrong current password, then rate limits', async () => {
     for (let i = 0; i < PASSWORD_ATTEMPTS; i++) {
-      await expect(service.changePassword('u1', 'wrong', 'new-password')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.changePassword('u1', 's1', 'wrong', 'new-password')).rejects.toBeInstanceOf(BadRequestException);
     }
-    await expect(service.changePassword('u1', 'wrong', 'new-password')).rejects.toMatchObject({ status: 429 });
+    await expect(service.changePassword('u1', 's1', 'wrong', 'new-password')).rejects.toMatchObject({ status: 429 });
     expect(users.setPassword).not.toHaveBeenCalled();
+    expect(sessions.revokeOthers).not.toHaveBeenCalled();
   });
 
   it('rejects reusing the current password', async () => {
-    await expect(service.changePassword('u1', 'old-password', 'old-password')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.changePassword('u1', 's1', 'old-password', 'old-password')).rejects.toBeInstanceOf(BadRequestException);
   });
 });
 
 describe('AuthService login', () => {
   const users = { findByEmail: vi.fn() };
   const jwt = { sign: vi.fn(() => 'token') };
+  const sessions = { create: vi.fn(async () => ({ id: 's1' })) };
   let service: AuthService;
   let hash: string;
 
@@ -96,36 +100,32 @@ describe('AuthService login', () => {
     users.findByEmail.mockImplementation(async (email: string) =>
       email === 'owner@example.com' ? { id: 'u1', email, passwordHash: hash } : null,
     );
-    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any);
+    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any);
   });
 
   it('blocks an IP after too many failures, even with the right password', async () => {
     for (let i = 0; i < LOGIN_ATTEMPTS; i++) {
       const email = i % 2 ? 'owner@example.com' : 'nobody@example.com';
-      await expect(service.login(email, 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(service.login(email, 'wrong', { ip: '1.2.3.4' })).rejects.toBeInstanceOf(UnauthorizedException);
     }
-    await expect(service.login('owner@example.com', 'right-password', '1.2.3.4')).rejects.toMatchObject({ status: 429 });
-    await expect(service.login('owner@example.com', 'right-password', '5.6.7.8')).resolves.toEqual({ access_token: 'token' });
+    await expect(service.login('owner@example.com', 'right-password', { ip: '1.2.3.4' })).rejects.toMatchObject({ status: 429 });
+    await expect(service.login('owner@example.com', 'right-password', { ip: '5.6.7.8' })).resolves.toEqual({ access_token: 'token' });
   });
 
   it('clears the count after a successful login', async () => {
     for (let i = 0; i < LOGIN_ATTEMPTS - 1; i++) {
-      await expect(service.login('owner@example.com', 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(service.login('owner@example.com', 'wrong', { ip: '1.2.3.4' })).rejects.toBeInstanceOf(UnauthorizedException);
     }
-    await service.login('owner@example.com', 'right-password', '1.2.3.4');
+    await service.login('owner@example.com', 'right-password', { ip: '1.2.3.4' });
     for (let i = 0; i < LOGIN_ATTEMPTS - 1; i++) {
-      await expect(service.login('owner@example.com', 'wrong', '1.2.3.4')).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(service.login('owner@example.com', 'wrong', { ip: '1.2.3.4' })).rejects.toBeInstanceOf(UnauthorizedException);
     }
-    await expect(service.login('owner@example.com', 'right-password', '1.2.3.4')).resolves.toEqual({ access_token: 'token' });
+    await expect(service.login('owner@example.com', 'right-password', { ip: '1.2.3.4' })).resolves.toEqual({ access_token: 'token' });
   });
-});
 
-describe('isRevoked', () => {
-  const changed = new Date('2026-01-01T00:00:10Z');
-  it('accepts tokens issued at or after the change, rejects older ones', () => {
-    expect(isRevoked(undefined, null)).toBe(false);
-    expect(isRevoked(changed.getTime() / 1000, changed)).toBe(false);
-    expect(isRevoked(changed.getTime() / 1000 - 1, changed)).toBe(true);
-    expect(isRevoked(undefined, changed)).toBe(true);
+  it('starts a session and puts its id in the token', async () => {
+    await service.login('owner@example.com', 'right-password', { ip: '1.2.3.4', userAgent: 'Firefox' });
+    expect(sessions.create).toHaveBeenCalledWith('u1', 'Firefox', '1.2.3.4');
+    expect(jwt.sign).toHaveBeenCalledWith({ sub: 'u1', email: 'owner@example.com', sid: 's1' });
   });
 });

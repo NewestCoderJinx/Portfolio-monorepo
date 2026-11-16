@@ -16,6 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { changePassword, getAccount, type Account } from '../../api/auth';
 import { apiErrorMessage } from '../../api/profile';
+import { SessionsCard } from './SessionsCard';
 
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 72;
@@ -42,6 +43,7 @@ export function AccountPanel() {
   const [confirm, setConfirm] = useState('');
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [sessionsVersion, setSessionsVersion] = useState(0);
   const toast = useToast();
 
   useEffect(() => {
@@ -66,6 +68,7 @@ export function AccountPanel() {
       setConfirm('');
       setSubmitted(false);
       setAccount((prev) => (prev ? { ...prev, passwordChangedAt: new Date().toISOString() } : prev));
+      setSessionsVersion((v) => v + 1);
       toast({
         title: 'Password changed',
         description: 'Any other devices where you were signed in have been signed out.',
@@ -136,6 +139,8 @@ export function AccountPanel() {
           </Button>
         </VStack>
       </Box>
+
+      <SessionsCard refreshKey={sessionsVersion} />
     </SimpleGrid>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { getToken, isAuthenticated, logoutUser, SESSION_EXPIRED_EVENT, tokenExpiry } from './api/auth';
+import { getToken, isAuthenticated, logoutUser, SESSION_EXPIRED_EVENT, signOut, tokenExpiry } from './api/auth';
 import { AuthForm } from './components/AuthForm';
 import { Navbar } from './components/Navbar';
 import { AdminView } from './pages/AdminView';
@@ -36,7 +36,7 @@ export function App() {
   }, [isAuth]);
 
   const handleLogout = () => {
-    logoutUser();
+    void signOut();
     setIsAuth(false);
     setSessionExpired(false);
   };
