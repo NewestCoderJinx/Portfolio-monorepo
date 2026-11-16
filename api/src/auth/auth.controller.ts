@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { AuthService, type ClientInfo } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DisableTwoFactorDto, TwoFactorCodeDto, TwoFactorLoginDto } from './dto/two-factor.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthUser } from './jwt.strategy';
 import { SessionsService } from './sessions.service';
@@ -32,6 +33,13 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password, clientInfo(req));
   }
 
+  /** Second step when 2FA is on: the challenge from /auth/login plus a code. */
+  @Post('login/2fa')
+  @HttpCode(200)
+  loginWithCode(@Body() dto: TwoFactorLoginDto, @Req() req: Request) {
+    return this.authService.loginWithCode(dto.challenge, dto.code, clientInfo(req));
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@Req() req: Request) {
@@ -44,6 +52,35 @@ export class AuthController {
   changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
     const { userId, sessionId } = req.user as AuthUser;
     return this.authService.changePassword(userId, sessionId, dto.currentPassword, dto.newPassword);
+  }
+
+  /** Returns a new secret and otpauth:// link for the authenticator app; 2FA stays off until /2fa/enable. */
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/setup')
+  @HttpCode(200)
+  setupTwoFactor(@Req() req: Request) {
+    return this.authService.setupTwoFactor((req.user as AuthUser).userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/enable')
+  @HttpCode(200)
+  enableTwoFactor(@Req() req: Request, @Body() dto: TwoFactorCodeDto) {
+    return this.authService.enableTwoFactor((req.user as AuthUser).userId, dto.code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/disable')
+  @HttpCode(204)
+  disableTwoFactor(@Req() req: Request, @Body() dto: DisableTwoFactorDto) {
+    return this.authService.disableTwoFactor((req.user as AuthUser).userId, dto.password, dto.code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/recovery-codes')
+  @HttpCode(200)
+  regenerateRecoveryCodes(@Req() req: Request, @Body() dto: TwoFactorCodeDto) {
+    return this.authService.regenerateRecoveryCodes((req.user as AuthUser).userId, dto.code);
   }
 
   /** Ends the caller's own session. */

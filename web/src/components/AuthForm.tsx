@@ -14,8 +14,9 @@ import {
   Card,
   CardBody,
   Badge,
+  FormHelperText,
 } from '@chakra-ui/react';
-import { getRegistrationStatus, loginUser, registerUser } from '../api/auth';
+import { getRegistrationStatus, loginUser, registerUser, verifyLoginCode } from '../api/auth';
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -30,6 +31,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean>(false);
+  /** Set once the password is accepted and 2FA asks for a code. */
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     getRegistrationStatus().then((open) => {
@@ -45,15 +49,26 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await loginUser(email, password);
+      if (challenge) {
+        await verifyLoginCode(challenge, code);
+      } else if (isLogin) {
+        const step = await loginUser(email, password);
+        if (!step.signedIn) {
+          setChallenge(step.challenge);
+          setPassword('');
+          return;
+        }
       } else {
         await registerUser(email, password);
       }
       onSuccess();
     } catch (err: any) {
-      console.error('Authentication error:', err);
       setError(err.message || 'Authentication failed. Please check your credentials.');
+      // An expired challenge means starting again from the password.
+      if (challenge && /sign in again|too long/i.test(err.message ?? '')) {
+        setChallenge(null);
+        setCode('');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,10 +87,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
                   Admin Access
                 </Badge>
                 <Heading size="lg" color="fg.heading" letterSpacing="tight">
-                  {isLogin ? 'Sign In' : 'Create Owner Account'}
+                  {challenge ? 'Two-Step Verification' : isLogin ? 'Sign In' : 'Create Owner Account'}
                 </Heading>
                 <Text color="fg.secondary" fontSize="sm">
-                  {isLogin
+                  {challenge
+                    ? 'Enter the 6-digit code from your authenticator app.'
+                    : isLogin
                     ? 'Enter your credentials to manage your portfolio'
                     : 'No admin account exists yet. This account becomes the site owner, and sign-ups close afterwards.'}
                 </Text>
@@ -98,6 +115,44 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
 
               {/* Form */}
               <Box as="form" onSubmit={handleSubmit}>
+                {challenge ? (
+                  <VStack spacing={4}>
+                    <FormControl isRequired>
+                      <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>
+                        Code
+                      </FormLabel>
+                      <Input
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        autoComplete="one-time-code"
+                        autoFocus
+                        placeholder="123456"
+                        maxLength={20}
+                        fontFamily="mono"
+                        letterSpacing="widest"
+                        fontSize="lg"
+                        textAlign="center"
+                        borderRadius="md"
+                      />
+                      <FormHelperText fontSize="xs">Lost your phone? Enter one of your recovery codes instead.</FormHelperText>
+                    </FormControl>
+                    <Button type="submit" colorScheme="brand" width="full" mt={2} isLoading={loading} loadingText="Checking...">
+                      Verify
+                    </Button>
+                    <Button
+                      variant="link"
+                      colorScheme="brand"
+                      fontSize="sm"
+                      onClick={() => {
+                        setChallenge(null);
+                        setCode('');
+                        setError(null);
+                      }}
+                    >
+                      Back to sign in
+                    </Button>
+                  </VStack>
+                ) : (
                 <VStack spacing={4}>
                   <FormControl isRequired>
                     <FormLabel fontSize="xs" fontWeight="bold" color="fg.secondary" mb={1}>
@@ -136,10 +191,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
                     {isLogin ? 'Sign In' : 'Create Account'}
                   </Button>
                 </VStack>
+                )}
               </Box>
 
               {/* Switch between Login and Register (only while sign-ups are open) */}
-              {registrationOpen && (
+              {registrationOpen && !challenge && (
               <Box textAlign="center" pt={2}>
                 <Button
                   variant="link"

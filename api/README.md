@@ -64,7 +64,7 @@ The first migration, `InitialSchema`, only adds what's missing, so databases bui
 
 | Area | Public | Admin 🔒 |
 | --- | --- | --- |
-| Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login` | `GET /auth/me`, `PATCH /auth/password`, `POST /auth/logout`, `GET /auth/sessions`, `DELETE /auth/sessions` (all but this one), `DELETE /auth/sessions/:id` |
+| Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login`, `POST /auth/login/2fa` (code step when 2FA is on) | `GET /auth/me`, `PATCH /auth/password`, `POST /auth/logout`, `GET /auth/sessions`, `DELETE /auth/sessions` (all but this one), `DELETE /auth/sessions/:id`, `POST /auth/2fa/setup`, `POST /auth/2fa/enable`, `POST /auth/2fa/disable`, `POST /auth/2fa/recovery-codes` |
 | Profile | `GET /profile` | `PATCH /profile`, `POST /profile/resume` (PDF) |
 | Projects | `GET /projects`, `GET /projects/:id`, `POST /projects/:id/view` | `GET /projects/manage`, `GET /projects/stats?days=30`, `POST /projects`, `PATCH /projects/reorder`, `PATCH /projects/:id`, `DELETE /projects/:id`, `POST /projects/upload` (image) |
 | Blog posts | `GET /posts` (no bodies), `GET /posts/:slug` | `GET /posts/manage`, `POST /posts`, `PATCH /posts/:id`, `DELETE /posts/:id` |
@@ -85,11 +85,20 @@ Public routes that can be abused are rate limited per visitor:
 
 Uploaded images (up to 15 MB) are resized, stripped of metadata and saved as WebP under `uploads/`, served at `/uploads/...`.
 
+## Locked out of two-step verification
+
+If the owner loses both their authenticator app and every recovery code, turn 2FA off straight in the database, then sign in with the password and set it up again:
+
+```sql
+UPDATE users SET "totpSecret" = NULL, "totpEnabledAt" = NULL, "totpLastUsedStep" = NULL, "totpRecoveryCodes" = NULL
+WHERE email = 'owner@example.com';
+```
+
 ## Layout
 
 ```
 src/
-  auth/          login, registration, sessions, JWT guard
+  auth/          login, registration, sessions, two-step verification (TOTP), JWT guard
   profile/       the single owner profile and résumé upload
   projects/      projects, ordering, views and daily stats
   posts/         blog posts and their URL slugs

@@ -22,6 +22,10 @@ export class UsersService {
     await this.userRepository.update({ id }, { passwordHash, passwordChangedAt: changedAt });
   }
 
+  async update(id: string, changes: Partial<Pick<User, 'totpSecret' | 'totpEnabledAt' | 'totpLastUsedStep' | 'totpRecoveryCodes'>>): Promise<void> {
+    await this.userRepository.update({ id }, changes);
+  }
+
   count(): Promise<number> {
     return this.userRepository.count();
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   Box,
   Button,
@@ -17,6 +17,7 @@ import {
 import { changePassword, getAccount, type Account } from '../../api/auth';
 import { apiErrorMessage } from '../../api/profile';
 import { SessionsCard } from './SessionsCard';
+import { TwoFactorCard } from './TwoFactorCard';
 
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 72;
@@ -46,11 +47,13 @@ export function AccountPanel() {
   const [sessionsVersion, setSessionsVersion] = useState(0);
   const toast = useToast();
 
-  useEffect(() => {
+  const loadAccount = useCallback(() => {
     getAccount()
       .then(setAccount)
       .catch(() => toast({ title: 'Failed to load account details', status: 'error', duration: 4000, isClosable: true }));
   }, [toast]);
+
+  useEffect(loadAccount, [loadAccount]);
 
   const tooShort = next.length > 0 && next.length < MIN_LENGTH;
   const mismatch = confirm.length > 0 && confirm !== next;
@@ -139,6 +142,8 @@ export function AccountPanel() {
           </Button>
         </VStack>
       </Box>
+
+      <TwoFactorCard account={account} onChanged={loadAccount} />
 
       <SessionsCard refreshKey={sessionsVersion} />
     </SimpleGrid>

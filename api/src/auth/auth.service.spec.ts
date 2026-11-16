@@ -1,7 +1,9 @@
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthService, LOGIN_ATTEMPTS, PASSWORD_ATTEMPTS } from './auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { AuthService, CODE_ATTEMPTS, LOGIN_ATTEMPTS, PASSWORD_ATTEMPTS } from './auth.service';
+import { base32Decode, currentStep, totpAt } from './totp';
 
 describe('AuthService registration', () => {
   const users = { count: vi.fn(), findByEmail: vi.fn(), create: vi.fn() };
@@ -127,5 +129,93 @@ describe('AuthService login', () => {
     await service.login('owner@example.com', 'right-password', { ip: '1.2.3.4', userAgent: 'Firefox' });
     expect(sessions.create).toHaveBeenCalledWith('u1', 'Firefox', '1.2.3.4');
     expect(jwt.sign).toHaveBeenCalledWith({ sub: 'u1', email: 'owner@example.com', sid: 's1' });
+  });
+});
+
+describe('AuthService two-step verification', () => {
+  let user: Record<string, any>;
+  const users = {
+    findByEmail: vi.fn(async () => user),
+    findById: vi.fn(async () => user),
+    update: vi.fn(async (_id: string, changes: Record<string, unknown>) => Object.assign(user, changes)),
+  };
+  const jwt = new JwtService({ secret: 'test-secret' });
+  const sessions = { create: vi.fn(async () => ({ id: '6f1c3c3e-8f7b-4a43-9d2e-2b4f6f0f6a10' })) };
+  let service: AuthService;
+  let hash: string;
+  const codeNow = () => totpAt(base32Decode(user.totpSecret), currentStep());
+
+  beforeAll(async () => {
+    hash = await bcrypt.hash('right-password', 4);
+  });
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    user = { id: 'u1', email: 'owner@example.com', passwordHash: hash, totpSecret: null, totpEnabledAt: null, totpLastUsedStep: null, totpRecoveryCodes: null };
+    service = new AuthService(users as any, jwt, { get: vi.fn() } as any, sessions as any);
+  });
+
+  const turnOn = async () => {
+    const { otpauthUrl } = await service.setupTwoFactor('u1');
+    expect(otpauthUrl).toContain(`secret=${user.totpSecret}`);
+    expect(user.totpEnabledAt).toBeNull();
+    return (await service.enableTwoFactor('u1', codeNow())).recoveryCodes;
+  };
+
+  it('only turns on after a valid code, and returns ten recovery codes', async () => {
+    await service.setupTwoFactor('u1');
+    await expect(service.enableTwoFactor('u1', '000000')).rejects.toBeInstanceOf(BadRequestException);
+    expect(user.totpEnabledAt).toBeNull();
+    const codes = await service.enableTwoFactor('u1', codeNow());
+    expect(codes.recoveryCodes).toHaveLength(10);
+    expect(user.totpEnabledAt).toBeInstanceOf(Date);
+    expect(user.totpRecoveryCodes).not.toContain(codes.recoveryCodes[0]);
+  });
+
+  it('asks for a code after the password, then signs in with it', async () => {
+    await turnOn();
+    user.totpLastUsedStep = null; // the enabling code would otherwise block reuse within the same step
+    const first = await service.login('owner@example.com', 'right-password', { ip: '1.2.3.4' });
+    expect(first).toMatchObject({ twoFactorRequired: true });
+    expect(sessions.create).not.toHaveBeenCalled();
+    const { challenge } = first as { challenge: string };
+    const result = await service.loginWithCode(challenge, codeNow(), { ip: '1.2.3.4' });
+    expect(result).toHaveProperty('access_token');
+    await expect(service.loginWithCode(challenge, codeNow(), { ip: '1.2.3.4' })).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('accepts each recovery code once', async () => {
+    const [code] = await turnOn();
+    const { challenge } = (await service.login('owner@example.com', 'right-password')) as { challenge: string };
+    await expect(service.loginWithCode(challenge, code.toUpperCase())).resolves.toHaveProperty('access_token');
+    expect(user.totpRecoveryCodes).toHaveLength(9);
+    await expect(service.loginWithCode(challenge, code)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('refuses a challenge that is not one, or an access token in its place', async () => {
+    await turnOn();
+    await expect(service.loginWithCode('garbage', '123456')).rejects.toBeInstanceOf(UnauthorizedException);
+    const accessLike = jwt.sign({ sub: 'u1', email: 'owner@example.com', sid: 'x' });
+    await expect(service.loginWithCode(accessLike, codeNow())).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('locks code entry after too many wrong codes', async () => {
+    await turnOn();
+    user.totpLastUsedStep = null;
+    const { challenge } = (await service.login('owner@example.com', 'right-password')) as { challenge: string };
+    for (let i = 0; i < CODE_ATTEMPTS; i++) {
+      await expect(service.loginWithCode(challenge, '000000', { ip: `10.0.0.${i}` })).rejects.toBeInstanceOf(UnauthorizedException);
+    }
+    await expect(service.loginWithCode(challenge, codeNow(), { ip: '10.0.0.99' })).rejects.toMatchObject({ status: 429 });
+  });
+
+  it('turns off only with the password and a code', async () => {
+    const [recovery] = await turnOn();
+    await expect(service.disableTwoFactor('u1', 'wrong-password', recovery)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.disableTwoFactor('u1', 'right-password', 'zzzzz-zzzzz')).rejects.toBeInstanceOf(BadRequestException);
+    expect(user.totpEnabledAt).toBeInstanceOf(Date);
+    await service.disableTwoFactor('u1', 'right-password', recovery);
+    expect(user).toMatchObject({ totpSecret: null, totpEnabledAt: null, totpRecoveryCodes: null });
+    await expect(service.login('owner@example.com', 'right-password')).resolves.toHaveProperty('access_token');
   });
 });

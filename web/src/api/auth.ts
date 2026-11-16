@@ -8,7 +8,16 @@ export const getAuthHeaders = () => {
   };
 };
 
-export const loginUser = async (email: string, password: string) => {
+const errorMessage = async (res: Response, fallback: string): Promise<string> => {
+  const data = await res.json().catch(() => ({}));
+  const msg = data.error?.message ?? data.message;
+  return (Array.isArray(msg) ? msg.join(', ') : msg) || fallback;
+};
+
+/** After a correct password: either signed in, or 2FA is on and `challenge` must go to verifyLoginCode. */
+export type LoginStep = { signedIn: true } | { signedIn: false; challenge: string };
+
+export const loginUser = async (email: string, password: string): Promise<LoginStep> => {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -16,16 +25,25 @@ export const loginUser = async (email: string, password: string) => {
   });
 
   if (!res.ok) {
-    if (res.status === 429) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error?.message ?? errorData.message ?? 'Too many failed sign-in attempts. Please try again later.');
-    }
+    if (res.status === 429) throw new Error(await errorMessage(res, 'Too many failed sign-in attempts. Please try again later.'));
     throw new Error('Invalid credentials');
   }
 
   const data = await res.json();
+  if (data.twoFactorRequired) return { signedIn: false, challenge: data.challenge };
   localStorage.setItem('access_token', data.access_token);
-  return data;
+  return { signedIn: true };
+};
+
+/** Second sign-in step: an authenticator code or a recovery code. */
+export const verifyLoginCode = async (challenge: string, code: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/auth/login/2fa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ challenge, code: code.trim() }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res, 'That code didn’t work.'));
+  localStorage.setItem('access_token', (await res.json()).access_token);
 };
 /** Forgets the saved login in this browser only. */
 export const logoutUser = (): void => {
@@ -75,11 +93,7 @@ export const registerUser = async (email: string, password: string) => {
     body: JSON.stringify({ email, password }),
   });
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    const msg = errorData.error?.message ?? errorData.message;
-    throw new Error((Array.isArray(msg) ? msg.join(', ') : msg) || 'Registration failed');
-  }
+  if (!res.ok) throw new Error(await errorMessage(res, 'Registration failed'));
 
   const data = await res.json();
   if (data.access_token) {
@@ -103,6 +117,9 @@ export interface Account {
   email: string;
   createdAt: string;
   passwordChangedAt: string | null;
+  twoFactorEnabledAt: string | null;
+  /** Unused recovery codes; null while 2FA is off. */
+  recoveryCodesLeft: number | null;
 }
 
 export const getAccount = async (): Promise<Account> => {
@@ -155,3 +172,17 @@ export const describeUserAgent = (ua: string | null): string => {
     : null;
   return os ? `${browser} on ${os}` : browser;
 };
+
+/** A new authenticator secret; 2FA stays off until enableTwoFactor gets a valid code. */
+export const setupTwoFactor = async (): Promise<{ secret: string; otpauthUrl: string }> => (await API.post('/auth/2fa/setup')).data;
+
+/** Turns 2FA on; the recovery codes are only ever returned here and by regenerateRecoveryCodes. */
+export const enableTwoFactor = async (code: string): Promise<string[]> =>
+  (await API.post<{ recoveryCodes: string[] }>('/auth/2fa/enable', { code: code.trim() })).data.recoveryCodes;
+
+export const disableTwoFactor = async (password: string, code: string): Promise<void> => {
+  await API.post('/auth/2fa/disable', { password, code: code.trim() });
+};
+
+export const regenerateRecoveryCodes = async (code: string): Promise<string[]> =>
+  (await API.post<{ recoveryCodes: string[] }>('/auth/2fa/recovery-codes', { code: code.trim() })).data.recoveryCodes;
