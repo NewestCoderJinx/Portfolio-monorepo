@@ -5,8 +5,10 @@
 }
 
 /* Colors and fonts come from the Chakra theme (src/theme.ts). */
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Printing (used by the /resume page): just the sheet, edge to edge, no app chrome. */

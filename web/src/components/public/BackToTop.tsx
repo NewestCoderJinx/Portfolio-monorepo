@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IconButton, ScaleFade } from '@chakra-ui/react';
 import { ArrowUpIcon } from './icons';
+import { scrollBehavior } from '../../motion';
 
 const SHOW_AFTER_PX = 600;
 
@@ -21,7 +22,7 @@ export function BackToTop() {
         aria-label="Back to top"
         title="Back to top"
         icon={<ArrowUpIcon width={18} height={18} />}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
         position="fixed"
         bottom={{ base: 5, md: 8 }}
         right={{ base: 5, md: 8 }}

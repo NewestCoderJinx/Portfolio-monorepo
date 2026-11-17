@@ -1,15 +1,25 @@
-import { useEffect, useState } from 'react';
-import { Box } from '@chakra-ui/react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Box, Center, SkipNavLink, Spinner } from '@chakra-ui/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { getToken, isAuthenticated, logoutUser, SESSION_EXPIRED_EVENT, signOut, tokenExpiry } from './api/auth';
-import { AuthForm } from './components/AuthForm';
 import { Navbar } from './components/Navbar';
-import { AdminView } from './pages/AdminView';
-import { BlogListView } from './pages/BlogListView';
-import { BlogPostView } from './pages/BlogPostView';
 import { PublicView } from './pages/PublicView';
-import { ResumeView } from './pages/ResumeView';
-import { TestimonialRequestView } from './pages/TestimonialRequestView';
+
+// Only the home page is in the main bundle; other pages load when first visited.
+const AuthForm = lazy(() => import('./components/AuthForm').then((m) => ({ default: m.AuthForm })));
+const AdminView = lazy(() => import('./pages/AdminView').then((m) => ({ default: m.AdminView })));
+const BlogListView = lazy(() => import('./pages/BlogListView').then((m) => ({ default: m.BlogListView })));
+const BlogPostView = lazy(() => import('./pages/BlogPostView').then((m) => ({ default: m.BlogPostView })));
+const ResumeView = lazy(() => import('./pages/ResumeView').then((m) => ({ default: m.ResumeView })));
+const TestimonialRequestView = lazy(() =>
+  import('./pages/TestimonialRequestView').then((m) => ({ default: m.TestimonialRequestView })),
+);
+
+const pageLoading = (
+  <Center py={24}>
+    <Spinner color="fg.brand" label="Loading page" />
+  </Center>
+);
 
 export function App() {
   const [isAuth, setIsAuth] = useState<boolean>(isAuthenticated());
@@ -49,28 +59,37 @@ export function App() {
   return (
     <BrowserRouter>
       <Box minH="100vh" bg="bg.canvas">
+        {/* Fixed and above the sticky navbar, which would otherwise cover it when it appears on focus. */}
+        <SkipNavLink id="main" position="fixed" zIndex="skipLink">
+          Skip to content
+        </SkipNavLink>
         <Navbar isAuth={isAuth} onLogout={handleLogout} />
-        <Routes>
-          <Route path="/" element={<PublicView />} />
-          <Route path="/resume" element={<ResumeView />} />
-          <Route path="/blog" element={<BlogListView />} />
-          <Route path="/blog/:slug" element={<BlogPostView />} />
-          <Route path="/testimonial/:token" element={<TestimonialRequestView />} />
-          <Route
-            path="/admin"
-            element={
-              isAuth ? (
-                <AdminView />
-              ) : (
-                <AuthForm
-                  onSuccess={handleLogin}
-                  notice={sessionExpired ? 'Your session expired. Please sign in again.' : undefined}
-                />
-              )
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        {/* tabIndex lets the skip link move keyboard focus here, not just scroll. */}
+        <Box as="main" id="main" tabIndex={-1} _focus={{ outline: 'none' }}>
+          <Suspense fallback={pageLoading}>
+            <Routes>
+              <Route path="/" element={<PublicView />} />
+              <Route path="/resume" element={<ResumeView />} />
+              <Route path="/blog" element={<BlogListView />} />
+              <Route path="/blog/:slug" element={<BlogPostView />} />
+              <Route path="/testimonial/:token" element={<TestimonialRequestView />} />
+              <Route
+                path="/admin"
+                element={
+                  isAuth ? (
+                    <AdminView />
+                  ) : (
+                    <AuthForm
+                      onSuccess={handleLogin}
+                      notice={sessionExpired ? 'Your session expired. Please sign in again.' : undefined}
+                    />
+                  )
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </Box>
       </Box>
     </BrowserRouter>
   );

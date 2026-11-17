@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { scrollBehavior } from '../motion';
 
 /** Scrolls to the section named in the URL hash (e.g. navbar links to /#projects) once `ready` is true. */
 export function useHashScroll(sectionIds: readonly string[], ready: boolean) {
@@ -9,6 +10,6 @@ export function useHashScroll(sectionIds: readonly string[], ready: boolean) {
 
   useEffect(() => {
     if (!ready || !known) return;
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(id)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   }, [id, known, ready]);
 }

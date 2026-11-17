@@ -77,6 +77,24 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
     plugins: [react(), seoMeta(env), crawlerFiles(env)],
+    build: {
+      // The vendor chunk below is ~600 kB (~195 kB gzipped); warn if it grows much past that.
+      chunkSizeWarningLimit: 700,
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            // Libraries every page needs get their own file, whose name only changes when they are upgraded,
+            // so returning visitors keep it cached across deploys of the app's own code.
+            groups: [
+              {
+                name: 'vendor',
+                test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|@chakra-ui|@emotion|framer-motion|motion-dom|motion-utils)[\\/]/,
+              },
+            ],
+          },
+        },
+      },
+    },
     server: {
       // Mirrors nginx in production, so share links work in development too.
       proxy: {

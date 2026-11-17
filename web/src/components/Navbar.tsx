@@ -5,6 +5,7 @@ import { getExperience } from '../api/experience';
 import { getPosts } from '../api/posts';
 import { getProfile } from '../api/profile';
 import { MoonIcon, SunIcon } from './public/icons';
+import { scrollBehavior } from '../motion';
 
 interface NavbarProps {
   isAuth: boolean;
@@ -47,9 +48,10 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
     (s) => (s.hash !== '#contact' || hasContact) && (s.hash !== '#experience' || hasExperience),
   );
 
+  // From another page the link navigates and PublicView scrolls once it has rendered. On the home page the
+  // hash may not change (a second click), so scroll here too.
   const goToSection = (hash: string) => {
-    // Works from any page: PublicView scrolls to the hash once it has rendered.
-    navigate({ pathname: '/', hash });
+    if (pathname === '/') document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   };
 
   const handleLogout = () => {
@@ -74,7 +76,7 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
           <Text
             as={RouterLink}
             to="/"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
             fontSize="lg"
             fontWeight="bold"
             color="fg.brand"
@@ -88,6 +90,8 @@ export function Navbar({ isAuth, onLogout }: NavbarProps) {
             {sections.map((s) => (
               <Button
                 key={s.hash}
+                as={RouterLink}
+                to={{ pathname: '/', hash: s.hash }}
                 variant="ghost"
                 size="sm"
                 onClick={() => goToSection(s.hash)}

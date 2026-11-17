@@ -31,6 +31,7 @@ import {
 } from '../../api/credentials';
 import { apiErrorMessage } from '../../api/profile';
 import { formatUrl } from '../../api/projectstate';
+import { scrollBehavior } from '../../motion';
 
 interface Form {
   kind: CredentialKind;
@@ -109,7 +110,7 @@ export function CredentialsEditor() {
   const startEdit = (c: Credential) => {
     setEditingId(c.id);
     setForm(toForm(c));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   };
 
   const education = form.kind === 'education';

@@ -19,6 +19,7 @@ import { useHashScroll } from '../hooks/useHashScroll';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useProfileMeta } from '../hooks/useProfileMeta';
 import { useStructuredData } from '../hooks/useStructuredData';
+import { scrollBehavior } from '../motion';
 
 const NAV_SECTIONS = ['projects', 'experience', 'education', 'skills', 'testimonials', 'writing', 'contact'] as const;
 
@@ -43,7 +44,7 @@ export function PublicView() {
 
   const selectTag = (tag: string | null) => {
     setSelectedTag(tag);
-    document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('projects')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   };
 
   if (error) return <LoadError onRetry={retry} />;

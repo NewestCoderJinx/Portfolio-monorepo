@@ -30,6 +30,7 @@ import {
   type TestimonialInput,
 } from '../../api/testimonials';
 import { TestimonialRequestsPanel } from './TestimonialRequestsPanel';
+import { scrollBehavior } from '../../motion';
 
 const QUOTE_MAX = 1000;
 
@@ -98,7 +99,7 @@ export function TestimonialsEditor() {
   const startEdit = (t: Testimonial) => {
     setEditingId(t.id);
     setForm(toForm(t));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   };
 
   const handleAvatar = async (e: ChangeEvent<HTMLInputElement>) => {

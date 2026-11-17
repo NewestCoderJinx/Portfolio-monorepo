@@ -66,7 +66,14 @@ export function SessionsCard({ refreshKey = 0 }: { refreshKey?: number }) {
       </Flex>
 
       {sessions ? (
-        <VStack as="ul" listStyleType="none" align="stretch" spacing={0} divider={<Box borderTopWidth="1px" borderColor="border.default" />}>
+        <VStack
+          as="ul"
+          listStyleType="none"
+          align="stretch"
+          spacing={0}
+          // Borders rather than the divider prop, which would put <div>s between the <li>s.
+          sx={{ '& > li + li': { borderTopWidth: '1px', borderColor: 'border.default' } }}
+        >
           {sessions.map((s) => (
             <Stack as="li" key={s.id} direction={{ base: 'column', sm: 'row' }} justify="space-between" align={{ base: 'start', sm: 'center' }} py={3} gap={2}>
               <Box minW={0}>

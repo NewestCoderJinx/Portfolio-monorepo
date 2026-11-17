@@ -628,7 +628,7 @@ export function AdminView() {
                       <VStack align="start" spacing={3} height="100%" justifyContent="space-between">
                         <Box width="full">
                           {p.imageUrl && (
-                            <Image src={p.imageUrl} alt={p.title} draggable={false} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
+                            <Image src={p.imageUrl} alt="" loading="lazy" draggable={false} borderRadius="lg" maxH="140px" w="full" objectFit="cover" mb={3} />
                           )}
                           <HStack justify="space-between" align="start" gap={2}>
                             <Heading size="sm" color="fg.heading">{p.title}</Heading>
@@ -690,6 +690,9 @@ export function AdminView() {
                             size="xs"
                             variant={p.featured ? 'solid' : 'ghost'}
                             colorScheme="yellow"
+                            // Chakra's yellow ghost text is too faint on white; this one meets 4.5:1.
+                            color={p.featured ? undefined : 'yellow.700'}
+                            _dark={p.featured ? undefined : { color: 'yellow.200' }}
                             onClick={() => handleToggleFeatured(p)}
                             title={p.featured ? 'Unpin from top' : 'Pin to top of public page'}
                             flex={1}

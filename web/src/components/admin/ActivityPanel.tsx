@@ -102,7 +102,14 @@ export function ActivityPanel() {
         </Text>
       ) : (
         <>
-          <VStack as="ol" listStyleType="none" align="stretch" spacing={0} divider={<Box borderTopWidth="1px" borderColor="border.default" />}>
+          <VStack
+          as="ol"
+          listStyleType="none"
+          align="stretch"
+          spacing={0}
+          // Borders rather than the divider prop, which would put <div>s between the <li>s.
+          sx={{ '& > li + li': { borderTopWidth: '1px', borderColor: 'border.default' } }}
+        >
             {events.map((e) => {
               const { text, tone } = describeAuditEvent(e);
               const where = [e.ip, e.userAgent ? describeUserAgent(e.userAgent) : null].filter(Boolean).join(' · ');

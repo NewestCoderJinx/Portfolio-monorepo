@@ -65,7 +65,8 @@ const semanticTokens = {
     'fg.heading': { default: 'gray.900', _dark: 'gray.50' },
     'fg.secondary': { default: 'gray.600', _dark: 'gray.400' },
     'fg.muted': { default: 'gray.500', _dark: 'gray.400' },
-    'fg.subtle': { default: 'gray.400', _dark: 'gray.500' },
+    // Still meets 4.5:1 on bg.canvas and bg.surface, because it's used for small text like dates.
+    'fg.subtle': { default: 'gray.500', _dark: 'gray.400' },
     'fg.brand': { default: 'brand.600', _dark: 'brand.200' },
     'fg.accent': { default: 'accent.700', _dark: 'accent.300' },
   },

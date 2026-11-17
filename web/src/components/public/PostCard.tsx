@@ -2,8 +2,11 @@ import { Box, Heading, HStack, Image, LinkBox, LinkOverlay, Tag, Text, Wrap } fr
 import { Link as RouterLink } from 'react-router-dom';
 import { formatPostDate, type PostSummary } from '../../api/posts';
 
-/** One post in a list. The whole card is a link to /blog/<slug>. */
-export function PostCard({ post, compact = false }: { post: PostSummary; compact?: boolean }) {
+/**
+ * One post in a list. The whole card is a link to /blog/<slug>. `heading` is the title's level: h2 on the
+ * /blog page (under its h1), h3 inside a home-page section.
+ */
+export function PostCard({ post, compact = false, heading = 'h3' }: { post: PostSummary; compact?: boolean; heading?: 'h2' | 'h3' }) {
   return (
     <LinkBox
       as="article"
@@ -25,7 +28,7 @@ export function PostCard({ post, compact = false }: { post: PostSummary; compact
         <Text as="time" dateTime={post.publishedAt ?? undefined} fontSize="xs" color="fg.muted" mb={1}>
           {formatPostDate(post.publishedAt)}
         </Text>
-        <Heading as="h3" size="sm" color="fg.heading" mb={2} lineHeight="short">
+        <Heading as={heading} size="sm" color="fg.heading" mb={2} lineHeight="short">
           <LinkOverlay as={RouterLink} to={`/blog/${post.slug}`}>
             {post.title}
           </LinkOverlay>

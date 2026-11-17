@@ -33,14 +33,16 @@ export function TrendChart({ days, series, ariaLabel }: { days: string[]; series
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
   const [active, setActive] = useState<number | null>(null);
+  const [focused, setFocused] = useState(false);
   const [showTable, setShowTable] = useState(false);
 
   const { colorMode } = useColorMode();
   const colors = useToken('colors', series.map((s) => (colorMode === 'dark' ? s.color.dark : s.color.light)));
-  const [grid, axisText, surface] = useToken('colors', [
+  const [grid, axisText, surface, focusRing] = useToken('colors', [
     useColorModeValue('gray.200', 'gray.700'),
     useColorModeValue('gray.500', 'gray.400'),
     useColorModeValue('white', 'gray.800'),
+    useColorModeValue('brand.500', 'brand.300'),
   ]);
 
   useEffect(() => {
@@ -84,6 +86,11 @@ export function TrendChart({ days, series, ariaLabel }: { days: string[]; series
     });
   };
 
+  // What a screen reader says for the selected day, e.g. "Nov 10: 12 Views, 3 Clicks".
+  const current = active ?? n - 1;
+  const dayText = (i: number) =>
+    n ? `${shortDay(days[i])}: ${series.map((s) => `${(s.values[i] ?? 0).toLocaleString()} ${s.label}`).join(', ')}` : '';
+
   // Beside the crosshair (never over the hovered points), flipping to the left near the right edge.
   const TOOLTIP_W = 190;
   const tooltipLeft = active === null ? 0 : x(active) + 12 + TOOLTIP_W <= width ? x(active) + 12 : Math.max(0, x(active) - 12 - TOOLTIP_W);
@@ -100,7 +107,7 @@ export function TrendChart({ days, series, ariaLabel }: { days: string[]; series
       </HStack>
 
       <Box ref={wrapRef} position="relative">
-        <svg width={width} height={HEIGHT} role="img" aria-label={ariaLabel} style={{ display: 'block', overflow: 'visible' }}>
+        <svg width={width} height={HEIGHT} role="group" aria-label={ariaLabel} style={{ display: 'block', overflow: 'visible' }}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={M.left + plotW} y1={y(t)} y2={y(t)} stroke={grid} strokeWidth={1} />
@@ -142,20 +149,35 @@ export function TrendChart({ days, series, ariaLabel }: { days: string[]; series
             </g>
           )}
 
-          {/* Hit area covers the whole plot, so the pointer only has to be near a day. */}
+          {/* Hit area covers the whole plot, so the pointer only has to be near a day. For keyboard and
+              screen reader users it is a slider over the days, whose value is that day's numbers. */}
           <rect
             x={M.left}
             y={M.top}
             width={plotW}
             height={plotH}
             fill="transparent"
+            stroke={focused ? focusRing : 'none'}
+            strokeWidth={2}
+            rx={4}
             tabIndex={0}
-            aria-label={`${ariaLabel}. Use the left and right arrow keys to read each day.`}
+            role="slider"
+            aria-label={`${ariaLabel}, by day`}
+            aria-valuemin={0}
+            aria-valuemax={Math.max(0, n - 1)}
+            aria-valuenow={current}
+            aria-valuetext={dayText(current)}
             onPointerMove={pick}
             onPointerDown={pick}
             onPointerLeave={() => setActive(null)}
-            onFocus={() => setActive((cur) => cur ?? n - 1)}
-            onBlur={() => setActive(null)}
+            onFocus={() => {
+              setFocused(true);
+              setActive((cur) => cur ?? n - 1);
+            }}
+            onBlur={() => {
+              setFocused(false);
+              setActive(null);
+            }}
             onKeyDown={onKey}
             style={{ outline: 'none', cursor: 'crosshair' }}
           />
@@ -175,8 +197,8 @@ export function TrendChart({ days, series, ariaLabel }: { days: string[]; series
             boxShadow="md"
             px={3}
             py={2}
-            role="status"
-            aria-live="polite"
+            // The slider's value already reads this out.
+            aria-hidden
           >
             <Text fontSize="xs" color="fg.muted" mb={1}>
               {shortDay(days[active])}

@@ -20,13 +20,23 @@ export function PortfolioStats({ projects }: { projects: Project[] }) {
   return (
     <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
       {stats.map((s) => (
-        <Stat key={s.label} bg="bg.surface" p={4} borderRadius="xl" borderWidth="1px" borderColor="border.default" textAlign="center">
-          <StatNumber fontSize="3xl" color="fg.brand">
-            {s.value}
-          </StatNumber>
+        // The label comes first in the markup (a <dt> must precede its <dd>) and is shown below the number.
+        <Stat
+          key={s.label}
+          bg="bg.surface"
+          p={4}
+          borderRadius="xl"
+          borderWidth="1px"
+          borderColor="border.default"
+          textAlign="center"
+          sx={{ '& > dl': { display: 'flex', flexDirection: 'column-reverse' } }}
+        >
           <StatLabel color="fg.muted" fontSize="xs" textTransform="uppercase" letterSpacing="wide">
             {s.label}
           </StatLabel>
+          <StatNumber fontSize="3xl" color="fg.brand">
+            {s.value}
+          </StatNumber>
         </Stat>
       ))}
     </SimpleGrid>

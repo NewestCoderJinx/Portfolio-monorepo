@@ -23,6 +23,7 @@ import { getExperience } from '../../api/experience';
 import { apiErrorMessage } from '../../api/profile';
 import { getAllProjects } from '../../api/projectstate';
 import { createSkill, deleteSkill, getSkills, groupSkills, OTHER_CATEGORY, reorderSkills, updateSkill, type Skill } from '../../api/skills';
+import { scrollBehavior } from '../../motion';
 
 const MAX_SUGGESTIONS = 20;
 
@@ -96,7 +97,7 @@ export function SkillsEditor() {
     setEditingId(s.id);
     setNames(s.name);
     setCategory(s.category ?? '');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   };
 
   /** Adds each name in turn so one duplicate doesn't block the rest. */

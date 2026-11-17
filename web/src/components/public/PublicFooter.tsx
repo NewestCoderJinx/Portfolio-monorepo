@@ -4,7 +4,7 @@ import { isAuthenticated } from '../../api/auth';
 
 export function PublicFooter({ name }: { name?: string }) {
   return (
-    <HStack justify="center" spacing={3} fontSize="xs" color="fg.subtle">
+    <HStack as="footer" justify="center" spacing={3} fontSize="xs" color="fg.subtle">
       <Text>© {new Date().getFullYear()} {name ?? 'Portfolio'}</Text>
       {!isAuthenticated() && (
         <>

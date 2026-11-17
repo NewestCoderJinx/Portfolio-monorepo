@@ -25,6 +25,7 @@ import { createPost, deletePost, formatPostDate, getAllPosts, readingTime, slugi
 import { apiErrorMessage } from '../../api/profile';
 import { uploadProjectImage } from '../../api/projectstate';
 import { Markdown } from '../Markdown';
+import { scrollBehavior } from '../../motion';
 
 interface Form {
   title: string;
@@ -95,7 +96,7 @@ export function PostsEditor() {
     setEditingId(p.id);
     setForm(toForm(p));
     setPreview(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   };
 
   const handleCover = async (e: ChangeEvent<HTMLInputElement>) => {

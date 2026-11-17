@@ -306,7 +306,7 @@ export function ResumeView() {
 
           <Text className="no-print" fontSize="xs" color="gray.500" mt={10} textAlign="center">
             Generated from{' '}
-            <Link as={RouterLink} to="/" color="brand.700">
+            <Link as={RouterLink} to="/" color="brand.700" textDecoration="underline">
               the live portfolio
             </Link>
             , so it is always up to date.

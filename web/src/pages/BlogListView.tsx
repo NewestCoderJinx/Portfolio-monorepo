@@ -96,7 +96,7 @@ export function BlogListView() {
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {shown.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <PostCard key={p.id} post={p} heading="h2" />
               ))}
             </SimpleGrid>
           )}

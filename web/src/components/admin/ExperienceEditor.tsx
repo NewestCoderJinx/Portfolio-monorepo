@@ -26,6 +26,7 @@ import {
   type ExperienceInput,
 } from '../../api/experience';
 import { apiErrorMessage } from '../../api/profile';
+import { scrollBehavior } from '../../motion';
 
 interface Form {
   role: string;
@@ -97,7 +98,7 @@ export function ExperienceEditor() {
   const startEdit = (e: Experience) => {
     setEditingId(e.id);
     setForm(toForm(e));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   };
 
   const handleSubmit = async (e: FormEvent) => {

@@ -86,7 +86,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess, notice }) => {
                 <Badge colorScheme="brand" px={3} py={1} borderRadius="full" fontSize="xs">
                   Admin Access
                 </Badge>
-                <Heading size="lg" color="fg.heading" letterSpacing="tight">
+                <Heading as="h1" size="lg" color="fg.heading" letterSpacing="tight">
                   {challenge ? 'Two-Step Verification' : isLogin ? 'Sign In' : 'Create Owner Account'}
                 </Heading>
                 <Text color="fg.secondary" fontSize="sm">

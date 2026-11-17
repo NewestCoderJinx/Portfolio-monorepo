@@ -32,7 +32,8 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
     >
       <Box position="relative">
         {p.imageUrl ? (
-          <Image src={p.imageUrl} alt={p.title} h="170px" w="full" objectFit="cover" />
+          // The title is right below, so the image is decorative for screen readers.
+          <Image src={p.imageUrl} alt="" h="170px" w="full" objectFit="cover" loading="lazy" decoding="async" />
         ) : (
           <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, brand.600, accent.500)">
             <Text color="white" fontSize="5xl" fontWeight="bold" opacity={0.85}>
