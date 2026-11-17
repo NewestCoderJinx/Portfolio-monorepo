@@ -5,6 +5,9 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService, CODE_ATTEMPTS, LOGIN_ATTEMPTS, PASSWORD_ATTEMPTS } from './auth.service';
 import { base32Decode, currentStep, totpAt } from './totp';
 
+const audit = { record: vi.fn(async () => undefined) };
+const loggedActions = () => audit.record.mock.calls.map(([e]: any[]) => e.action);
+
 describe('AuthService registration', () => {
   const users = { count: vi.fn(), findByEmail: vi.fn(), create: vi.fn() };
   const jwt = { sign: vi.fn(() => 'token') };
@@ -18,7 +21,7 @@ describe('AuthService registration', () => {
     delete env.ALLOW_REGISTRATION;
     users.findByEmail.mockResolvedValue(null);
     users.create.mockResolvedValue({ id: 'u1', email: 'owner@example.com' });
-    service = new AuthService(users as any, jwt as any, config as any, sessions as any);
+    service = new AuthService(users as any, jwt as any, config as any, sessions as any, audit as any);
   });
 
   it('lets the first user register', async () => {
@@ -60,7 +63,7 @@ describe('AuthService password change', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     users.findById.mockResolvedValue({ id: 'u1', email: 'owner@example.com', passwordHash: hash });
-    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any);
+    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any, audit as any);
   });
 
   it('saves the new hash and signs out every other session', async () => {
@@ -102,7 +105,7 @@ describe('AuthService login', () => {
     users.findByEmail.mockImplementation(async (email: string) =>
       email === 'owner@example.com' ? { id: 'u1', email, passwordHash: hash } : null,
     );
-    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any);
+    service = new AuthService(users as any, jwt as any, { get: vi.fn() } as any, sessions as any, audit as any);
   });
 
   it('blocks an IP after too many failures, even with the right password', async () => {
@@ -112,6 +115,17 @@ describe('AuthService login', () => {
     }
     await expect(service.login('owner@example.com', 'right-password', { ip: '1.2.3.4' })).rejects.toMatchObject({ status: 429 });
     await expect(service.login('owner@example.com', 'right-password', { ip: '5.6.7.8' })).resolves.toEqual({ access_token: 'token' });
+  });
+
+  it('logs failed, blocked and successful sign-ins with the typed email', async () => {
+    await expect(service.login('nobody@example.com', 'wrong', { ip: '9.9.9.9' })).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(audit.record).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'auth.login_failed', email: 'nobody@example.com', ip: '9.9.9.9' }));
+    await service.login('owner@example.com', 'right-password', { ip: '9.9.9.9' });
+    expect(audit.record).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'auth.login', userId: 'u1' }));
+    for (let i = 0; i < LOGIN_ATTEMPTS; i++) await service.login('owner@example.com', 'wrong', { ip: '8.8.8.8' }).catch(() => undefined);
+    await service.login('owner@example.com', 'right-password', { ip: '8.8.8.8' }).catch(() => undefined);
+    expect(loggedActions().slice(-1)[0]).toBe('auth.login_blocked');
+    for (const [entry] of audit.record.mock.calls as any[]) expect(JSON.stringify(entry)).not.toContain('password');
   });
 
   it('clears the count after a successful login', async () => {
@@ -152,7 +166,7 @@ describe('AuthService two-step verification', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     user = { id: 'u1', email: 'owner@example.com', passwordHash: hash, totpSecret: null, totpEnabledAt: null, totpLastUsedStep: null, totpRecoveryCodes: null };
-    service = new AuthService(users as any, jwt, { get: vi.fn() } as any, sessions as any);
+    service = new AuthService(users as any, jwt, { get: vi.fn() } as any, sessions as any, audit as any);
   });
 
   const turnOn = async () => {
@@ -189,6 +203,7 @@ describe('AuthService two-step verification', () => {
     const { challenge } = (await service.login('owner@example.com', 'right-password')) as { challenge: string };
     await expect(service.loginWithCode(challenge, code.toUpperCase())).resolves.toHaveProperty('access_token');
     expect(user.totpRecoveryCodes).toHaveLength(9);
+    expect(loggedActions().slice(-2)).toEqual(['auth.recovery_code_used', 'auth.login']);
     await expect(service.loginWithCode(challenge, code)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -207,6 +222,7 @@ describe('AuthService two-step verification', () => {
       await expect(service.loginWithCode(challenge, '000000', { ip: `10.0.0.${i}` })).rejects.toBeInstanceOf(UnauthorizedException);
     }
     await expect(service.loginWithCode(challenge, codeNow(), { ip: '10.0.0.99' })).rejects.toMatchObject({ status: 429 });
+    expect(loggedActions().filter((a) => a === 'auth.code_failed')).toHaveLength(CODE_ATTEMPTS);
   });
 
   it('turns off only with the password and a code', async () => {
@@ -215,6 +231,8 @@ describe('AuthService two-step verification', () => {
     await expect(service.disableTwoFactor('u1', 'right-password', 'zzzzz-zzzzz')).rejects.toBeInstanceOf(BadRequestException);
     expect(user.totpEnabledAt).toBeInstanceOf(Date);
     await service.disableTwoFactor('u1', 'right-password', recovery);
+    expect(loggedActions()).toContain('auth.2fa_enabled');
+    expect(loggedActions().slice(-1)[0]).toBe('auth.2fa_disabled');
     expect(user).toMatchObject({ totpSecret: null, totpEnabledAt: null, totpRecoveryCodes: null });
     await expect(service.login('owner@example.com', 'right-password')).resolves.toHaveProperty('access_token');
   });

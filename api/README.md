@@ -73,6 +73,7 @@ The first migration, `InitialSchema`, only adds what's missing, so databases bui
 | Education & certifications | `GET /credentials` | `POST`, `PATCH /:id`, `DELETE /:id` |
 | Testimonials | `GET /testimonials` | `GET /testimonials/manage`, `POST`, `PATCH /:id`, `DELETE /:id` |
 | Testimonial requests | `GET /testimonial-requests/:token`, `POST /testimonial-requests/:token` | `GET /testimonial-requests`, `POST /testimonial-requests`, `DELETE /testimonial-requests/:id` |
+| Activity log | | `GET /audit?kind=all\|security\|content&before=<date>&limit=50` (newest first; kept 90 days) |
 | Contact messages | `POST /messages` | `GET /messages`, `GET /messages/alerts`, `POST /messages/alerts/test`, `PATCH /messages/read-all`, `PATCH /messages/:id`, `DELETE /messages/:id` |
 | Link previews | `GET /share/projects/:id`, `GET /share/projects/:id/image.png`, `GET /share/posts/:slug`, `GET /share/posts/:slug/image.png` | |
 
@@ -98,6 +99,7 @@ WHERE email = 'owner@example.com';
 
 ```
 src/
+  audit/         activity log: sign-in and security events, plus every signed-in write (via a global interceptor)
   auth/          login, registration, sessions, two-step verification (TOTP), JWT guard
   profile/       the single owner profile and résumé upload
   projects/      projects, ordering, views and daily stats

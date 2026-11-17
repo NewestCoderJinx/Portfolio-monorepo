@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { databaseConfig } from './config/database.config';
 import { CredentialsModule } from './credentials/credentials.module';
@@ -20,6 +21,7 @@ import { TestimonialsModule } from './testimonials/testimonials.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({ useFactory: databaseConfig }),
+    AuditModule,
     AuthModule,
     MailModule,
     ProfileModule,

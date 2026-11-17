@@ -34,6 +34,7 @@ import {
   TabPanel,
 } from '@chakra-ui/react';
 import { AccountPanel } from '../components/admin/AccountPanel';
+import { ActivityPanel } from '../components/admin/ActivityPanel';
 import { CredentialsEditor } from '../components/admin/CredentialsEditor';
 import { ExperienceEditor } from '../components/admin/ExperienceEditor';
 import { GalleryField } from '../components/admin/GalleryField';
@@ -59,7 +60,7 @@ import {
 } from '../api/projectstate';
 
 /** Tab order; the Overview opens first. */
-const TABS = ['overview', 'projects', 'writing', 'profile', 'experience', 'education', 'skills', 'testimonials', 'inbox', 'account'] as const;
+const TABS = ['overview', 'projects', 'writing', 'profile', 'experience', 'education', 'skills', 'testimonials', 'inbox', 'account', 'activity'] as const;
 
 export function AdminView() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -340,7 +341,12 @@ export function AdminView() {
 
           <Tabs colorScheme="brand" variant="enclosed-colored" isLazy index={tabIndex} onChange={setTabIndex}>
             {/* Scrolls sideways on phones instead of widening the page. */}
-            <TabList overflowX="auto" overflowY="hidden" sx={{ scrollbarWidth: 'none', '& > button': { flexShrink: 0 } }}>
+            {/* Slightly tighter tabs on wide screens so all of them fit without scrolling. */}
+            <TabList
+              overflowX="auto"
+              overflowY="hidden"
+              sx={{ scrollbarWidth: 'none', '& > button': { flexShrink: 0, px: { lg: 3 }, fontSize: { lg: '15px' } } }}
+            >
               <Tab fontWeight="semibold">Overview</Tab>
               <Tab fontWeight="semibold">Projects</Tab>
               <Tab fontWeight="semibold">Writing</Tab>
@@ -358,6 +364,7 @@ export function AdminView() {
                 )}
               </Tab>
               <Tab fontWeight="semibold">Account</Tab>
+              <Tab fontWeight="semibold">Activity</Tab>
             </TabList>
             <TabPanels>
               <TabPanel px={0}>
@@ -740,6 +747,9 @@ export function AdminView() {
               </TabPanel>
               <TabPanel px={0}>
                 <AccountPanel />
+              </TabPanel>
+              <TabPanel px={0}>
+                <ActivityPanel />
               </TabPanel>
             </TabPanels>
           </Tabs>

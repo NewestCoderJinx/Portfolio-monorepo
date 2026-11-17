@@ -1,10 +1,12 @@
 import { DataSourceOptions } from 'typeorm';
+import { AuditEvent } from '../audit/audit-event.entity';
 import { Session } from '../auth/session.entity';
 import { Credential } from '../credentials/credential.entity';
 import { InitialSchema1794771932836 } from '../migrations/1794771932836-InitialSchema';
 import { TimestampsWithTimeZone1794772308676 } from '../migrations/1794772308676-TimestampsWithTimeZone';
 import { Sessions1794862148003 } from '../migrations/1794862148003-Sessions';
 import { TwoFactor1794862770711 } from '../migrations/1794862770711-TwoFactor';
+import { AuditLog1794863567489 } from '../migrations/1794863567489-AuditLog';
 import { Experience } from '../experience/experience.entity';
 import { Message } from '../messages/message.entity';
 import { Post } from '../posts/post.entity';
@@ -17,9 +19,9 @@ import { Testimonial } from '../testimonials/testimonial.entity';
 import { User } from '../users/user.entity';
 
 /** Applied in this order. Add each new migration class here (see api/README.md). */
-export const MIGRATIONS = [InitialSchema1794771932836, TimestampsWithTimeZone1794772308676, Sessions1794862148003, TwoFactor1794862770711];
+export const MIGRATIONS = [InitialSchema1794771932836, TimestampsWithTimeZone1794772308676, Sessions1794862148003, TwoFactor1794862770711, AuditLog1794863567489];
 
-export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial, Credential, Skill, ProjectDailyStat, TestimonialRequest, Post, Session];
+export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial, Credential, Skill, ProjectDailyStat, TestimonialRequest, Post, Session, AuditEvent];
 
 // Single source of truth for DB settings, shared by the app and the seed script.
 export function databaseConfig(): DataSourceOptions {

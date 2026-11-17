@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import type { AuditAction } from '../audit/audit-event.entity';
+import { AuditService } from '../audit/audit.service';
 import type { User } from '../users/user.entity';
 import { UsersService } from '../users/user.service';
 import * as bcrypt from 'bcrypt';
@@ -46,6 +48,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly sessions: SessionsService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -69,6 +72,7 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(pass, 10);
     const user = await this.usersService.create(email, passwordHash);
+    await this.log('auth.register', client, { userId: user.id, email: user.email });
 
     return this.startSession(user.id, user.email, client);
   }
@@ -80,11 +84,12 @@ export class AuthService {
    */
   async login(email: string, pass: string, client: ClientInfo = {}): Promise<LoginResult> {
     const clientKey = client.ip ?? 'unknown';
-    this.assertNotBlocked(clientKey);
+    await this.assertNotBlocked(clientKey, client, email);
 
     const user = await this.usersService.findByEmail(email);
     if (!user || !(await bcrypt.compare(pass, user.passwordHash))) {
       this.loginFailures.tryHit(clientKey);
+      await this.log('auth.login_failed', client, { userId: user?.id, email });
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -94,13 +99,14 @@ export class AuthService {
     }
 
     this.loginFailures.reset(clientKey);
+    await this.log('auth.login', client, { userId: user.id, email: user.email });
     return this.startSession(user.id, user.email, client);
   }
 
   /** Second sign-in step: the challenge from login() plus an authenticator or recovery code. */
   async loginWithCode(challenge: string, code: string, client: ClientInfo = {}) {
     const clientKey = client.ip ?? 'unknown';
-    this.assertNotBlocked(clientKey);
+    await this.assertNotBlocked(clientKey, client);
 
     let payload: { sub?: string; purpose?: string };
     try {
@@ -112,11 +118,13 @@ export class AuthService {
     if (!user?.totpEnabledAt) throw new UnauthorizedException('Please sign in again.');
 
     this.assertCodesAllowed(user.id);
-    if (!(await this.useSecondFactor(user, code))) {
+    const used = await this.useSecondFactor(user, code, client);
+    if (!used) {
       this.loginFailures.tryHit(clientKey);
       throw new UnauthorizedException('That code didn’t work. Check your authenticator app and try again.');
     }
     this.loginFailures.reset(clientKey);
+    await this.log('auth.login', client, { userId: user.id, email: user.email, detail: { twoFactor: used } });
     return this.startSession(user.id, user.email, client);
   }
 
@@ -142,13 +150,13 @@ export class AuthService {
   }
 
   /** Finishes turning on 2FA once the app produces a valid code. The recovery codes are shown only this once. */
-  async enableTwoFactor(userId: string, code: string): Promise<{ recoveryCodes: string[] }> {
+  async enableTwoFactor(userId: string, code: string, client: ClientInfo = {}): Promise<{ recoveryCodes: string[] }> {
     const user = await this.requireUser(userId);
     if (user.totpEnabledAt) throw new ConflictException('Two-step verification is already on');
     if (!user.totpSecret) throw new BadRequestException('Start the setup again');
     this.assertCodesAllowed(user.id);
     const step = verifyTotp(user.totpSecret, code, null);
-    if (step === null) this.failCode(user.id);
+    if (step === null) await this.failCode(user.id, client);
 
     const recoveryCodes = generateRecoveryCodes();
     await this.usersService.update(user.id, {
@@ -156,11 +164,12 @@ export class AuthService {
       totpLastUsedStep: step,
       totpRecoveryCodes: recoveryCodes.map(hashRecoveryCode),
     });
+    await this.log('auth.2fa_enabled', client, { userId: user.id });
     return { recoveryCodes };
   }
 
   /** Turns 2FA off; needs the password and a current code (or a recovery code). */
-  async disableTwoFactor(userId: string, password: string, code: string): Promise<void> {
+  async disableTwoFactor(userId: string, password: string, code: string, client: ClientInfo = {}): Promise<void> {
     const user = await this.requireUser(userId);
     if (!user.totpEnabledAt) throw new BadRequestException('Two-step verification is already off');
     if (!(await bcrypt.compare(password, user.passwordHash))) {
@@ -170,24 +179,32 @@ export class AuthService {
       throw new BadRequestException('Password is incorrect');
     }
     this.assertCodesAllowed(user.id);
-    if (!(await this.useSecondFactor(user, code))) this.rejectCode(user.id);
+    if (!(await this.useSecondFactor(user, code, client))) this.rejectCode(user.id);
     await this.usersService.update(user.id, { totpSecret: null, totpEnabledAt: null, totpLastUsedStep: null, totpRecoveryCodes: null });
+    await this.log('auth.2fa_disabled', client, { userId: user.id });
   }
 
   /** Replaces every recovery code; needs a current authenticator code. */
-  async regenerateRecoveryCodes(userId: string, code: string): Promise<{ recoveryCodes: string[] }> {
+  async regenerateRecoveryCodes(userId: string, code: string, client: ClientInfo = {}): Promise<{ recoveryCodes: string[] }> {
     const user = await this.requireUser(userId);
     if (!user.totpEnabledAt || !user.totpSecret) throw new BadRequestException('Two-step verification is off');
     this.assertCodesAllowed(user.id);
     const step = verifyTotp(user.totpSecret, code, user.totpLastUsedStep);
-    if (step === null) this.failCode(user.id);
+    if (step === null) await this.failCode(user.id, client);
     const recoveryCodes = generateRecoveryCodes();
     await this.usersService.update(user.id, { totpLastUsedStep: step, totpRecoveryCodes: recoveryCodes.map(hashRecoveryCode) });
+    await this.log('auth.recovery_codes_regenerated', client, { userId: user.id });
     return { recoveryCodes };
   }
 
   /** Changes the password after checking the current one, and signs out every other session. */
-  async changePassword(userId: string, sessionId: string, currentPassword: string, newPassword: string): Promise<{ signedOut: number }> {
+  async changePassword(
+    userId: string,
+    sessionId: string,
+    currentPassword: string,
+    newPassword: string,
+    client: ClientInfo = {},
+  ): Promise<{ signedOut: number }> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
 
@@ -202,28 +219,33 @@ export class AuthService {
     }
 
     await this.usersService.setPassword(user.id, await bcrypt.hash(newPassword, 10), new Date());
-    return { signedOut: await this.sessions.revokeOthers(user.id, sessionId) };
+    const signedOut = await this.sessions.revokeOthers(user.id, sessionId);
+    await this.log('auth.password_changed', client, { userId: user.id, detail: { signedOut } });
+    return { signedOut };
   }
 
   /**
-   * Accepts an authenticator code (not one already used) or an unused recovery code, and records the use.
-   * Wrong codes count towards CODE_ATTEMPTS per account; callers check assertCodesAllowed first.
+   * Accepts an authenticator code (not one already used) or an unused recovery code, records the use and
+   * says which it was. Wrong codes count towards CODE_ATTEMPTS per account; callers check assertCodesAllowed first.
    */
-  private async useSecondFactor(user: User, code: string): Promise<boolean> {
-    if (!user.totpSecret) return false;
+  private async useSecondFactor(user: User, code: string, client: ClientInfo): Promise<'app' | 'recovery' | null> {
+    if (!user.totpSecret) return null;
     const step = verifyTotp(user.totpSecret, code, user.totpLastUsedStep);
     if (step !== null) {
       await this.usersService.update(user.id, { totpLastUsedStep: step });
-      return true;
+      return 'app';
     }
     const hash = hashRecoveryCode(code);
     const remaining = user.totpRecoveryCodes ?? [];
     if (/[a-z]/i.test(code) && remaining.includes(hash)) {
-      await this.usersService.update(user.id, { totpRecoveryCodes: remaining.filter((h) => h !== hash) });
-      return true;
+      const left = remaining.filter((h) => h !== hash);
+      await this.usersService.update(user.id, { totpRecoveryCodes: left });
+      await this.log('auth.recovery_code_used', client, { userId: user.id, detail: { left: left.length } });
+      return 'recovery';
     }
     this.codeFailures.tryHit(user.id);
-    return false;
+    await this.log('auth.code_failed', client, { userId: user.id });
+    return null;
   }
 
   private assertCodesAllowed(userId: string) {
@@ -232,9 +254,10 @@ export class AuthService {
     }
   }
 
-  /** Counts a wrong code, then refuses it. */
-  private failCode(userId: string): never {
+  /** Counts and logs a wrong code, then refuses it. */
+  private async failCode(userId: string, client: ClientInfo): Promise<never> {
     this.codeFailures.tryHit(userId);
+    await this.log('auth.code_failed', client, { userId });
     this.rejectCode(userId);
   }
 
@@ -244,10 +267,15 @@ export class AuthService {
     throw new BadRequestException('That code didn’t work. Check your authenticator app and try again.');
   }
 
-  private assertNotBlocked(clientKey: string) {
+  private async assertNotBlocked(clientKey: string, client: ClientInfo, email?: string) {
     if (this.loginFailures.isLimited(clientKey)) {
+      await this.log('auth.login_blocked', client, { email });
       throw new HttpException('Too many failed sign-in attempts. Please try again in 15 minutes.', HttpStatus.TOO_MANY_REQUESTS);
     }
+  }
+
+  private log(action: AuditAction, client: ClientInfo, extra: { userId?: string; email?: string; detail?: Record<string, unknown> } = {}) {
+    return this.audit.record({ action, ip: client.ip, userAgent: client.userAgent, ...extra });
   }
 
   private async requireUser(userId: string): Promise<User> {

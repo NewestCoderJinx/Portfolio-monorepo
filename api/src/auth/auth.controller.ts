@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
+import { AuditService } from '../audit/audit.service';
 import { AuthService, type ClientInfo } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -16,7 +17,13 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessions: SessionsService,
+    private readonly audit: AuditService,
   ) {}
+
+  private log(req: Request, action: Parameters<AuditService['record']>[0]['action'], detail?: Record<string, unknown>) {
+    const { ip, userAgent } = clientInfo(req);
+    return this.audit.record({ action, userId: (req.user as AuthUser).userId, ip, userAgent, detail });
+  }
 
   @Get('registration-status')
   async registrationStatus() {
@@ -51,7 +58,7 @@ export class AuthController {
   @Patch('password')
   changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
     const { userId, sessionId } = req.user as AuthUser;
-    return this.authService.changePassword(userId, sessionId, dto.currentPassword, dto.newPassword);
+    return this.authService.changePassword(userId, sessionId, dto.currentPassword, dto.newPassword, clientInfo(req));
   }
 
   /** Returns a new secret and otpauth:// link for the authenticator app; 2FA stays off until /2fa/enable. */
@@ -66,21 +73,21 @@ export class AuthController {
   @Post('2fa/enable')
   @HttpCode(200)
   enableTwoFactor(@Req() req: Request, @Body() dto: TwoFactorCodeDto) {
-    return this.authService.enableTwoFactor((req.user as AuthUser).userId, dto.code);
+    return this.authService.enableTwoFactor((req.user as AuthUser).userId, dto.code, clientInfo(req));
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('2fa/disable')
   @HttpCode(204)
   disableTwoFactor(@Req() req: Request, @Body() dto: DisableTwoFactorDto) {
-    return this.authService.disableTwoFactor((req.user as AuthUser).userId, dto.password, dto.code);
+    return this.authService.disableTwoFactor((req.user as AuthUser).userId, dto.password, dto.code, clientInfo(req));
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('2fa/recovery-codes')
   @HttpCode(200)
   regenerateRecoveryCodes(@Req() req: Request, @Body() dto: TwoFactorCodeDto) {
-    return this.authService.regenerateRecoveryCodes((req.user as AuthUser).userId, dto.code);
+    return this.authService.regenerateRecoveryCodes((req.user as AuthUser).userId, dto.code, clientInfo(req));
   }
 
   /** Ends the caller's own session. */
@@ -90,6 +97,7 @@ export class AuthController {
   async logout(@Req() req: Request) {
     const { userId, sessionId } = req.user as AuthUser;
     await this.sessions.revoke(userId, sessionId);
+    await this.log(req, 'auth.logout');
   }
 
   @UseGuards(JwtAuthGuard)
@@ -104,7 +112,9 @@ export class AuthController {
   @Delete('sessions')
   async revokeOtherSessions(@Req() req: Request) {
     const { userId, sessionId } = req.user as AuthUser;
-    return { signedOut: await this.sessions.revokeOthers(userId, sessionId) };
+    const signedOut = await this.sessions.revokeOthers(userId, sessionId);
+    await this.log(req, 'auth.other_sessions_revoked', { signedOut });
+    return { signedOut };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -114,5 +124,6 @@ export class AuthController {
     if (!(await this.sessions.revoke((req.user as AuthUser).userId, id))) {
       throw new NotFoundException('Session not found');
     }
+    await this.log(req, 'auth.session_revoked', { sessionId: id });
   }
 }
