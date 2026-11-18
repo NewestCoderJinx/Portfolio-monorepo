@@ -32,6 +32,7 @@ yarn dev                  # http://localhost:5173
 | `/blog`, `/blog/:slug` | Post list with search and tag filter (kept in the URL as `?q=` and `?tag=`), an RSS link, and single posts rendered from Markdown |
 | `/testimonial/:token` | Form behind a private testimonial request link |
 | `/admin` | Sign-in, then the Admin tabs: Overview, Projects, Writing, Profile, Experience, Education, Skills, Testimonials, Inbox, Account, Activity |
+| anything else | "Page not found", marked `noindex` so search engines skip it |
 
 Post bodies are rendered with `react-markdown` and `remark-gfm` (tables, task lists). Raw HTML in a post is shown as text, never run.
 
@@ -64,4 +65,5 @@ src/
   seo.ts       helpers for <title>, meta tags and JSON-LD
   theme.ts     Chakra theme and colour tokens (light and dark)
 nginx.conf     production server: the app, /api and /uploads proxies, share links, the RSS feed, crawler routing for blog posts
+security-headers.conf  security headers nginx adds to every response
 ```

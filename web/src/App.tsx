@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Box, Center, SkipNavLink, Spinner } from '@chakra-ui/react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { getToken, isAuthenticated, logoutUser, SESSION_EXPIRED_EVENT, signOut, tokenExpiry } from './api/auth';
 import { Navbar } from './components/Navbar';
 import { PublicView } from './pages/PublicView';
@@ -10,6 +10,7 @@ const AuthForm = lazy(() => import('./components/AuthForm').then((m) => ({ defau
 const AdminView = lazy(() => import('./pages/AdminView').then((m) => ({ default: m.AdminView })));
 const BlogListView = lazy(() => import('./pages/BlogListView').then((m) => ({ default: m.BlogListView })));
 const BlogPostView = lazy(() => import('./pages/BlogPostView').then((m) => ({ default: m.BlogPostView })));
+const NotFoundView = lazy(() => import('./pages/NotFoundView').then((m) => ({ default: m.NotFoundView })));
 const ResumeView = lazy(() => import('./pages/ResumeView').then((m) => ({ default: m.ResumeView })));
 const TestimonialRequestView = lazy(() =>
   import('./pages/TestimonialRequestView').then((m) => ({ default: m.TestimonialRequestView })),
@@ -86,7 +87,7 @@ export function App() {
                   )
                 }
               />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundView />} />
             </Routes>
           </Suspense>
         </Box>
