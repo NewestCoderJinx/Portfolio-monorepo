@@ -14,7 +14,7 @@ npm ci
 npm run start:dev         # http://localhost:3000, reloads on change
 ```
 
-On an empty database, the first account to register becomes the admin: open `/admin` on the web app and sign up. `npm run seed` fills in a sample profile and projects.
+On an empty database, the first account to register becomes the admin: open `/admin` on the web app and sign up. With `NODE_ENV=production`, sign-up stays closed; use `create-admin` instead. `npm run seed` fills in a sample profile and projects.
 
 | Script | What it does |
 | --- | --- |
@@ -24,6 +24,7 @@ On an empty database, the first account to register becomes the admin: open `/ad
 | `npm run test:e2e` | Boots the whole app against the database in `.env` and checks it over HTTP |
 | `npm run lint` | oxlint |
 | `npm run seed` | Sample profile and projects |
+| `npm run build && npm run create-admin -- you@example.com` | Create an Admin account from the command line (the only way in production) |
 | `npm run migration:generate -- src/migrations/Name` | Write a migration for your entity changes (see below) |
 | `npm run migration:show` / `migration:run` / `migration:revert` | List, apply or undo migrations by hand |
 
@@ -42,7 +43,7 @@ Read from the environment, or from `api/.env` in development.
 | `NODE_ENV` | `development` | `production` (set by the Docker image) refuses to start with missing, short or default `JWT_SECRET`/`POSTGRES_PASSWORD`, and turns off CORS unless `CORS_ORIGINS` is set |
 | `TRUST_PROXY` | off | How many proxies sit in front of the API (`1` for nginx), `true`, or a list of addresses. Lets it read the visitor's IP and https from `X-Forwarded-*`. Leave it off when the API is reached directly, or visitors could fake their IP. |
 | `CORS_ORIGINS` | any (dev) / none (production) | Comma-separated sites allowed to call the API from the browser. Not needed when the site goes through nginx's `/api/`. |
-| `ALLOW_REGISTRATION` | `false` | Only the first account can register. Set to `true` for a moment to add another admin. |
+| `ALLOW_REGISTRATION` | `false` | In development only the first account can register; in production nobody can (use `create-admin`, below). Set to `true` for a moment to open sign-up anyway. |
 | `SITE_URL` | from the request | Public address of the site, used in share links and preview tags |
 | `PUBLIC_API_URL` | from the request | Public address of the API, used in uploaded file URLs |
 | `SMTP_*`, `MAIL_FROM`, `NOTIFY_EMAIL` | off | Email alerts. See [Email alerts](../README.md#email-alerts) in the root README. |

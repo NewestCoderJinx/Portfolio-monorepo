@@ -44,6 +44,12 @@ Set these in the `.env` next to it:
 - `VITE_API_URL`: leave empty. The site then calls `/api` on its own address.
 - `TRUST_PROXY`: defaults to `1` (nginx). Set it to `2` if another proxy, such as a TLS terminator on the host, sits in front of nginx. The API uses it to see each visitor's real IP for login limits, sessions and the Activity log.
 
+Sign-up through the site is closed in production, even before any account exists, so nobody can claim a fresh deployment before you do. Create your Admin account on the server instead. It asks for the password without showing it:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api node dist/create-admin you@example.com
+```
+
 The API applies any pending database migrations when it starts, so deploying a new version updates the tables. Back up the database before deploying a version with new migrations. See [Database migrations](api/README.md#database-migrations).
 
 Every push to `main` runs lint, tests and builds on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).

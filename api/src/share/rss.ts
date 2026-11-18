@@ -29,6 +29,7 @@ const escapeXml = (v: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
     // Control characters (other than tab and newlines) aren't allowed anywhere in XML 1.0.
+    // eslint-disable-next-line no-control-regex -- stripping these is the point
     .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
 
 /** An RSS 2.0 feed of published posts, newest first. Readers link each item to /blog/<slug>. */

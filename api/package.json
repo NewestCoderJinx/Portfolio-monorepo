@@ -12,6 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "seed": "npx nest start --entryFile seed",
+    "create-admin": "node dist/create-admin",
     "migration:generate": "npm run build && typeorm migration:generate -p -d dist/config/data-source.js",
     "migration:run": "typeorm migration:run -d dist/config/data-source.js",
     "migration:revert": "typeorm migration:revert -d dist/config/data-source.js",

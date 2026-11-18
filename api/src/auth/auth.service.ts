@@ -52,11 +52,13 @@ export class AuthService {
   ) {}
 
   /**
-   * Only the first account (the site owner) may register. After that, registration
-   * is closed unless ALLOW_REGISTRATION=true is set to add another admin.
+   * In development, only the first account (the site owner) may register. In production sign-up is
+   * closed from the start, so nobody can claim a fresh deployment before its owner: the first account
+   * is made with `node dist/create-admin`. ALLOW_REGISTRATION=true opens it either way.
    */
   async isRegistrationOpen(): Promise<boolean> {
     if (this.config.get<string>('ALLOW_REGISTRATION') === 'true') return true;
+    if (this.config.get<string>('NODE_ENV') === 'production') return false;
     return (await this.usersService.count()) === 0;
   }
 

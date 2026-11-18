@@ -19,6 +19,7 @@ describe('AuthService registration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete env.ALLOW_REGISTRATION;
+    delete env.NODE_ENV;
     users.findByEmail.mockResolvedValue(null);
     users.create.mockResolvedValue({ id: 'u1', email: 'owner@example.com' });
     service = new AuthService(users as any, jwt as any, config as any, sessions as any, audit as any);
@@ -38,6 +39,15 @@ describe('AuthService registration', () => {
 
   it('can be reopened with ALLOW_REGISTRATION=true', async () => {
     users.count.mockResolvedValue(3);
+    env.ALLOW_REGISTRATION = 'true';
+    await expect(service.isRegistrationOpen()).resolves.toBe(true);
+  });
+
+  it('stays closed in production even with no accounts, unless ALLOW_REGISTRATION=true', async () => {
+    users.count.mockResolvedValue(0);
+    env.NODE_ENV = 'production';
+    await expect(service.isRegistrationOpen()).resolves.toBe(false);
+    await expect(service.register('first@example.com', 'secret123')).rejects.toBeInstanceOf(ForbiddenException);
     env.ALLOW_REGISTRATION = 'true';
     await expect(service.isRegistrationOpen()).resolves.toBe(true);
   });
