@@ -6,11 +6,20 @@ import { resolve } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { UPLOAD_DIR } from './common/uploads';
+import { corsOrigins, productionConfigProblems, trustProxySetting } from './config/production-check';
 
 async function bootstrap() {
+  const problems = productionConfigProblems();
+  if (problems.length) {
+    console.error(`Refusing to start in production:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+    process.exit(1);
+  }
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.enableCors();
+  // Behind nginx, take the client's IP and protocol from X-Forwarded-* (rate limits, sessions, audit log).
+  app.set('trust proxy', trustProxySetting(process.env.TRUST_PROXY));
+  app.enableCors({ origin: corsOrigins() });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
 

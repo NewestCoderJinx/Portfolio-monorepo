@@ -21,7 +21,7 @@ yarn dev                  # http://localhost:5173
 | `yarn preview` | Serve the built `dist/` locally |
 | `yarn lint` | oxlint |
 
-`VITE_*` settings are baked in at build time, so rebuild after changing them. `VITE_API_URL` is the only one needed for development. The rest are listed under [Link previews and SEO](../README.md#link-previews-and-seo).
+`VITE_*` settings are baked in at build time, so rebuild after changing them. `VITE_API_URL` is the only one needed for development. Production builds default to `/api` on the site's own address. The rest are listed under [Link previews and SEO](../README.md#link-previews-and-seo).
 
 ## Pages
 

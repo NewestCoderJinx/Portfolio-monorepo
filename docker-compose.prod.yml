@@ -5,10 +5,9 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
-    ports:
-      - "5432:5432"
+    # No published port: only the api container reaches the database, over the compose network.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,15 +20,21 @@ services:
     build: ./api
     container_name: portfolio_api
     restart: always
-    ports:
-      - "3000:3000"
+    # No published port: browsers reach the API through nginx at /api/.
     environment:
+      NODE_ENV: production
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-portfolio_db}
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      # nginx in the web container is the one proxy in front of the API. Use 2 if another proxy
+      # (e.g. a TLS terminator on the host) sits in front of nginx.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      # Only needed if another site's pages call this API; the portfolio itself goes through /api/.
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
       # Public address used in /p/<id> share links; falls back to the request host when empty.
       SITE_URL: ${SITE_URL:-${VITE_SITE_URL:-}}
       # Email alerts for new contact messages; leave SMTP_HOST empty to turn them off.
@@ -50,7 +55,8 @@ services:
     build:
       context: ./web
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        # Empty: the browser calls /api on the site's own address.
+        VITE_API_URL: ${VITE_API_URL:-}
         VITE_SITE_TITLE: ${VITE_SITE_TITLE:-}
         VITE_SITE_DESCRIPTION: ${VITE_SITE_DESCRIPTION:-}
         VITE_SITE_URL: ${VITE_SITE_URL:-}
@@ -58,7 +64,7 @@ services:
     container_name: portfolio_web
     restart: always
     ports:
-      - "5173:80"
+      - "${WEB_PORT:-80}:80"
     depends_on:
       - api
 

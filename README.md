@@ -35,11 +35,14 @@ To work on one app with live reload instead, see the README in `api/` or `web/`.
 
 ## Production
 
-`docker-compose.prod.yml` runs the same three services. Before deploying, set these in the `.env` next to it:
+`docker-compose.prod.yml` runs the same three services in production mode. Only the web container (nginx) is published, on port 80 (`WEB_PORT` to change it). nginx serves the site and proxies `/api/`, `/uploads/`, share links and the RSS feed to the API. The API and database are only reachable inside the compose network.
 
-- `JWT_SECRET` and `POSTGRES_PASSWORD`: long random values. The defaults are for local use only.
+Set these in the `.env` next to it:
+
+- `JWT_SECRET` (at least 32 characters) and `POSTGRES_PASSWORD` (at least 12): long random values, e.g. from `openssl rand -base64 48`. Compose won't start without them, and the API refuses to start in production with missing, short or default values.
 - `VITE_SITE_URL`: your public address, e.g. `https://yourname.dev`.
-- `VITE_API_URL`: the address the browser should use for the API.
+- `VITE_API_URL`: leave empty. The site then calls `/api` on its own address.
+- `TRUST_PROXY`: defaults to `1` (nginx). Set it to `2` if another proxy, such as a TLS terminator on the host, sits in front of nginx. The API uses it to see each visitor's real IP for login limits, sessions and the Activity log.
 
 The API applies any pending database migrations when it starts, so deploying a new version updates the tables. Back up the database before deploying a version with new migrations. See [Database migrations](api/README.md#database-migrations).
 

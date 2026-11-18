@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-export const API_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+/**
+ * Where the browser calls the API. Production builds default to /api on the same address, which nginx
+ * proxies to the API container; the dev server talks to the API on its own port.
+ */
+export const API_URL: string = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '/api')).replace(/\/+$/, '');
 
 // No default Content-Type: axios picks JSON for objects and multipart (with boundary) for FormData.
 const API = axios.create({ baseURL: API_URL });

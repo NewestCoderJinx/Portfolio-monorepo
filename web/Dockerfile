@@ -7,8 +7,9 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
-# Baked into the bundle at build time; the browser calls this URL directly.
-ARG VITE_API_URL=http://localhost:3000
+# Baked into the bundle at build time; the browser calls this URL directly. Empty means /api on the
+# site's own address, through nginx.
+ARG VITE_API_URL=
 ARG VITE_SITE_TITLE
 ARG VITE_SITE_DESCRIPTION
 ARG VITE_SITE_URL
