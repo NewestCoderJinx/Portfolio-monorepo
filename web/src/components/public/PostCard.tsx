@@ -1,4 +1,4 @@
-import { Box, Heading, HStack, Image, LinkBox, LinkOverlay, Tag, Text, Wrap } from '@chakra-ui/react';
+import { Box, Heading, HStack, Image, LinkBox, LinkOverlay, Tag, Text, Wrap, WrapItem } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { formatPostDate, type PostSummary } from '../../api/posts';
 
@@ -41,9 +41,11 @@ export function PostCard({ post, compact = false, heading = 'h3' }: { post: Post
         {post.tags && post.tags.length > 0 && (
           <Wrap spacing={2} mt={4}>
             {post.tags.slice(0, 4).map((t) => (
-              <Tag key={t} size="sm" variant="subtle" colorScheme="brand">
-                {t}
-              </Tag>
+              <WrapItem key={t}>
+                <Tag size="sm" variant="subtle" colorScheme="brand">
+                  {t}
+                </Tag>
+              </WrapItem>
             ))}
           </Wrap>
         )}

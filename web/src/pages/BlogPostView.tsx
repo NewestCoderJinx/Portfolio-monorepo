@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Avatar, Box, Button, Container, Divider, Heading, HStack, Image, Skeleton, SkeletonText, Tag, Text, VStack, Wrap } from '@chakra-ui/react';
+import { Avatar, Box, Button, Container, Divider, Heading, HStack, Image, Skeleton, SkeletonText, Tag, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import { isAxiosError } from 'axios';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { formatPostDate, getPost, readingTime, type Post } from '../api/posts';
@@ -126,9 +126,11 @@ export function BlogPostView() {
             {post.tags && post.tags.length > 0 && (
               <Wrap spacing={2} mt={8}>
                 {post.tags.map((t) => (
-                  <Tag key={t} variant="subtle" colorScheme="brand">
-                    {t}
-                  </Tag>
+                  <WrapItem key={t}>
+                    <Tag variant="subtle" colorScheme="brand">
+                      {t}
+                    </Tag>
+                  </WrapItem>
                 ))}
               </Wrap>
             )}
