@@ -10,7 +10,7 @@ A self-hosted developer portfolio with a private admin area, split into two apps
 ## Features
 
 - Public portfolio, printable résumé page and project case studies
-- Blog: write posts in Markdown in Admin, with drafts, a preview, cover images and tags
+- Blog: write posts in Markdown in Admin, with drafts, a preview, cover images and tags; readers can search posts and follow them by RSS (`/rss.xml`)
 - Admin area: projects (with ordering), skills (drag to reorder), experience, education and certifications, profile
 - Admin sign-in with optional two-step verification (authenticator app), a list of signed-in devices you can sign out, blocking after repeated failed logins, and an activity log of sign-ins and edits
 - Contact inbox with optional email alerts over SMTP

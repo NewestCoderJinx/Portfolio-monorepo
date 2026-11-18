@@ -29,8 +29,9 @@ export interface PostInput {
   published: boolean;
 }
 
-/** Published posts, newest first. */
-export const getPosts = async (): Promise<PostSummary[]> => (await API.get<PostSummary[]>('/posts')).data;
+/** Published posts, newest first; with a search, only posts containing every word of it. */
+export const getPosts = async (search?: string): Promise<PostSummary[]> =>
+  (await API.get<PostSummary[]>('/posts', { params: search?.trim() ? { q: search.trim() } : undefined })).data;
 
 /** A published post; 404s for drafts. */
 export const getPost = async (slug: string): Promise<Post> => (await API.get<Post>(`/posts/${encodeURIComponent(slug)}`)).data;

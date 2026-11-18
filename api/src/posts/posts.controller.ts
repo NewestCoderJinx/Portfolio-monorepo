@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post as HttpPost, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post as HttpPost, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -9,9 +9,10 @@ import { PostsService, type PostSummary } from './posts.service';
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  /** Published posts; ?q= searches titles, excerpts, bodies and tags. */
   @Get()
-  findPublished(): Promise<PostSummary[]> {
-    return this.postsService.findPublished();
+  findPublished(@Query('q') q?: string | string[]): Promise<PostSummary[]> {
+    return this.postsService.findPublished(typeof q === 'string' ? q : undefined);
   }
 
   /** Every post, drafts included. Declared before :slug so "manage" isn't read as a slug. */

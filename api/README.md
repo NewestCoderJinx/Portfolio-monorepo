@@ -67,7 +67,7 @@ The first migration, `InitialSchema`, only adds what's missing, so databases bui
 | Auth | `GET /auth/registration-status`, `POST /auth/register`, `POST /auth/login`, `POST /auth/login/2fa` (code step when 2FA is on) | `GET /auth/me`, `PATCH /auth/password`, `POST /auth/logout`, `GET /auth/sessions`, `DELETE /auth/sessions` (all but this one), `DELETE /auth/sessions/:id`, `POST /auth/2fa/setup`, `POST /auth/2fa/enable`, `POST /auth/2fa/disable`, `POST /auth/2fa/recovery-codes` |
 | Profile | `GET /profile` | `PATCH /profile`, `POST /profile/resume` (PDF) |
 | Projects | `GET /projects`, `GET /projects/:id`, `POST /projects/:id/view` | `GET /projects/manage`, `GET /projects/stats?days=30`, `POST /projects`, `PATCH /projects/reorder`, `PATCH /projects/:id`, `DELETE /projects/:id`, `POST /projects/upload` (image) |
-| Blog posts | `GET /posts` (no bodies), `GET /posts/:slug` | `GET /posts/manage`, `POST /posts`, `PATCH /posts/:id`, `DELETE /posts/:id` |
+| Blog posts | `GET /posts` (no bodies; `?q=` searches titles, excerpts, bodies and tags), `GET /posts/:slug` | `GET /posts/manage`, `POST /posts`, `PATCH /posts/:id`, `DELETE /posts/:id` |
 | Skills | `GET /skills` | `POST /skills`, `PATCH /skills/reorder`, `PATCH /skills/:id`, `DELETE /skills/:id` |
 | Experience | `GET /experience` | `POST`, `PATCH /:id`, `DELETE /:id` |
 | Education & certifications | `GET /credentials` | `POST`, `PATCH /:id`, `DELETE /:id` |
@@ -75,7 +75,7 @@ The first migration, `InitialSchema`, only adds what's missing, so databases bui
 | Testimonial requests | `GET /testimonial-requests/:token`, `POST /testimonial-requests/:token` | `GET /testimonial-requests`, `POST /testimonial-requests`, `DELETE /testimonial-requests/:id` |
 | Activity log | | `GET /audit?kind=all\|security\|content&before=<date>&limit=50` (newest first; kept 90 days) |
 | Contact messages | `POST /messages` | `GET /messages`, `GET /messages/alerts`, `POST /messages/alerts/test`, `PATCH /messages/read-all`, `PATCH /messages/:id`, `DELETE /messages/:id` |
-| Link previews | `GET /share/projects/:id`, `GET /share/projects/:id/image.png`, `GET /share/posts/:slug`, `GET /share/posts/:slug/image.png` | |
+| Link previews | `GET /share/projects/:id`, `GET /share/projects/:id/image.png`, `GET /share/posts/:slug`, `GET /share/posts/:slug/image.png`, `GET /share/rss.xml` (served at `/rss.xml`) | |
 
 Drafts (unpublished projects and posts) are only returned on the Admin routes; the public ones answer 404, so their ids can't be guessed.
 

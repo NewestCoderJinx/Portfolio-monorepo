@@ -29,7 +29,7 @@ yarn dev                  # http://localhost:5173
 | --- | --- |
 | `/` | Portfolio: profile, projects and case studies, experience, education, skills, testimonials, latest posts, contact form |
 | `/resume` | Printable résumé |
-| `/blog`, `/blog/:slug` | Post list with tag filter, and single posts rendered from Markdown |
+| `/blog`, `/blog/:slug` | Post list with search and tag filter (kept in the URL as `?q=` and `?tag=`), an RSS link, and single posts rendered from Markdown |
 | `/testimonial/:token` | Form behind a private testimonial request link |
 | `/admin` | Sign-in, then the Admin tabs: Overview, Projects, Writing, Profile, Experience, Education, Skills, Testimonials, Inbox, Account, Activity |
 
@@ -63,5 +63,5 @@ src/
   motion.ts    scroll behaviour that respects reduced motion
   seo.ts       helpers for <title>, meta tags and JSON-LD
   theme.ts     Chakra theme and colour tokens (light and dark)
-nginx.conf     production server: the app, /api and /uploads proxies, share links, crawler routing for blog posts
+nginx.conf     production server: the app, /api and /uploads proxies, share links, the RSS feed, crawler routing for blog posts
 ```

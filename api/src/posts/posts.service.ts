@@ -21,6 +21,19 @@ function clean(dto: UpdatePostDto): UpdatePostDto {
   return out;
 }
 
+/** Longest search the API looks at, and how many of its words it uses. */
+export const SEARCH_MAX_LENGTH = 100;
+const SEARCH_MAX_WORDS = 8;
+
+/** The distinct words of a search, lowercased; empty when there's nothing to search for. */
+export function searchWords(search: string | undefined): string[] {
+  const words = (search ?? '').slice(0, SEARCH_MAX_LENGTH).toLowerCase().split(/\s+/).filter(Boolean);
+  return [...new Set(words)].slice(0, SEARCH_MAX_WORDS);
+}
+
+/** Makes %, _ and \ match themselves in an ILIKE pattern. */
+export const escapeLike = (text: string): string => text.replace(/[\\%_]/g, '\\$&');
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -33,9 +46,23 @@ export class PostsService {
     return this.postRepository.find({ order: { createdAt: 'DESC' } });
   }
 
-  /** Published posts, newest first, without their bodies. */
-  async findPublished(): Promise<PostSummary[]> {
-    const posts = await this.postRepository.find({ where: { published: true }, order: { publishedAt: 'DESC' } });
+  /**
+   * Published posts, newest first, without their bodies. With a search, only posts where every word
+   * appears somewhere in the title, excerpt, body or tags (case-insensitive).
+   */
+  async findPublished(search?: string): Promise<PostSummary[]> {
+    const words = searchWords(search);
+    const query = this.postRepository
+      .createQueryBuilder('post')
+      .where('post.published = true')
+      .orderBy('post.publishedAt', 'DESC');
+    words.forEach((word, i) => {
+      query.andWhere(
+        `(post.title ILIKE :w${i} OR post.excerpt ILIKE :w${i} OR post.body ILIKE :w${i} OR post.tags ILIKE :w${i})`,
+        { [`w${i}`]: `%${escapeLike(word)}%` },
+      );
+    });
+    const posts = await query.getMany();
     return posts.map(({ body: _body, ...summary }) => summary);
   }
 

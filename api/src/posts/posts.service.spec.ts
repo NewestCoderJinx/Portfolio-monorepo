@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PostsService } from './posts.service';
+import { escapeLike, PostsService, searchWords } from './posts.service';
 import { slugify } from './slug';
 
 describe('slugify', () => {
@@ -19,8 +19,32 @@ describe('slugify', () => {
   });
 });
 
+describe('search helpers', () => {
+  it('splits a search into distinct lowercase words', () => {
+    expect(searchWords('  Redis  queue redis ')).toEqual(['redis', 'queue']);
+    expect(searchWords('   ')).toEqual([]);
+    expect(searchWords(undefined)).toEqual([]);
+  });
+
+  it('caps the length and number of words', () => {
+    expect(searchWords('a'.repeat(500))[0]).toHaveLength(100);
+    expect(searchWords('a b c d e f g h i j')).toHaveLength(8);
+  });
+
+  it('escapes ILIKE wildcards', () => {
+    expect(escapeLike('100%_off\\')).toBe('100\\%\\_off\\\\');
+  });
+});
+
 describe('PostsService', () => {
+  const qb = {
+    where: vi.fn().mockReturnThis(),
+    andWhere: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    getMany: vi.fn(),
+  };
   const repo = {
+    createQueryBuilder: vi.fn(() => qb),
     find: vi.fn(),
     findOne: vi.fn(),
     exists: vi.fn(),
@@ -84,14 +108,23 @@ describe('PostsService', () => {
   });
 
   it('only serves published posts to the public, without bodies in the list', async () => {
-    repo.find.mockResolvedValue([{ id: 'p1', slug: 's', body: '# hi', published: true }]);
+    qb.getMany.mockResolvedValue([{ id: 'p1', slug: 's', body: '# hi', published: true }]);
     const list = await service.findPublished();
-    expect(repo.find).toHaveBeenCalledWith(expect.objectContaining({ where: { published: true } }));
+    expect(qb.where).toHaveBeenCalledWith('post.published = true');
+    expect(qb.andWhere).not.toHaveBeenCalled();
     expect(list[0]).not.toHaveProperty('body');
 
     repo.findOne.mockResolvedValue(null);
     await expect(service.findPublishedBySlug('draft')).rejects.toBeInstanceOf(NotFoundException);
     expect(repo.findOne).toHaveBeenCalledWith({ where: { slug: 'draft', published: true } });
+  });
+
+  it('requires every search word to match, with wildcards escaped', async () => {
+    qb.getMany.mockResolvedValue([]);
+    await service.findPublished('Redis 100%');
+    expect(qb.andWhere).toHaveBeenCalledTimes(2);
+    expect(qb.andWhere).toHaveBeenNthCalledWith(1, expect.stringContaining('post.body ILIKE :w0'), { w0: '%redis%' });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(2, expect.stringContaining('post.tags ILIKE :w1'), { w1: '%100\\%%' });
   });
 
   it('404s when updating or deleting a missing post', async () => {
