@@ -1,8 +1,16 @@
+# Keep container logs from filling the disk: at most 3 files of 10 MB per service.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:15-alpine
     container_name: portfolio_db
     restart: always
+    logging: *logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-portfolio_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -20,6 +28,15 @@ services:
     build: ./api
     container_name: portfolio_api
     restart: always
+    logging: *logging
+    # GET / is the API's status endpoint. Restarts aren't automatic on "unhealthy", but `docker compose ps`
+    # shows it, and nginx waits for a healthy API on startup.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     # No published port: browsers reach the API through nginx at /api/.
     environment:
       NODE_ENV: production
@@ -63,10 +80,12 @@ services:
         VITE_OG_IMAGE: ${VITE_OG_IMAGE:-}
     container_name: portfolio_web
     restart: always
+    logging: *logging
     ports:
       - "${WEB_PORT:-80}:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:

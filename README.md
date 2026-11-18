@@ -52,6 +52,25 @@ docker compose -f docker-compose.prod.yml exec api node dist/create-admin you@ex
 
 The API applies any pending database migrations when it starts, so deploying a new version updates the tables. Back up the database before deploying a version with new migrations. See [Database migrations](api/README.md#database-migrations).
 
+### Backups
+
+`scripts/backup.sh` saves the database (`backups/db-<time>.dump`) and the uploaded files (`backups/uploads-<time>.tar.gz`), and deletes backups older than 14 days (`BACKUP_KEEP_DAYS`). Run it nightly from cron on the server, and copy `backups/` somewhere off the server too:
+
+```cron
+15 3 * * * cd /path/to/portfolio-monorepo && ./scripts/backup.sh >> backups/backup.log 2>&1
+```
+
+To restore, stop the API so nothing writes meanwhile, load the dump, unpack the uploads and start it again:
+
+```bash
+docker compose -f docker-compose.prod.yml stop api
+docker compose -f docker-compose.prod.yml exec -T postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < backups/db-<time>.dump
+tar -xzf backups/uploads-<time>.tar.gz -C api
+docker compose -f docker-compose.prod.yml start api
+```
+
+Container logs are capped at 3 × 10 MB per service. `docker compose -f docker-compose.prod.yml ps` shows whether the API is healthy.
+
 Every push to `main` runs lint, tests and builds on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Link previews and SEO
