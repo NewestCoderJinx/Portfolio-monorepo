@@ -102,6 +102,10 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_API_URL || 'http://localhost:3000',
           rewrite: (path: string) => path.replace(/^\/p\//, '/share/projects/'),
         },
+        '/rss.xml': {
+          target: env.VITE_API_URL || 'http://localhost:3000',
+          rewrite: () => '/share/rss.xml',
+        },
       },
     },
   };

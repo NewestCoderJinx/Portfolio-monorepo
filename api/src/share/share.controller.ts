@@ -11,6 +11,7 @@ import { VIEW_WINDOW_MS } from '../projects/projects.controller';
 import { ProjectsService } from '../projects/projects.service';
 import { isBot } from './bots';
 import { renderPreviewPng } from './preview-image';
+import { FEED_LIMIT, renderRssFeed } from './rss';
 import { absoluteUrl, markdownToText, renderSharePage } from './share-page';
 
 /** Rendered previews, keyed by project and the last edits that affect them. */
@@ -150,6 +151,23 @@ export class ShareController {
         headline: profile?.headline,
       }),
     );
+  }
+
+  /** RSS feed of published posts, served at /rss.xml by nginx. */
+  @Get('rss.xml')
+  async feed(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const site = siteUrl(req);
+    const [posts, profile] = await Promise.all([
+      this.posts.find({ where: { published: true }, order: { publishedAt: 'DESC' }, take: FEED_LIMIT }),
+      this.findProfile(),
+    ]);
+    const xml = renderRssFeed({
+      site,
+      title: profile?.name ? `${profile.name} | Writing` : 'Writing',
+      description: profile?.name ? `Posts by ${profile.name}${profile.headline ? `, ${profile.headline}` : ''}.` : 'Posts and notes.',
+      posts,
+    });
+    res.set('Cache-Control', 'public, max-age=300').type('application/rss+xml; charset=utf-8').send(xml);
   }
 
   /** Serves a preview card from the cache, rendering it on a miss. */

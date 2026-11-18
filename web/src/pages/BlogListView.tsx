@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Container, Heading, SimpleGrid, Skeleton, Tag, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
+import { Box, Button, Container, Flex, Heading, Link, SimpleGrid, Skeleton, Tag, Text, VStack, Wrap, WrapItem } from '@chakra-ui/react';
 import { getPosts, type PostSummary } from '../api/posts';
 import { getProfile, type Profile } from '../api/profile';
+import { RssIcon } from '../components/public/icons';
 import { PostCard } from '../components/public/PostCard';
 import { PublicFooter } from '../components/public/PublicFooter';
 import { applyPageMeta } from '../seo';
@@ -45,14 +46,31 @@ export function BlogListView() {
     <Box bg="bg.canvas" minH="calc(100vh - 70px)" py={{ base: 8, md: 12 }}>
       <Container maxW="container.lg">
         <VStack spacing={10} align="stretch">
-          <Box>
-            <Heading as="h1" size="xl" color="fg.heading">
-              Writing
-            </Heading>
-            <Text color="fg.secondary" mt={2}>
-              Notes on what I build, break and learn along the way.
-            </Text>
-          </Box>
+          <Flex justify="space-between" align="flex-start" gap={4} wrap="wrap">
+            <Box>
+              <Heading as="h1" size="xl" color="fg.heading">
+                Writing
+              </Heading>
+              <Text color="fg.secondary" mt={2}>
+                Notes on what I build, break and learn along the way.
+              </Text>
+            </Box>
+            <Link
+              href="/rss.xml"
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              mt={2}
+              fontSize="sm"
+              fontWeight="medium"
+              color="fg.secondary"
+              _hover={{ color: 'fg.brand' }}
+              title="Follow new posts in a feed reader"
+            >
+              <RssIcon />
+              RSS feed
+            </Link>
+          </Flex>
 
           {tags.length > 1 && (
             <Wrap spacing={2} role="group" aria-label="Filter by tag">
