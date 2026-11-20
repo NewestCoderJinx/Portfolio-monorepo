@@ -2,6 +2,7 @@ import { Badge, Box, Button, Flex, Heading, HStack, Image, Tag, Text, Wrap, Wrap
 import { formatUrl, type Project } from '../../api/projectstate';
 import { formatProjectDate, hasCaseStudy } from './caseStudy';
 import { ExternalIcon, GitHubIcon } from './icons';
+import { ProjectCover } from './ProjectCover';
 
 interface Props {
   project: Project;
@@ -33,11 +34,7 @@ export function FeaturedProject({ project: p, onOpen, onShare }: Props) {
         {p.imageUrl ? (
           <Image src={p.imageUrl} alt={p.title} position="absolute" inset={0} w="full" h="full" objectFit="cover" />
         ) : (
-          <Flex position="absolute" inset={0} align="center" justify="center" bgGradient="linear(to-br, brand.700, accent.500)">
-            <Text color="white" fontSize="7xl" fontWeight="extrabold" opacity={0.85}>
-              {p.title.charAt(0).toUpperCase()}
-            </Text>
-          </Flex>
+          <ProjectCover project={p} size="lg" />
         )}
       </Box>
 

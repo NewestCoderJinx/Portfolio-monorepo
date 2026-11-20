@@ -1,7 +1,8 @@
-import { Badge, Box, Button, Card, CardBody, Flex, Heading, HStack, Image, Tag, Text, Wrap, WrapItem } from '@chakra-ui/react';
+import { AspectRatio, Badge, Box, Button, Card, CardBody, Flex, Heading, HStack, IconButton, Image, Tag, Text, Wrap, WrapItem } from '@chakra-ui/react';
 import { formatUrl, type Project } from '../../api/projectstate';
 import { formatProjectDate, hasCaseStudy } from './caseStudy';
-import { ExternalIcon, GitHubIcon } from './icons';
+import { ArrowRightIcon, ExternalIcon, GitHubIcon, ShareIcon } from './icons';
+import { ProjectCover } from './ProjectCover';
 
 const MAX_TAGS = 4;
 
@@ -16,37 +17,48 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
   const date = formatProjectDate(p.createdAt);
   const github = formatUrl(p.githubUrl);
   const demo = formatUrl(p.demoUrl);
+  const caseStudy = hasCaseStudy(p);
 
   return (
     <Card
       id={`project-${p.id}`}
+      role="group"
       h="full"
       borderWidth="1px"
       borderColor="border.default"
-      borderRadius="xl"
+      borderRadius="2xl"
       overflow="hidden"
       boxShadow="sm"
       bg="bg.surface"
-      transition="all 0.2s"
-      _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }}
+      transition="box-shadow 0.2s, transform 0.2s, border-color 0.2s"
+      _hover={{ boxShadow: 'lg', transform: 'translateY(-3px)', borderColor: 'border.strong' }}
+      sx={{ '@media (prefers-reduced-motion: reduce)': { _hover: { transform: 'none' } } }}
     >
-      <Box position="relative">
-        {p.imageUrl ? (
-          // The title is right below, so the image is decorative for screen readers.
-          <Image src={p.imageUrl} alt="" h="170px" w="full" objectFit="cover" loading="lazy" decoding="async" />
-        ) : (
-          <Flex h="170px" align="center" justify="center" bgGradient="linear(to-br, brand.600, accent.500)">
-            <Text color="white" fontSize="5xl" fontWeight="bold" opacity={0.85}>
-              {p.title.charAt(0).toUpperCase()}
-            </Text>
-          </Flex>
-        )}
-        {p.featured && (
-          <Badge position="absolute" top={3} left={3} colorScheme="yellow" variant="solid" borderRadius="full" px={2.5} py={0.5} boxShadow="sm">
-            ★ Featured
-          </Badge>
-        )}
-      </Box>
+      <AspectRatio ratio={16 / 9} overflow="hidden">
+        <Box>
+          {p.imageUrl ? (
+            // The title is right below, so the image is decorative for screen readers.
+            <Image
+              src={p.imageUrl}
+              alt=""
+              w="full"
+              h="full"
+              objectFit="cover"
+              loading="lazy"
+              decoding="async"
+              transition="transform 0.4s"
+              _groupHover={{ transform: 'scale(1.04)' }}
+            />
+          ) : (
+            <ProjectCover project={p} />
+          )}
+          {p.featured && (
+            <Badge position="absolute" top={3} right={3} colorScheme="yellow" variant="solid" borderRadius="full" px={2.5} py={0.5} boxShadow="sm">
+              ★ Featured
+            </Badge>
+          )}
+        </Box>
+      </AspectRatio>
 
       <CardBody p={5} display="flex" flexDirection="column">
         <Box flex="1">
@@ -55,8 +67,21 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
               {date}
             </Text>
           )}
-          <Heading size="md" color="fg.heading" mb={2}>
-            {p.title}
+          <Heading as="h3" size="md" color="fg.heading" mb={2} lineHeight="short">
+            {caseStudy ? (
+              <Box
+                as="button"
+                sx={{ font: 'inherit' }}
+                textAlign="left"
+                onClick={() => onOpen(p)}
+                _hover={{ color: 'fg.brand' }}
+                _focusVisible={{ outline: '2px solid', outlineColor: 'brand.400', outlineOffset: '2px', borderRadius: 'sm' }}
+              >
+                {p.title}
+              </Box>
+            ) : (
+              p.title
+            )}
           </Heading>
           <Text color="fg.secondary" fontSize="sm" mb={4} noOfLines={3}>
             {p.description || 'No description provided.'}
@@ -73,7 +98,7 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
               ))}
               {tags.length > MAX_TAGS && (
                 <WrapItem>
-                  <Tag size="sm" variant="subtle" borderRadius="full">
+                  <Tag size="sm" variant="subtle" borderRadius="full" title={tags.slice(MAX_TAGS).join(', ')}>
                     +{tags.length - MAX_TAGS}
                   </Tag>
                 </WrapItem>
@@ -82,28 +107,64 @@ export function ProjectCard({ project: p, onOpen, onShare }: Props) {
           )}
         </Box>
 
-        <Box pt={4} borderTopWidth="1px" borderColor="border.subtle">
-          {hasCaseStudy(p) && (
-            <Button size="sm" colorScheme="brand" variant="outline" w="full" mb={2} onClick={() => onOpen(p)}>
-              Read Case Study
+        <Flex pt={3} borderTopWidth="1px" borderColor="border.subtle" align="center" justify="space-between" gap={2}>
+          {caseStudy ? (
+            <Button
+              variant="link"
+              colorScheme="brand"
+              size="sm"
+              rightIcon={<ArrowRightIcon />}
+              onClick={() => onOpen(p)}
+              // The visible words come first in the name, so voice control ("click Read case study") still works.
+              aria-label={`Read case study: ${p.title}`}
+              sx={{ '& svg': { transition: 'transform 0.2s' } }}
+              _hover={{ textDecoration: 'none', '& svg': { transform: 'translateX(3px)' } }}
+            >
+              Read case study
             </Button>
+          ) : (
+            <Box />
           )}
-          <HStack spacing={2}>
+          <HStack spacing={1}>
             {github && (
-              <Button as="a" href={github} target="_blank" rel="noopener noreferrer" size="xs" variant="outline" leftIcon={<GitHubIcon width={14} height={14} />} flex={1}>
-                Code
-              </Button>
+              <IconButton
+                as="a"
+                href={github}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Source code for ${p.title} (opens in a new tab)`}
+                title="Source code"
+                icon={<GitHubIcon />}
+                size="sm"
+                variant="ghost"
+                color="fg.secondary"
+              />
             )}
             {demo && (
-              <Button as="a" href={demo} target="_blank" rel="noopener noreferrer" size="xs" colorScheme="brand" rightIcon={<ExternalIcon />} flex={1}>
-                Live Demo
-              </Button>
+              <IconButton
+                as="a"
+                href={demo}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Live demo of ${p.title} (opens in a new tab)`}
+                title="Live demo"
+                icon={<ExternalIcon />}
+                size="sm"
+                variant="ghost"
+                color="fg.secondary"
+              />
             )}
-            <Button size="xs" variant="ghost" colorScheme="accent" onClick={() => onShare(p)}>
-              Share
-            </Button>
+            <IconButton
+              aria-label={`Share ${p.title}`}
+              title="Share"
+              icon={<ShareIcon />}
+              size="sm"
+              variant="ghost"
+              color="fg.secondary"
+              onClick={() => onShare(p)}
+            />
           </HStack>
-        </Box>
+        </Flex>
       </CardBody>
     </Card>
   );
