@@ -13,6 +13,10 @@ describe('productionConfigProblems', () => {
     expect(productionConfigProblems({ NODE_ENV: 'production', ...strong })).toEqual([]);
   });
 
+  it('accepts a DATABASE_URL instead of POSTGRES_PASSWORD', () => {
+    expect(productionConfigProblems({ NODE_ENV: 'production', JWT_SECRET: strong.JWT_SECRET, DATABASE_URL: 'postgres://u:p@db.example/app' })).toEqual([]);
+  });
+
   it('rejects missing, default and short secrets in production', () => {
     expect(productionConfigProblems({ NODE_ENV: 'production' })).toEqual(['JWT_SECRET is not set.', 'POSTGRES_PASSWORD is not set.']);
     expect(

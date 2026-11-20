@@ -24,9 +24,12 @@ export const MIGRATIONS = [InitialSchema1794771932836, TimestampsWithTimeZone179
 export const ENTITIES = [Project, Profile, User, Experience, Message, Testimonial, Credential, Skill, ProjectDailyStat, TestimonialRequest, Post, Session, AuditEvent];
 
 // Single source of truth for DB settings, shared by the app and the seed script.
+// DATABASE_URL (e.g. from a hosted Postgres like Neon, with ?sslmode=require) wins over the POSTGRES_* settings.
 export function databaseConfig(): DataSourceOptions {
+  const url = process.env.DATABASE_URL?.trim() || undefined;
   return {
     type: 'postgres',
+    url,
     host: process.env.POSTGRES_HOST || 'localhost',
     port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
     username: process.env.POSTGRES_USER || 'portfolio_user',

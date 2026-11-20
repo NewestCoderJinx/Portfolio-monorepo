@@ -17,8 +17,11 @@ export function productionConfigProblems(env: NodeJS.ProcessEnv = process.env): 
   else if (KNOWN_DEFAULTS.has(jwt)) problems.push('JWT_SECRET is still a default value.');
   else if (jwt.length < JWT_SECRET_MIN_LENGTH) problems.push(`JWT_SECRET must be at least ${JWT_SECRET_MIN_LENGTH} characters.`);
 
+  // A DATABASE_URL comes from a hosted database, which generates its own password.
   const db = env.POSTGRES_PASSWORD ?? '';
-  if (!db) problems.push('POSTGRES_PASSWORD is not set.');
+  if (env.DATABASE_URL?.trim()) {
+    /* password is part of the URL */
+  } else if (!db) problems.push('POSTGRES_PASSWORD is not set.');
   else if (KNOWN_DEFAULTS.has(db)) problems.push('POSTGRES_PASSWORD is still a default value.');
   else if (db.length < DB_PASSWORD_MIN_LENGTH) problems.push(`POSTGRES_PASSWORD must be at least ${DB_PASSWORD_MIN_LENGTH} characters.`);
 

@@ -36,11 +36,12 @@ Read from the environment, or from `api/.env` in development.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `DATABASE_URL` | unset | Full connection string, e.g. `postgres://user:pass@host/db?sslmode=require` from a hosted database. When set, the `POSTGRES_*` settings below are ignored |
 | `POSTGRES_HOST` / `POSTGRES_PORT` | `localhost` / `5432` | Database address |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `portfolio_user` / `secret_password` / `portfolio_db` | Database login |
 | `JWT_SECRET` | a dev-only value | Signs Admin logins. Always set a long random string in production. Logins last one day. |
 | `PORT` | `3000` | HTTP port |
-| `NODE_ENV` | `development` | `production` (set by the Docker image) refuses to start with missing, short or default `JWT_SECRET`/`POSTGRES_PASSWORD`, and turns off CORS unless `CORS_ORIGINS` is set |
+| `NODE_ENV` | `development` | `production` (set by the Docker image) refuses to start with missing, short or default `JWT_SECRET`/`POSTGRES_PASSWORD` (`POSTGRES_PASSWORD` isn't needed with `DATABASE_URL`), and turns off CORS unless `CORS_ORIGINS` is set |
 | `TRUST_PROXY` | off | How many proxies sit in front of the API (`1` for nginx), `true`, or a list of addresses. Lets it read the visitor's IP and https from `X-Forwarded-*`. Leave it off when the API is reached directly, or visitors could fake their IP. |
 | `CORS_ORIGINS` | any (dev) / none (production) | Comma-separated sites allowed to call the API from the browser. Not needed when the site goes through nginx's `/api/`. |
 | `ALLOW_REGISTRATION` | `false` | In development only the first account can register; in production nobody can (use `create-admin`, below). Set to `true` for a moment to open sign-up anyway. |
