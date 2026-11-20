@@ -6,7 +6,6 @@ import { ContactSection } from '../components/public/ContactSection';
 import { CredentialsSection } from '../components/public/CredentialsSection';
 import { ExperienceSection } from '../components/public/ExperienceSection';
 import { LatestPostsSection } from '../components/public/LatestPostsSection';
-import { PortfolioStats } from '../components/public/PortfolioStats';
 import { ProfileHero } from '../components/public/ProfileHero';
 import { SkillsSection } from '../components/public/SkillsSection';
 import { ProjectsSection } from '../components/public/ProjectsSection';
@@ -58,14 +57,9 @@ export function PublicView() {
           </Reveal>
 
           {!loading && (
-            <>
-              <Reveal delay={0.1}>
-                <PortfolioStats projects={projects} />
-              </Reveal>
-              <Reveal>
-                <TechStack projects={projects} selectedTag={selectedTag} onSelect={selectTag} />
-              </Reveal>
-            </>
+            <Reveal delay={0.1}>
+              <TechStack projects={projects} selectedTag={selectedTag} onSelect={selectTag} />
+            </Reveal>
           )}
 
           <ProjectsSection

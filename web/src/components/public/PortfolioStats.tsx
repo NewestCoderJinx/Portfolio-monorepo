@@ -1,44 +1,52 @@
-import { SimpleGrid, Stat, StatLabel, StatNumber } from '@chakra-ui/react';
+import { Box, HStack, Text } from '@chakra-ui/react';
 import type { Project } from '../../api/projectstate';
 import { hasCaseStudy } from './caseStudy';
 
-/** Every number here is computed from real project data, never hard-coded. */
-export function PortfolioStats({ projects }: { projects: Project[] }) {
-  if (projects.length === 0) return null;
-
+/**
+ * Every number here is computed from real project data, never hard-coded. Zeros are left out, and so
+ * are counts that only repeat the project total ("3 projects, 3 case studies" says nothing new).
+ */
+export function portfolioStats(projects: Project[]) {
+  const total = projects.length;
   const technologies = new Set(projects.flatMap((p) => p.tags || [])).size;
   const caseStudies = projects.filter(hasCaseStudy).length;
   const liveDemos = projects.filter((p) => p.demoUrl).length;
 
-  const stats = [
-    { label: 'Projects', value: projects.length },
-    { label: 'Technologies', value: technologies },
-    { label: 'Case studies', value: caseStudies },
-    { label: 'Live demos', value: liveDemos },
-  ];
+  return [
+    { label: total === 1 ? 'Project' : 'Projects', value: total },
+    { label: technologies === 1 ? 'Technology' : 'Technologies', value: technologies },
+    { label: caseStudies === 1 ? 'Case study' : 'Case studies', value: caseStudies, skip: caseStudies === total },
+    { label: liveDemos === 1 ? 'Live demo' : 'Live demos', value: liveDemos, skip: liveDemos === total },
+  ].filter((s) => s.value > 0 && !s.skip);
+}
+
+/** A slim row of numbers, as a description list (label first in the markup, shown under the number). */
+export function PortfolioStats({ projects }: { projects: Project[] }) {
+  const stats = portfolioStats(projects);
+  if (stats.length === 0) return null;
 
   return (
-    <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+    // Separators are borders, not elements: a <dl> may only hold <div> groups of <dt>/<dd>.
+    <HStack as="dl" spacing={0}>
       {stats.map((s) => (
-        // The label comes first in the markup (a <dt> must precede its <dd>) and is shown below the number.
-        <Stat
+        <Box
           key={s.label}
-          bg="bg.surface"
-          p={4}
-          borderRadius="xl"
-          borderWidth="1px"
-          borderColor="border.default"
-          textAlign="center"
-          sx={{ '& > dl': { display: 'flex', flexDirection: 'column-reverse' } }}
+          display="flex"
+          flexDirection="column-reverse"
+          alignItems="center"
+          px={{ base: 3, md: 5 }}
+          _first={{ pl: 0 }}
+          _last={{ pr: 0 }}
+          sx={{ '& + &': { borderLeftWidth: '1px', borderColor: 'border.default' } }}
         >
-          <StatLabel color="fg.muted" fontSize="xs" textTransform="uppercase" letterSpacing="wide">
+          <Text as="dt" color="fg.muted" fontSize="xs" textTransform="uppercase" letterSpacing="wide" whiteSpace="nowrap">
             {s.label}
-          </StatLabel>
-          <StatNumber fontSize="3xl" color="fg.brand">
+          </Text>
+          <Text as="dd" fontSize="2xl" fontWeight="bold" color="fg.brand" lineHeight="short">
             {s.value}
-          </StatNumber>
-        </Stat>
+          </Text>
+        </Box>
       ))}
-    </SimpleGrid>
+    </HStack>
   );
 }
