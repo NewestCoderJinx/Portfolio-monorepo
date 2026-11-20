@@ -130,3 +130,16 @@ export const ShareIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
   </svg>
 );
+
+export const CopyIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="9" y="9" width="13" height="13" rx="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
+export const CheckIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);

@@ -58,9 +58,10 @@ export function SocialLinks({ profile, size = 'sm', inverted = false, compact = 
               title={l.label}
               icon={l.icon}
               variant="ghost"
-              color="fg.secondary"
               borderRadius="full"
-              _hover={{ color: 'fg.brand', bg: 'bg.brandSubtle' }}
+              {...(inverted
+                ? { color: 'whiteAlpha.900', _hover: { bg: 'whiteAlpha.200', color: 'white' } }
+                : { color: 'fg.secondary', _hover: { color: 'fg.brand', bg: 'bg.brandSubtle' } })}
             />
           </WrapItem>
         ))}
