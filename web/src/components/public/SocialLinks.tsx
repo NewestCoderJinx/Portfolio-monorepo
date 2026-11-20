@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactElement } from 'react';
-import { Button, Wrap, WrapItem } from '@chakra-ui/react';
+import { Button, IconButton, Wrap, WrapItem, type WrapProps } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import type { Profile } from '../../api/profile';
 import { formatUrl } from '../../api/projectstate';
@@ -10,10 +10,13 @@ interface Props {
   size?: 'sm' | 'md';
   /** Use on dark/colored backgrounds. */
   inverted?: boolean;
+  /** Round icon-only buttons (with accessible names), for a quiet row under a call to action. */
+  compact?: boolean;
+  justify?: WrapProps['justify'];
 }
 
 /** Renders only the contact links the profile actually has. */
-export function SocialLinks({ profile, size = 'sm', inverted = false }: Props) {
+export function SocialLinks({ profile, size = 'sm', inverted = false, compact = false, justify = 'center' }: Props) {
   const navigate = useNavigate();
   const links = [
     profile.email && { label: 'Email', href: `mailto:${profile.email}`, icon: <MailIcon />, primary: true },
@@ -35,8 +38,38 @@ export function SocialLinks({ profile, size = 'sm', inverted = false }: Props) {
     navigate(to);
   };
 
+  const linkProps = (l: (typeof links)[number]) => ({
+    as: 'a' as const,
+    href: l.to ?? l.href,
+    // In-app pages open in place; external links get a new tab.
+    target: l.to || l.href?.startsWith('mailto:') ? undefined : '_blank',
+    rel: l.to ? undefined : 'noopener noreferrer',
+    onClick: l.to ? (e: MouseEvent) => openInApp(e, l.to as string) : undefined,
+  });
+
+  if (compact) {
+    return (
+      <Wrap spacing={2} justify={justify}>
+        {links.map((l) => (
+          <WrapItem key={l.label}>
+            <IconButton
+              {...linkProps(l)}
+              aria-label={l.label}
+              title={l.label}
+              icon={l.icon}
+              variant="ghost"
+              color="fg.secondary"
+              borderRadius="full"
+              _hover={{ color: 'fg.brand', bg: 'bg.brandSubtle' }}
+            />
+          </WrapItem>
+        ))}
+      </Wrap>
+    );
+  }
+
   return (
-    <Wrap spacing={2} justify="center">
+    <Wrap spacing={2} justify={justify}>
       {links.map((l) => (
         <WrapItem key={l.label}>
           <Button

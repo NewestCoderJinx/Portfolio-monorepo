@@ -1,7 +1,9 @@
-import { Avatar, Box, Heading, HStack, Skeleton, SkeletonCircle, Text, VStack } from '@chakra-ui/react';
+import type { MouseEvent } from 'react';
+import { Avatar, Box, Button, Flex, Heading, HStack, Skeleton, SkeletonCircle, Stack, Text, VStack } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import type { Profile } from '../../api/profile';
-import { MapPinIcon } from './icons';
+import { scrollBehavior } from '../../motion';
+import { ArrowRightIcon, MapPinIcon, MailIcon } from './icons';
 import { SocialLinks } from './SocialLinks';
 
 const pulse = keyframes`
@@ -38,6 +40,15 @@ function AvailabilityBadge({ text }: { text: string }) {
   );
 }
 
+/** In-page jump that still works as a normal link (new tab, no JavaScript). */
+function jumpTo(e: MouseEvent, id: string) {
+  const target = document.getElementById(id);
+  if (!target || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+  history.replaceState(null, '', `#${id}`);
+}
+
 interface Props {
   profile: Profile | null;
   loading: boolean;
@@ -46,18 +57,22 @@ interface Props {
 export function ProfileHero({ profile, loading }: Props) {
   if (loading) {
     return (
-      <VStack spacing={4} py={6}>
-        <SkeletonCircle size="24" />
-        <Skeleton h="36px" w="260px" />
-        <Skeleton h="20px" w="360px" maxW="full" />
-      </VStack>
+      <Flex direction={{ base: 'column-reverse', md: 'row' }} align="center" gap={8} py={{ base: 4, md: 10 }}>
+        <VStack spacing={4} align={{ base: 'center', md: 'start' }} flex={1} w="full">
+          <Skeleton h="24px" w="160px" borderRadius="full" />
+          <Skeleton h="48px" w="320px" maxW="full" />
+          <Skeleton h="20px" w="420px" maxW="full" />
+          <Skeleton h="20px" w="380px" maxW="full" />
+        </VStack>
+        <SkeletonCircle boxSize={{ base: '128px', md: '192px', lg: '220px' }} />
+      </Flex>
     );
   }
 
   // No profile yet: keep the page presentable instead of showing placeholder personal details.
   if (!profile) {
     return (
-      <VStack spacing={3} textAlign="center" py={6}>
+      <VStack spacing={3} textAlign="center" py={10}>
         <Heading as="h1" size="2xl" letterSpacing="tight">
           Engineering Portfolio
         </Heading>
@@ -68,46 +83,101 @@ export function ProfileHero({ profile, loading }: Props) {
     );
   }
 
+  const align = { base: 'center', md: 'start' } as const;
+
   return (
-    <VStack spacing={5} textAlign="center" py={6}>
-      <Avatar
-        size="2xl"
-        name={profile.name}
-        src={profile.avatarUrl || undefined}
-        bg="brand.600"
-        color="white"
-        boxShadow="md"
-        borderWidth="4px"
-        borderColor="bg.surface"
-      />
-
-      <VStack spacing={2}>
+    <Flex
+      as="section"
+      aria-label="Introduction"
+      direction={{ base: 'column-reverse', md: 'row' }}
+      align="center"
+      justify="space-between"
+      gap={{ base: 8, md: 12 }}
+      py={{ base: 4, md: 10 }}
+    >
+      <VStack spacing={5} align={align} textAlign={{ base: 'center', md: 'left' }} flex={1} minW={0}>
         {profile.availability && <AvailabilityBadge text={profile.availability} />}
-        <Heading as="h1" size="2xl" letterSpacing="tight">
-          {profile.name}
-        </Heading>
-        {profile.headline && (
-          <Text fontSize="lg" fontWeight="medium" color="fg.brand">
-            {profile.headline}
-          </Text>
-        )}
-        {profile.location && (
-          <HStack spacing={1} color="fg.muted" fontSize="sm">
-            <MapPinIcon width={14} height={14} />
-            <Text>{profile.location}</Text>
-          </HStack>
-        )}
-      </VStack>
 
-      {profile.bio && (
-        <Box maxW="2xl">
-          <Text color="fg.secondary" fontSize="md" lineHeight="tall" whiteSpace="pre-line">
+        <VStack spacing={2} align={align}>
+          <Heading as="h1" fontSize={{ base: '4xl', md: '5xl', lg: '6xl' }} lineHeight="1.05" letterSpacing="tighter">
+            {profile.name}
+          </Heading>
+          {profile.headline && (
+            <Text
+              fontSize={{ base: 'lg', md: 'xl' }}
+              fontWeight="semibold"
+              bgGradient="linear(to-r, brand.600, accent.600)"
+              _dark={{ bgGradient: 'linear(to-r, brand.200, accent.300)' }}
+              bgClip="text"
+            >
+              {profile.headline}
+            </Text>
+          )}
+          {profile.location && (
+            <HStack spacing={1} color="fg.muted" fontSize="sm">
+              <MapPinIcon width={14} height={14} />
+              <Text>{profile.location}</Text>
+            </HStack>
+          )}
+        </VStack>
+
+        {profile.bio && (
+          <Text color="fg.secondary" fontSize={{ base: 'md', md: 'lg' }} lineHeight="tall" whiteSpace="pre-line" maxW="xl">
             {profile.bio}
           </Text>
-        </Box>
-      )}
+        )}
 
-      <SocialLinks profile={profile} />
-    </VStack>
+        <Stack direction={{ base: 'column', sm: 'row' }} spacing={3} w={{ base: 'full', sm: 'auto' }} pt={1}>
+          <Button
+            as="a"
+            href="#projects"
+            onClick={(e: MouseEvent) => jumpTo(e, 'projects')}
+            colorScheme="brand"
+            size="lg"
+            rightIcon={<ArrowRightIcon />}
+          >
+            View my work
+          </Button>
+          <Button
+            as="a"
+            href="#contact"
+            onClick={(e: MouseEvent) => jumpTo(e, 'contact')}
+            variant="outline"
+            bg="bg.surface"
+            size="lg"
+            leftIcon={<MailIcon />}
+          >
+            Get in touch
+          </Button>
+        </Stack>
+
+        <SocialLinks profile={profile} compact justify={align} />
+      </VStack>
+
+      <Box position="relative" flexShrink={0}>
+        {/* Soft glow behind the photo; decoration only. */}
+        <Box
+          position="absolute"
+          inset="-14%"
+          borderRadius="full"
+          bgGradient="radial(accent.200, transparent 70%)"
+          _dark={{ bgGradient: 'radial(rgba(20, 184, 166, 0.25), transparent 70%)' }}
+          aria-hidden
+        />
+        <Box p="5px" borderRadius="full" bgGradient="linear(to-br, brand.500, accent.400)" position="relative" boxShadow="xl">
+          <Avatar
+            boxSize={{ base: '128px', md: '192px', lg: '220px' }}
+            // Chakra sizes the initials from its own size scale, which a custom boxSize skips.
+            sx={{ '.chakra-avatar__initials': { fontSize: { base: '5xl', md: '7xl' }, fontWeight: 'bold' } }}
+            name={profile.name}
+            src={profile.avatarUrl || undefined}
+            bg="brand.600"
+            color="white"
+            borderWidth="4px"
+            borderColor="bg.canvas"
+          />
+        </Box>
+      </Box>
+    </Flex>
   );
 }

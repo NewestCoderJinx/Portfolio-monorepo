@@ -115,3 +115,9 @@ export const RssIcon = (p: SVGProps<SVGSVGElement>) => (
     <circle cx="5" cy="19" r="1" />
   </svg>
 );
+
+export const MenuIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
