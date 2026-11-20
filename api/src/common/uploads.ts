@@ -1,9 +1,11 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Logger } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { Request } from 'express';
 import { mkdirSync } from 'fs';
+import { unlink } from 'fs/promises';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { basename, extname } from 'path';
+import { cloudinaryConfig, uploadToCloudinary } from './cloudinary';
 
 export const UPLOAD_DIR = './uploads';
 
@@ -37,4 +39,40 @@ export function uploadedFileUrl(req: Request, file: Express.Multer.File | undefi
   }
   const baseUrl = process.env.PUBLIC_API_URL || `${req.protocol}://${req.get('host')}`;
   return `${baseUrl}/uploads/${file.filename}`;
+}
+
+const logger = new Logger('Uploads');
+
+/**
+ * Stores an uploaded file and returns its public URL. With CLOUDINARY_URL set the file goes to
+ * Cloudinary and the local copy is deleted (for hosts whose disk doesn't survive a restart);
+ * otherwise it stays in UPLOAD_DIR and the API serves it under /uploads/.
+ */
+export async function storeUploadedFile(
+  req: Request,
+  file: Express.Multer.File | undefined,
+  kind: 'image' | 'document',
+  upload: typeof uploadToCloudinary = uploadToCloudinary,
+): Promise<string> {
+  if (!file) {
+    throw new BadRequestException('No file uploaded');
+  }
+  const config = cloudinaryConfig();
+  if (!config) return uploadedFileUrl(req, file);
+
+  try {
+    return await upload(config, {
+      path: file.path,
+      // PDFs go up as "raw" so they're served unchanged, and keep their extension so browsers open them.
+      resourceType: kind === 'image' ? 'image' : 'raw',
+      folder: kind === 'image' ? 'portfolio/images' : 'portfolio/documents',
+      publicId: kind === 'image' ? basename(file.filename, extname(file.filename)) : file.filename,
+      mimetype: file.mimetype,
+    });
+  } catch (err) {
+    logger.error(err instanceof Error ? err.message : String(err));
+    throw new BadGatewayException('The file could not be stored. Please try again.');
+  } finally {
+    await unlink(file.path).catch(() => undefined);
+  }
 }

@@ -2,7 +2,7 @@ import { Body, Controller, Get, Patch, Post, Req, UploadedFile, UseGuards, UseIn
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { uploadedFileUrl, uploadOptions } from '../common/uploads';
+import { storeUploadedFile, uploadOptions } from '../common/uploads';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Profile } from './entities/profile.entity';
 import { ProfileService } from './profile.service';
@@ -28,7 +28,7 @@ export class ProfileController {
   @UseInterceptors(
     FileInterceptor('file', uploadOptions({ maxBytes: 10 * 1024 * 1024, mimeTypes: /^application\/pdf$/, error: 'Only PDF files are allowed' })),
   )
-  uploadResume(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    return { url: uploadedFileUrl(req, file) };
+  async uploadResume(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    return { url: await storeUploadedFile(req, file, 'document') };
   }
 }

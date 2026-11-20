@@ -19,7 +19,7 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { MAX_IMAGE_UPLOAD_BYTES, optimizeUploadedImage } from '../common/images';
 import { RateLimiter } from '../common/rate-limiter';
-import { uploadedFileUrl, uploadOptions } from '../common/uploads';
+import { storeUploadedFile, uploadOptions } from '../common/uploads';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ReorderProjectsDto } from './dto/reorder-projects.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -111,6 +111,6 @@ export class ProjectsController {
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
     // Resized and re-encoded as WebP; the URL points at the optimised file.
-    return { imageUrl: uploadedFileUrl(req, file && (await optimizeUploadedImage(file))) };
+    return { imageUrl: await storeUploadedFile(req, file && (await optimizeUploadedImage(file)), 'image') };
   }
 }

@@ -17,6 +17,12 @@ describe('productionConfigProblems', () => {
     expect(productionConfigProblems({ NODE_ENV: 'production', JWT_SECRET: strong.JWT_SECRET, DATABASE_URL: 'postgres://u:p@db.example/app' })).toEqual([]);
   });
 
+  it('rejects a malformed CLOUDINARY_URL', () => {
+    expect(productionConfigProblems({ NODE_ENV: 'production', ...strong, CLOUDINARY_URL: 'https://k:s@demo' })).toEqual([
+      'CLOUDINARY_URL must look like cloudinary://<api key>:<api secret>@<cloud name>.',
+    ]);
+  });
+
   it('rejects missing, default and short secrets in production', () => {
     expect(productionConfigProblems({ NODE_ENV: 'production' })).toEqual(['JWT_SECRET is not set.', 'POSTGRES_PASSWORD is not set.']);
     expect(

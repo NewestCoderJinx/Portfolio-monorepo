@@ -47,6 +47,7 @@ Read from the environment, or from `api/.env` in development.
 | `ALLOW_REGISTRATION` | `false` | In development only the first account can register; in production nobody can (use `create-admin`, below). Set to `true` for a moment to open sign-up anyway. |
 | `SITE_URL` | from the request | Public address of the site, used in share links and preview tags |
 | `PUBLIC_API_URL` | from the request | Public address of the API, used in uploaded file URLs |
+| `CLOUDINARY_URL` | unset | `cloudinary://<api key>:<api secret>@<cloud name>` (from the Cloudinary dashboard). When set, uploads are stored on Cloudinary instead of `uploads/`, for hosts whose disk is wiped on restart |
 | `SMTP_*`, `MAIL_FROM`, `NOTIFY_EMAIL` | off | Email alerts. See [Email alerts](../README.md#email-alerts) in the root README. |
 
 ## Database migrations
@@ -89,7 +90,7 @@ Public routes that can be abused are rate limited per visitor:
 - Testimonial links: 30 lookups and 5 submissions an hour.
 - Project views and share clicks: counted once per visitor every 30 minutes.
 
-Uploaded images (up to 15 MB) are resized, stripped of metadata and saved as WebP under `uploads/`, served at `/uploads/...`.
+Uploaded images (up to 15 MB) are resized, stripped of metadata and saved as WebP under `uploads/`, served at `/uploads/...`. With `CLOUDINARY_URL` set they go to Cloudinary instead (images in `portfolio/images`, résumé PDFs in `portfolio/documents`) and the local copy is deleted. Cloudinary's free plan blocks PDF delivery until you turn on **Settings → Security → Allow delivery of PDF and ZIP files**.
 
 ## Locked out of two-step verification
 

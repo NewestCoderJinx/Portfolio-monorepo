@@ -1,3 +1,5 @@
+import { cloudinaryConfig } from '../common/cloudinary';
+
 /** Values that have shipped as defaults in this repo; never acceptable in production. */
 const KNOWN_DEFAULTS = new Set(['secret_password', 'super_secret_jwt_key', 'dev_only_jwt_secret_change_me', 'change_me', 'changeme', 'change_me_to_a_long_random_string']);
 
@@ -24,6 +26,12 @@ export function productionConfigProblems(env: NodeJS.ProcessEnv = process.env): 
   } else if (!db) problems.push('POSTGRES_PASSWORD is not set.');
   else if (KNOWN_DEFAULTS.has(db)) problems.push('POSTGRES_PASSWORD is still a default value.');
   else if (db.length < DB_PASSWORD_MIN_LENGTH) problems.push(`POSTGRES_PASSWORD must be at least ${DB_PASSWORD_MIN_LENGTH} characters.`);
+
+  try {
+    cloudinaryConfig(env);
+  } catch (err) {
+    problems.push((err as Error).message);
+  }
 
   return problems;
 }
