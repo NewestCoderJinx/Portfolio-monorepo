@@ -73,6 +73,62 @@ Container logs are capped at 3 × 10 MB per service. `docker compose -f docker-c
 
 Every push to `main` runs lint, tests and builds on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
+## Free hosting (Cloudflare Pages + Render + Neon + Cloudinary)
+
+An alternative to `docker-compose.prod.yml` that costs nothing and needs no card: four free services, each doing one job. None of these needs code changes, only settings.
+
+| Part | Service | Notes |
+|---|---|---|
+| Database | [Neon](https://neon.tech) | Free Postgres. Copy its connection string (with `?sslmode=require`). |
+| Uploaded files | [Cloudinary](https://cloudinary.com) | Free plan. Copy the `CLOUDINARY_URL` from the dashboard. Turn on **Settings → Security → Allow delivery of PDF and ZIP files** so résumé PDFs open. |
+| API | [Render](https://render.com) | Free web service built from `api/Dockerfile`. Sleeps after about 15 idle minutes; the next request wakes it in up to a minute. |
+| Website | [Cloudflare Pages](https://pages.cloudflare.com) | Serves the built site. The Functions in `web/functions/` do nginx's other jobs: share links, `/rss.xml` and blog previews for link crawlers. `web/public/_headers` sets the security headers and caching. |
+
+Render's disk is wiped on every restart, which is why uploads go to Cloudinary. The site calls the API directly at its Render address, so the API needs `CORS_ORIGINS`.
+
+### 1. Database and files
+
+Create a Neon project and a Cloudinary account, and keep the connection string and `CLOUDINARY_URL` for the next step.
+
+### 2. API on Render
+
+New → Web Service → connect this repository. Set **Language** to Docker, **Root Directory** to `api`, **Instance Type** to Free, and **Health Check Path** to `/`. Environment variables:
+
+- `DATABASE_URL`: the Neon connection string.
+- `JWT_SECRET`: a long random value, e.g. from `openssl rand -base64 48`.
+- `CLOUDINARY_URL`: from Cloudinary.
+- `SITE_URL`: the website's address, e.g. `https://yourname.pages.dev` (used in emails and share pages).
+- `CORS_ORIGINS`: the same address, so the browser may call the API.
+- `TRUST_PROXY`: Render sits behind its own proxies. Start with `1`, sign in, and check that Admin → Activity shows your real IP address; if it shows a Render address, try `2`, then `3`. Login limits and sessions use this IP.
+
+The API runs the database migrations when it starts. Note the service's address, e.g. `https://portfolio-api.onrender.com`.
+
+### 3. Website on Cloudflare Pages
+
+Workers & Pages → Create → Pages → connect this repository. Set **Root directory** to `web`, **Build command** to `yarn build` and **Build output directory** to `dist`. Environment variables (used by both the build and the Functions):
+
+- `VITE_API_URL`: the Render address from step 2.
+- `VITE_SITE_URL`: the website's own address (for the sitemap and preview tags).
+- Optionally `VITE_SITE_TITLE`, `VITE_SITE_DESCRIPTION`, `VITE_OG_IMAGE` (see [web/README.md](web/README.md)).
+
+The site gets a free `https://<project>.pages.dev` address. A free subdomain such as [is-a.dev](https://is-a.dev) can point at it later (Custom domains in the Pages project); then update `SITE_URL`, `CORS_ORIGINS` and `VITE_SITE_URL` to match and redeploy both.
+
+### 4. Your Admin account
+
+Render's free plan has no shell, so create the account from your own computer, against the Neon database, after the API has started once:
+
+```bash
+cd api
+npm ci && npm run build
+DATABASE_URL='<the Neon connection string>' node dist/create-admin you@example.com
+```
+
+### Keeping it awake and backed up
+
+- So visitors don't wait for Render to wake up, a free monitor such as [cron-job.org](https://cron-job.org) or UptimeRobot can request the API's address every 10 minutes. One always-on service fits in Render's free monthly hours.
+- Neon keeps a short restore history on the free plan. For your own copies, run `pg_dump '<the Neon connection string>' -Fc -f portfolio.dump` now and then, with a `pg_dump` at least as new as the Neon database's Postgres version. Uploaded files stay in your Cloudinary media library.
+- Email alerts: Render's free plan may block the usual SMTP ports (25, 465, 587). If messages don't send, use a provider that also listens on port 2525 (e.g. Brevo) and set `SMTP_PORT=2525`. See [Email alerts](#email-alerts).
+
 ## Link previews and SEO
 
 Set these before building the `web` image:

@@ -66,4 +66,9 @@ src/
   theme.ts     Chakra theme and colour tokens (light and dark)
 nginx.conf     production server: the app, /api and /uploads proxies, share links, the RSS feed, crawler routing for blog posts
 security-headers.conf  security headers nginx adds to every response
+functions/     Cloudflare Pages Functions: share links, /rss.xml and blog crawler routing (nginx's jobs on Pages)
+cloudflare/    code shared by those Functions
+public/_headers  security headers and caching on Cloudflare Pages
 ```
+
+Hosting on Cloudflare Pages instead of nginx: see [Free hosting](../README.md#free-hosting-cloudflare-pages--render--neon--cloudinary).
